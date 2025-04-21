@@ -1,0 +1,154 @@
+"use client"
+
+import type React from "react"
+
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import {
+  LayoutDashboard,
+  CheckSquare,
+  FileText,
+  Users,
+  BarChart,
+  Building2,
+  Settings,
+  LogIn,
+  ChevronDown,
+  LayoutGrid,
+} from "lucide-react"
+import { cn } from "@/lib/utils"
+
+interface SidebarProps {
+  open: boolean
+  setOpen: (open: boolean) => void
+}
+
+export function Sidebar({ open, setOpen }: SidebarProps) {
+  const pathname = usePathname()
+
+  return (
+    <div
+      className={cn(
+        "relative border-r border-gray-700/50 flex flex-col transition-all duration-300 backdrop-blur-md bg-gray-900/40",
+        open ? "w-64" : "w-0",
+      )}
+    >
+      <div className="p-4 border-b border-gray-700/50 relative z-10">
+        <div className="flex items-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-6 w-6 text-white mr-2"
+          >
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
+          <span className="font-bold text-lg text-white">SODO HOSPITAL</span>
+        </div>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto py-4 relative z-10">
+        <ul className="space-y-1 px-2">
+          <NavItem href="/" icon={<LayoutDashboard size={20} />} label="Dashboard" active={pathname === "/"} />
+          <NavItem href="/tasks" icon={<CheckSquare size={20} />} label="Tasks" active={pathname === "/tasks"} />
+          <NavItem
+            href="/tasks/kanban"
+            icon={<LayoutGrid size={20} />}
+            label="Kanban Board"
+            active={pathname === "/tasks/kanban"}
+          />
+          <NavItem
+            href="/documents"
+            icon={<FileText size={20} />}
+            label="Documents"
+            active={pathname === "/documents"}
+          />
+          <NavItem href="/teams" icon={<Users size={20} />} label="Teams" active={pathname === "/teams"} />
+          <NavItem href="/reports" icon={<BarChart size={20} />} label="Reports" active={pathname === "/reports"} />
+          <NavItem
+            href="/departments"
+            icon={<Building2 size={20} />}
+            label="Departments"
+            active={pathname === "/departments"}
+          />
+          <NavItem href="/settings" icon={<Settings size={20} />} label="Settings" active={pathname === "/settings"} />
+        </ul>
+      </nav>
+
+      <div className="p-4 border-t border-gray-700/50 relative z-10">
+        <div className="text-sm text-gray-400 mb-2">
+          Sign in to unlock all features and access your personal dashboard.
+        </div>
+        <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-2 px-4 rounded flex items-center justify-center">
+          <LogIn className="mr-2" size={16} />
+          SIGN IN
+        </button>
+      </div>
+
+      <div className="p-4 border-t border-gray-700/50 relative z-10">
+        <div className="text-sm font-medium text-gray-400 mb-2">Popular Categories</div>
+        <ul className="space-y-1">
+          <PopularItem label="Administrative" count={45} />
+          <PopularItem label="Clinical" count={32} />
+          <PopularItem label="Financial" count={28} />
+          <PopularItem label="HR" count={19} />
+          <PopularItem label="Compliance" count={15} />
+        </ul>
+        <button className="text-sm text-gray-400 hover:text-gray-300 mt-2 flex items-center">
+          Show more
+          <ChevronDown size={14} className="ml-1" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+interface NavItemProps {
+  href: string
+  label: string
+  icon: React.ReactNode
+  active?: boolean
+}
+
+function NavItem({ href, label, icon, active }: NavItemProps) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className={`flex items-center px-4 py-2 text-sm rounded-md transition-all duration-200 ${
+          active
+            ? "bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-white border border-blue-500/20"
+            : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
+        }`}
+      >
+        <span className={`mr-3 ${active ? "text-blue-400" : ""}`}>{icon}</span>
+        <span>{label}</span>
+      </Link>
+    </li>
+  )
+}
+
+interface PopularItemProps {
+  label: string
+  count: number
+}
+
+function PopularItem({ label, count }: PopularItemProps) {
+  return (
+    <li>
+      <Link
+        href="#"
+        className="flex items-center justify-between px-2 py-1 text-sm text-gray-400 hover:text-white rounded transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-900/20 hover:to-purple-900/20"
+      >
+        <span>{label}</span>
+        <span className="text-xs bg-gradient-to-r from-blue-900/60 to-purple-900/60 px-1.5 py-0.5 rounded">
+          {count}
+        </span>
+      </Link>
+    </li>
+  )
+}
