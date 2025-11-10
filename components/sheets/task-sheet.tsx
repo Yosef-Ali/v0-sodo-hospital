@@ -82,7 +82,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
       return formData.title.trim() !== "" && formData.description.trim() !== ""
     }
     if (currentStep === 2) {
-      return formData.status !== "" && formData.priority !== "" && formData.dueDate !== ""
+      return formData.dueDate !== ""
     }
     if (currentStep === 3) {
       return formData.assignee.trim() !== "" && formData.category.trim() !== ""

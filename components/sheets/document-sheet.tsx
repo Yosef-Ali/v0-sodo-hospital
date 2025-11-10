@@ -122,7 +122,7 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
       return formData.title.trim() !== "" && formData.description.trim() !== ""
     }
     if (currentStep === 3) {
-      return formData.status !== "" && formData.category.trim() !== "" && formData.owner.trim() !== ""
+      return formData.category.trim() !== "" && formData.owner.trim() !== ""
     }
     return true
   }

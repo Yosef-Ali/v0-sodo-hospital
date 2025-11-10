@@ -140,15 +140,15 @@ interface PopularItemProps {
 function PopularItem({ label, count }: PopularItemProps) {
   return (
     <li>
-      <Link
-        href="#"
-        className="flex items-center justify-between px-2 py-1 text-sm text-gray-400 hover:text-white rounded transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-900/20 hover:to-purple-900/20"
+      <button
+        type="button"
+        className="w-full flex items-center justify-between px-2 py-1 text-sm text-gray-400 hover:text-white rounded transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-900/20 hover:to-purple-900/20"
       >
         <span>{label}</span>
         <span className="text-xs bg-gradient-to-r from-blue-900/60 to-purple-900/60 px-1.5 py-0.5 rounded">
           {count}
         </span>
-      </Link>
+      </button>
     </li>
   )
 }
