@@ -1,10 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import "@/app/globals.css"
 import { MainLayout } from "@/components/layout/main-layout"
-
-const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Sodo Hospital - Administrative Dashboard",
@@ -19,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="font-sans">
         <MainLayout>{children}</MainLayout>
       </body>
     </html>
