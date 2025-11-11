@@ -5,6 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { Sidebar } from "@/components/layout/sidebar"
 import { TopBar } from "@/components/layout/top-bar"
+import { ChatWidget } from "@/components/ui/chat-widget"
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -26,6 +27,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
+
+      {/* Customer Support Chat Widget */}
+      <ChatWidget />
     </div>
   )
 }
