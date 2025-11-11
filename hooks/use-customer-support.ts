@@ -64,56 +64,70 @@ export function useCustomerSupport() {
 
     const lowerMessage = userMessage.toLowerCase()
 
-    if (lowerMessage.includes("pricing") || lowerMessage.includes("cost") || lowerMessage.includes("price")) {
-      response = "Here are our pricing plans:"
-      suggestions = ["Request demo", "View limitations", "Talk to sales", "Free trial"]
+    if (lowerMessage.includes("upload") || lowerMessage.includes("submit") || lowerMessage.includes("add document")) {
+      response = "Here's how to upload documents to the system:"
+      suggestions = ["View all documents", "Check processing status", "Bulk upload", "File formats"]
       widgets = [
         {
-          type: "list",
+          type: "action-card",
           data: {
-            title: "Pricing Plans",
-            items: [
-              { title: "Basic", subtitle: "$99/month", value: "10 users, 100GB" },
-              { title: "Professional", subtitle: "$299/month", value: "100 users, 1TB" },
-              { title: "Enterprise", subtitle: "Custom", value: "500+ users, unlimited" },
+            title: "Upload Documents",
+            description: "Navigate to Documents → Upload Document. Select file (PDF, DOC, DOCX, JPG, PNG up to 50MB), fill in details, and submit.",
+            actions: [
+              { label: "Go to Documents", variant: "default", href: "/documents" },
+              { label: "View Guide", variant: "outline" }
             ]
           }
         },
         {
-          type: "action-card",
+          type: "list",
           data: {
-            title: "Start Your Free Trial",
-            description: "All plans include a 14-day free trial with no credit card required",
-            actions: [
-              { label: "Start Trial", variant: "default" },
-              { label: "Talk to Sales", variant: "outline" }
+            title: "Supported Document Types",
+            items: [
+              { title: "License Renewals", subtitle: "Hospital licenses", value: "Ministry of Labor" },
+              { title: "Support Letters", subtitle: "Official correspondence", value: "HERQA/Internal" },
+              { title: "Authentication Docs", subtitle: "Verified documents", value: "Multi-authority" },
             ]
           }
         }
       ]
-    } else if (lowerMessage.includes("limit") || lowerMessage.includes("restriction") || lowerMessage.includes("maximum")) {
-      response = "I can show you our system limitations and capabilities. Key limitations include:\n\n• Max file size: 50MB\n• Supported formats: PDF, DOC, DOCX, JPG, PNG\n• Processing time: 2-7 business days\n• API rate limits vary by plan\n\nWould you like to see the complete limitations overview?"
-      suggestions = ["Show all limitations", "Compare plans", "Enterprise options"]
+    } else if (lowerMessage.includes("limit") || lowerMessage.includes("restriction") || lowerMessage.includes("maximum") || lowerMessage.includes("capability")) {
+      response = "I can show you the system capabilities and limitations:"
+      suggestions = ["Show all limitations", "File formats", "Processing times", "User access"]
       action = "show-limitations"
-    } else if (lowerMessage.includes("demo") || lowerMessage.includes("try") || lowerMessage.includes("test")) {
-      response = "Great! I can help you get started with SODO Hospital. We offer:\n\n✅ 14-day free trial (no credit card required)\n🎥 Live demo with our team\n📚 Self-guided product tour\n\nWhich would you prefer?"
-      suggestions = ["Start free trial", "Book live demo", "Product tour", "Contact sales"]
-    } else if (lowerMessage.includes("support") || lowerMessage.includes("help") || lowerMessage.includes("issue") || lowerMessage.includes("problem")) {
-      response = "I'm here to help! You can:\n\n🎫 Submit a support ticket for detailed assistance\n❓ Browse our FAQ for quick answers\n💬 Continue chatting with me\n📞 Talk to our support team directly\n\nWhat works best for you?"
-      suggestions = ["Submit ticket", "View FAQ", "Call support", "Continue chat"]
+    } else if (lowerMessage.includes("start") || lowerMessage.includes("begin") || lowerMessage.includes("how to use")) {
+      response = "Welcome to SODO Hospital Document Management! Here's how to get started:"
+      suggestions = ["Upload document", "View dashboard", "Check tasks", "System tour"]
+      widgets = [
+        {
+          type: "list",
+          data: {
+            title: "Quick Start Guide",
+            items: [
+              { title: "Dashboard", subtitle: "View system overview", icon: "📊" },
+              { title: "Documents", subtitle: "Upload and track documents", icon: "📄" },
+              { title: "Tasks", subtitle: "Manage your assignments", icon: "✅" },
+              { title: "Teams", subtitle: "Collaborate with colleagues", icon: "👥" }
+            ]
+          }
+        }
+      ]
+    } else if (lowerMessage.includes("support") || lowerMessage.includes("help") || lowerMessage.includes("issue") || lowerMessage.includes("problem") || lowerMessage.includes("ticket")) {
+      response = "I'm here to help! You can:\n\n🎫 Submit a support ticket for detailed assistance\n❓ Browse our FAQ for quick answers\n💬 Continue chatting with me\n📞 Contact your IT department for technical issues\n\nWhat works best for you?"
+      suggestions = ["Submit ticket", "View FAQ", "Document help", "Workflow help"]
       action = "open-ticket"
-    } else if (lowerMessage.includes("feature") || lowerMessage.includes("capability") || lowerMessage.includes("can it")) {
-      response = "SODO Hospital offers comprehensive features:\n\n📄 Document Processing (license renewals, support letters, authentication)\n✅ Multi-level Approval Workflows (Ministry of Labor, HERQA, Internal)\n⏱️ Processing Time Tracking & Optimization\n👥 Team Collaboration Tools\n📊 Analytics & Reporting\n🔒 Enterprise-grade Security & Compliance\n\nWhat specific feature are you interested in?"
-      suggestions = ["View all features", "Security details", "Request demo", "Compare plans"]
-    } else if (lowerMessage.includes("secure") || lowerMessage.includes("security") || lowerMessage.includes("complian")) {
-      response = "Security is our top priority:\n\n🔐 AES-256 encryption at rest\n🌐 TLS 1.3 in transit\n✅ SOC 2 Type II certified\n🏥 HIPAA compliant (Enterprise)\n📝 Full audit logging\n🔄 Automated backups\n\nNeed more details on our security practices?"
-      suggestions = ["Security whitepaper", "Compliance docs", "Enterprise security", "Talk to security team"]
+    } else if (lowerMessage.includes("feature") || lowerMessage.includes("what can") || lowerMessage.includes("capabilities")) {
+      response = "SODO Hospital Document Management System features:\n\n📄 Document Processing (license renewals, support letters, authentication)\n✅ Multi-level Approval Workflows (Ministry of Labor, HERQA, Internal)\n⏱️ Processing Time Tracking (avg 4.2 days)\n👥 Team Collaboration (9 departments, multiple teams)\n📊 Comprehensive Reporting (9 report types)\n🔒 Secure & HIPAA-compliant\n📋 Kanban task management\n\nWhat would you like to know more about?"
+      suggestions = ["Document types", "Approval process", "Team features", "Reports"]
+    } else if (lowerMessage.includes("secure") || lowerMessage.includes("security") || lowerMessage.includes("complian") || lowerMessage.includes("hipaa")) {
+      response = "Security and compliance information:\n\n🔐 AES-256 encryption at rest\n🌐 TLS 1.3 in transit\n🏥 HIPAA compliant for healthcare data\n📝 Complete audit trail and activity logging\n🔄 Daily automated backups (90-day retention)\n👤 Two-factor authentication available\n🔒 Role-based access control\n\nNeed specific security details?"
+      suggestions = ["Access control", "Data backup", "Compliance info", "Security settings"]
     } else if (lowerMessage.includes("hello") || lowerMessage.includes("hi") || lowerMessage.includes("hey")) {
-      response = "👋 Hello! Welcome to SODO Hospital Document Management. I'm here to help you learn about our system, answer questions, or guide you through getting started.\n\nWhat brings you here today?"
-      suggestions = ["View features", "See pricing", "Request demo", "Check limitations"]
+      response = "👋 Hello! Welcome to SODO Hospital Document Management System. I'm here to help hospital staff with document processing, approvals, task management, and system navigation.\n\nWhat can I help you with today?"
+      suggestions = ["Upload document", "Check status", "View tasks", "System features"]
     } else {
-      response = "Thanks for reaching out! I can help you with:\n\n💰 Pricing & Plans\n📋 System Limitations\n🎯 Features & Capabilities\n🎫 Support Tickets\n🎥 Product Demos\n\nWhat would you like to know more about?"
-      suggestions = ["Pricing info", "System limits", "Request demo", "Submit ticket"]
+      response = "Thanks for reaching out! I can help you with:\n\n📄 Document Upload & Processing\n✅ Approval Workflows & Tasks\n👥 Team Collaboration\n📊 Reports & Analytics\n🔧 Technical Support\n❓ System Navigation\n\nWhat would you like to know more about?"
+      suggestions = ["Document help", "Approval workflow", "System features", "Submit ticket"]
     }
 
     const assistantMessage: CustomerMessage = {
@@ -177,10 +191,10 @@ export function useCustomerSupport() {
       const welcomeMessage: CustomerMessage = {
         id: "welcome",
         role: "assistant",
-        content: "👋 Welcome! I'm here to help you learn about SODO Hospital Document Management System. Ask me about features, pricing, demos, or system capabilities!",
+        content: "👋 Welcome! I'm here to help you with SODO Hospital Document Management. Ask me about document processing, approvals, tasks, teams, or any system features!",
         timestamp: new Date(),
         metadata: {
-          suggestions: ["View pricing", "Request demo", "Check limitations", "System features"]
+          suggestions: ["Upload document", "Check approvals", "View tasks", "System features"]
         }
       }
       setState(prev => ({
