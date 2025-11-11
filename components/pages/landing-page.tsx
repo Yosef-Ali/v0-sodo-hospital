@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { CustomerSupportWidget } from "@/components/ui/customer-support-widget"
 import {
   FileText,
   Clock,
@@ -202,6 +205,9 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Customer Support Widget */}
+      <CustomerSupportWidget />
     </div>
   )
 }
