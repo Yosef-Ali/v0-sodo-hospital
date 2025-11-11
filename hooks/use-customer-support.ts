@@ -8,6 +8,10 @@ export interface CustomerMessage {
   content: string
   timestamp: Date
   isStreaming?: boolean
+  widgets?: Array<{
+    type: "action-card" | "progress" | "list" | "document-card" | "metric-card" | "quick-actions" | "status-badge" | "date-picker"
+    data: any
+  }>
   metadata?: {
     suggestions?: string[]
     action?: "open-ticket" | "show-faq" | "show-limitations" | "contact-sales"
@@ -56,12 +60,37 @@ export function useCustomerSupport() {
     let response = ""
     let suggestions: string[] = []
     let action: CustomerMessage["metadata"]["action"] = undefined
+    let widgets: CustomerMessage["widgets"] = []
 
     const lowerMessage = userMessage.toLowerCase()
 
     if (lowerMessage.includes("pricing") || lowerMessage.includes("cost") || lowerMessage.includes("price")) {
-      response = "We offer three pricing tiers:\n\n💼 Basic - $99/month (10 users, 100GB storage)\n🚀 Professional - $299/month (100 users, 1TB storage)\n🏢 Enterprise - Custom pricing (500+ users, unlimited storage)\n\nAll plans include a 14-day free trial. Would you like to speak with our sales team?"
+      response = "Here are our pricing plans:"
       suggestions = ["Request demo", "View limitations", "Talk to sales", "Free trial"]
+      widgets = [
+        {
+          type: "list",
+          data: {
+            title: "Pricing Plans",
+            items: [
+              { title: "Basic", subtitle: "$99/month", value: "10 users, 100GB" },
+              { title: "Professional", subtitle: "$299/month", value: "100 users, 1TB" },
+              { title: "Enterprise", subtitle: "Custom", value: "500+ users, unlimited" },
+            ]
+          }
+        },
+        {
+          type: "action-card",
+          data: {
+            title: "Start Your Free Trial",
+            description: "All plans include a 14-day free trial with no credit card required",
+            actions: [
+              { label: "Start Trial", variant: "default" },
+              { label: "Talk to Sales", variant: "outline" }
+            ]
+          }
+        }
+      ]
     } else if (lowerMessage.includes("limit") || lowerMessage.includes("restriction") || lowerMessage.includes("maximum")) {
       response = "I can show you our system limitations and capabilities. Key limitations include:\n\n• Max file size: 50MB\n• Supported formats: PDF, DOC, DOCX, JPG, PNG\n• Processing time: 2-7 business days\n• API rate limits vary by plan\n\nWould you like to see the complete limitations overview?"
       suggestions = ["Show all limitations", "Compare plans", "Enterprise options"]
@@ -93,6 +122,7 @@ export function useCustomerSupport() {
       content: "",
       timestamp: new Date(),
       isStreaming: true,
+      widgets,
       metadata: { suggestions, action }
     }
 

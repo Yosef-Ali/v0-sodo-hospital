@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useCallback, useRef, useEffect } from "react"
-import type { Message, ChatState } from "@/lib/chat-context"
+import type { Message, ChatState, ChatWidget } from "@/lib/chat-context"
 import { SUPPORT_AGENT_CONTEXT } from "@/lib/chat-context"
+import { FileText, Clock, AlertCircle } from "lucide-react"
 
 export function useChat() {
   const [state, setState] = useState<ChatState>({
@@ -39,21 +40,89 @@ export function useChat() {
     let response = ""
     let suggestions: string[] = []
     let link = ""
+    let widgets: ChatWidget[] = []
 
     const lowerMessage = userMessage.toLowerCase()
 
     if (lowerMessage.includes("document") || lowerMessage.includes("status")) {
-      response = "I can help you check your document status. You can view all documents and their processing status in the Documents section. Would you like me to guide you there?"
-      suggestions = ["View documents", "Check pending items", "Processing timeline"]
+      response = "I can help you check your document status. Here are your recent documents:"
+      suggestions = ["View all documents", "Check pending items", "Processing timeline"]
       link = "/documents"
+      widgets = [
+        {
+          type: "list",
+          data: {
+            title: "Recent Documents",
+            items: [
+              { title: "License Renewal - Dr. Ahmed", subtitle: "Ministry of Labor", status: "success", value: "Approved" },
+              { title: "Support Letter - Nursing Dept", subtitle: "HERQA Review", status: "pending", value: "Pending" },
+              { title: "Authentication - Admin Office", subtitle: "Internal", status: "pending", value: "Processing" },
+            ]
+          }
+        }
+      ]
     } else if (lowerMessage.includes("approval") || lowerMessage.includes("workflow")) {
-      response = "The approval workflow involves three main authorities: Ministry of Labor, HERQA, and Internal reviewers. You currently have 32 pending approvals with 5 marked as urgent. Would you like to view them?"
+      response = "The approval workflow involves three main authorities. Here's your approval status:"
       suggestions = ["View pending approvals", "Urgent items only", "Explain workflow"]
       link = "/tasks"
+      widgets = [
+        {
+          type: "metric-card",
+          data: {
+            title: "Pending Approvals",
+            value: "32",
+            change: { value: "+5", type: "increase" },
+            description: "5 urgent items need attention"
+          }
+        },
+        {
+          type: "list",
+          data: {
+            title: "Approval Breakdown",
+            items: [
+              { title: "Ministry of Labor", value: "12", status: "pending" },
+              { title: "HERQA", value: "8", status: "pending" },
+              { title: "Internal", value: "12", status: "success" },
+            ]
+          }
+        }
+      ]
     } else if (lowerMessage.includes("speed") || lowerMessage.includes("faster") || lowerMessage.includes("slow")) {
-      response = "To optimize processing time: 1) Ensure all required documents are complete 2) Follow up on pending approvals 3) Use the priority flag for urgent items. Your current average is 4.2 days. I can show you the overdue items that need attention."
+      response = "Here's your current processing performance:"
       suggestions = ["View overdue items", "Priority settings", "Best practices"]
       link = "/tasks"
+      widgets = [
+        {
+          type: "metric-card",
+          data: {
+            title: "Avg. Processing Time",
+            value: "4.2",
+            change: { value: "-0.3 days", type: "decrease" },
+            description: "Better than last month"
+          }
+        },
+        {
+          type: "progress",
+          data: {
+            label: "Documents on Track",
+            value: 142,
+            max: 156,
+            color: "green"
+          }
+        },
+        {
+          type: "action-card",
+          data: {
+            title: "8 Overdue Tasks",
+            description: "These items need immediate attention to prevent delays",
+            actions: [
+              { label: "View All", variant: "default", href: "/tasks" },
+              { label: "Prioritize", variant: "outline" }
+            ],
+            status: "error"
+          }
+        }
+      ]
     } else if (lowerMessage.includes("navigate") || lowerMessage.includes("help") || lowerMessage.includes("how")) {
       response = "I'm here to help! The system has several main sections:\n\n📊 Dashboard - Overview and metrics\n📄 Documents - All document processing\n✅ Tasks - Approvals and workflows\n👥 Teams - Staff management\n🏢 Departments - Department info\n📈 Reports - Analytics\n⚙️ Settings - Configuration\n\nWhat would you like to explore?"
       suggestions = ["Go to Dashboard", "View Documents", "Check Tasks", "System tour"]
@@ -72,6 +141,7 @@ export function useChat() {
       content: "",
       timestamp: new Date(),
       isStreaming: true,
+      widgets,
       metadata: {
         suggestions,
         link

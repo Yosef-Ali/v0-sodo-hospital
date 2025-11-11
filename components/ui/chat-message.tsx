@@ -5,6 +5,16 @@ import type { Message } from "@/lib/chat-context"
 import { Bot, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import {
+  ActionCardWidget,
+  ProgressWidget,
+  ListWidget,
+  DocumentCardWidget,
+  MetricCardWidget,
+  QuickActionButtonsWidget,
+  StatusBadgeWidget,
+  DatePickerWidget
+} from "@/components/ui/chat-widgets"
 
 interface ChatMessageProps {
   message: Message
@@ -63,6 +73,34 @@ export function ChatMessage({ message, onSuggestionClick }: ChatMessageProps) {
             </Link>
           )}
         </div>
+
+        {/* Widgets */}
+        {isAssistant && message.widgets && !message.isStreaming && (
+          <div className="mt-3 space-y-2">
+            {message.widgets.map((widget, idx) => {
+              switch (widget.type) {
+                case "action-card":
+                  return <ActionCardWidget key={idx} {...widget.data} />
+                case "progress":
+                  return <ProgressWidget key={idx} {...widget.data} />
+                case "list":
+                  return <ListWidget key={idx} {...widget.data} />
+                case "document-card":
+                  return <DocumentCardWidget key={idx} {...widget.data} />
+                case "metric-card":
+                  return <MetricCardWidget key={idx} {...widget.data} />
+                case "quick-actions":
+                  return <QuickActionButtonsWidget key={idx} {...widget.data} />
+                case "status-badge":
+                  return <StatusBadgeWidget key={idx} {...widget.data} />
+                case "date-picker":
+                  return <DatePickerWidget key={idx} {...widget.data} />
+                default:
+                  return null
+              }
+            })}
+          </div>
+        )}
 
         {/* Suggestions */}
         {isAssistant && message.metadata?.suggestions && !message.isStreaming && (

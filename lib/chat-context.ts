@@ -17,12 +17,18 @@ Key system information:
 
 Be professional, concise, and provide actionable guidance. Offer to help with specific tasks or navigate to relevant sections.`
 
+export interface ChatWidget {
+  type: "action-card" | "progress" | "list" | "document-card" | "metric-card" | "quick-actions" | "status-badge" | "date-picker"
+  data: any
+}
+
 export interface Message {
   id: string
   role: "user" | "assistant" | "system"
   content: string
   timestamp: Date
   isStreaming?: boolean
+  widgets?: ChatWidget[]
   metadata?: {
     action?: string
     link?: string

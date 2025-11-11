@@ -22,6 +22,11 @@ System Limitations:
 
 Be helpful, professional, and guide visitors to take action (request demo, create ticket, contact sales).`
 
+export interface ChatWidget {
+  type: "action-card" | "progress" | "list" | "document-card" | "metric-card" | "quick-actions" | "status-badge" | "date-picker"
+  data: any
+}
+
 export interface SupportTicket {
   id: string
   name: string
