@@ -26,7 +26,7 @@ export function DocumentCard({
   const statusColors = {
     pending: "bg-yellow-600",
     approved: "bg-green-600",
-    review: "bg-blue-600",
+    review: "bg-green-600",
   }
 
   const statusIcons = {
@@ -79,7 +79,7 @@ export function DocumentCard({
         </div>
       </div>
       <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center bg-gray-800/30">
-        <button className="text-xs text-blue-400 hover:text-blue-300 font-medium">View Document</button>
+        <button className="text-xs text-green-400 hover:text-green-300 font-medium">View Document</button>
         <DropdownMenu>
           <DropdownMenuTrigger className="text-xs text-gray-400 hover:text-gray-300 font-medium flex items-center">
             <MoreHorizontal size={14} className="mr-1" />

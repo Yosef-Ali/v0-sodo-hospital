@@ -67,7 +67,7 @@ export function MetricCard({
       </div>
       <div className="px-6 py-4 border-t border-gray-700">
         <div className="text-xs text-amber-500 mb-3">{footer}</div>
-        <Link href={buttonLink} className="text-xs text-blue-400 font-medium hover:text-blue-300">
+        <Link href={buttonLink} className="text-xs text-green-400 font-medium hover:text-green-300">
           {buttonText}
         </Link>
       </div>

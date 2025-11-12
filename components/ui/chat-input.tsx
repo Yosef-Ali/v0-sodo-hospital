@@ -53,7 +53,7 @@ export function ChatInput({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
-          className="min-h-[44px] max-h-32 resize-none bg-gray-800 border-gray-700 text-gray-100 placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500"
+          className="min-h-[44px] max-h-32 resize-none bg-gray-800 border-gray-700 text-gray-100 placeholder:text-gray-500 focus:border-green-500 focus:ring-green-500"
           rows={1}
         />
 
@@ -63,7 +63,7 @@ export function ChatInput({
           onClick={handleSend}
           disabled={!input.trim() || disabled}
           size="icon"
-          className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-700 disabled:text-gray-500"
+          className="flex-shrink-0 bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-700 disabled:text-gray-500"
         >
           <Send className="w-5 h-5" />
         </Button>

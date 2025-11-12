@@ -83,10 +83,10 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
         <div className="text-sm text-gray-400 mb-2">
           Sign in to unlock all features and access your personal dashboard.
         </div>
-        <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-2 px-4 rounded flex items-center justify-center">
+        <Link href="/login" className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center">
           <LogIn className="mr-2" size={16} />
           SIGN IN
-        </button>
+        </Link>
       </div>
 
       <div className="p-4 border-t border-gray-700/50 relative z-10">
@@ -121,11 +121,11 @@ function NavItem({ href, label, icon, active }: NavItemProps) {
         href={href}
         className={`flex items-center px-4 py-2 text-sm rounded-md transition-all duration-200 ${
           active
-            ? "bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-white border border-blue-500/20"
+            ? "bg-gradient-to-r from-green-600/20 to-green-500/20 text-white border border-green-500/20"
             : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
         }`}
       >
-        <span className={`mr-3 ${active ? "text-blue-400" : ""}`}>{icon}</span>
+        <span className={`mr-3 ${active ? "text-green-400" : ""}`}>{icon}</span>
         <span>{label}</span>
       </Link>
     </li>
@@ -142,10 +142,10 @@ function PopularItem({ label, count }: PopularItemProps) {
     <li>
       <Link
         href="#"
-        className="flex items-center justify-between px-2 py-1 text-sm text-gray-400 hover:text-white rounded transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-900/20 hover:to-purple-900/20"
+        className="flex items-center justify-between px-2 py-1 text-sm text-gray-400 hover:text-white rounded transition-all duration-200 hover:bg-gradient-to-r hover:from-green-900/20 hover:to-green-800/20"
       >
         <span>{label}</span>
-        <span className="text-xs bg-gradient-to-r from-blue-900/60 to-purple-900/60 px-1.5 py-0.5 rounded">
+        <span className="text-xs bg-gradient-to-r from-green-900/60 to-green-800/60 px-1.5 py-0.5 rounded">
           {count}
         </span>
       </Link>
