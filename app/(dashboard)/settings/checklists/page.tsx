@@ -2,6 +2,9 @@ import { redirect } from "next/navigation"
 import { getCurrentUser, canManageChecklistTemplates } from "@/lib/auth/permissions"
 import { SettingsChecklistsPage } from "@/components/pages/settings/checklists-page"
 
+// Force dynamic rendering to avoid build-time auth checks
+export const dynamic = 'force-dynamic'
+
 export default async function ChecklistsSettingsRoute() {
   const user = await getCurrentUser()
 
