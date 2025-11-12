@@ -16,6 +16,8 @@ import {
   ChevronDown,
   LayoutGrid,
   Calendar,
+  UserCircle,
+  ClipboardCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -74,6 +76,13 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
             label="Documents"
             active={pathname === "/documents"}
           />
+          <NavItem
+            href="/permits"
+            icon={<ClipboardCheck size={20} />}
+            label="Permits"
+            active={pathname === "/permits"}
+          />
+          <NavItem href="/people" icon={<UserCircle size={20} />} label="People" active={pathname === "/people"} />
           <NavItem href="/teams" icon={<Users size={20} />} label="Teams" active={pathname === "/teams"} />
           <NavItem href="/reports" icon={<BarChart size={20} />} label="Reports" active={pathname === "/reports"} />
           <NavItem
