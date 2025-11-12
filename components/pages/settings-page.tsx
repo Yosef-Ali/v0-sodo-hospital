@@ -17,25 +17,25 @@ export function SettingsPage() {
             <TabsList className="bg-transparent h-auto p-0">
               <TabsTrigger
                 value="profile"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
               >
                 Profile
               </TabsTrigger>
               <TabsTrigger
                 value="account"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
               >
                 Account
               </TabsTrigger>
               <TabsTrigger
                 value="notifications"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
               >
                 Notifications
               </TabsTrigger>
               <TabsTrigger
                 value="security"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-blue-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
               >
                 Security
               </TabsTrigger>

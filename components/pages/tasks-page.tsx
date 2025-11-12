@@ -224,7 +224,7 @@ export function TasksPage() {
               placeholder="Search tasks..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-full text-gray-300"
+              className="pl-10 pr-4 py-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 w-full text-gray-300"
             />
           </div>
 
@@ -253,7 +253,7 @@ export function TasksPage() {
 
           <Button
             size="sm"
-            className="text-sm font-normal bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500"
+            className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
             onClick={() => setIsSheetOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -273,7 +273,7 @@ export function TasksPage() {
               ? "No tasks match your search criteria. Try adjusting your search."
               : "There are no tasks in this category. Create a new task to get started."}
           </p>
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsSheetOpen(true)}>
+          <Button className="bg-green-600 hover:bg-green-700" onClick={() => setIsSheetOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Create New Task
           </Button>
