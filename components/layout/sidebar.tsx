@@ -93,6 +93,7 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
       </nav>
 
       <div className="p-4 border-t border-gray-700/50 relative z-10">
+<<<<<<< HEAD
         {user ? (
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
