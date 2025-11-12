@@ -10,7 +10,6 @@ import {
   BarChart,
   Settings,
   LogIn,
-  ChevronDown,
   UserCircle,
   ClipboardCheck,
 } from "lucide-react"
@@ -74,21 +73,6 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
           SIGN IN
         </Link>
       </div>
-
-      <div className="p-4 border-t border-gray-700/50 relative z-10">
-        <div className="text-sm font-medium text-gray-400 mb-2">Popular Categories</div>
-        <ul className="space-y-1">
-          <PopularItem label="Administrative" count={45} />
-          <PopularItem label="Clinical" count={32} />
-          <PopularItem label="Financial" count={28} />
-          <PopularItem label="HR" count={19} />
-          <PopularItem label="Compliance" count={15} />
-        </ul>
-        <button className="text-sm text-gray-400 hover:text-gray-300 mt-2 flex items-center">
-          Show more
-          <ChevronDown size={14} className="ml-1" />
-        </button>
-      </div>
     </div>
   )
 }
@@ -113,27 +97,6 @@ function NavItem({ href, label, icon, active }: NavItemProps) {
       >
         <span className={`mr-3 ${active ? "text-green-400" : ""}`}>{icon}</span>
         <span>{label}</span>
-      </Link>
-    </li>
-  )
-}
-
-interface PopularItemProps {
-  label: string
-  count: number
-}
-
-function PopularItem({ label, count }: PopularItemProps) {
-  return (
-    <li>
-      <Link
-        href="#"
-        className="flex items-center justify-between px-2 py-1 text-sm text-gray-400 hover:text-white rounded transition-all duration-200 hover:bg-gradient-to-r hover:from-green-900/20 hover:to-green-800/20"
-      >
-        <span>{label}</span>
-        <span className="text-xs bg-gradient-to-r from-green-900/60 to-green-800/60 px-1.5 py-0.5 rounded">
-          {count}
-        </span>
       </Link>
     </li>
   )
