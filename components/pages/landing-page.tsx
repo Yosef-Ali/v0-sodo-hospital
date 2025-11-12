@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Hexagon, Sparkles, Users, Mail, Grid3x3, Video, Star, Globe, PenTool } from "lucide-react"
+import { Activity, Sparkles, Users, Briefcase, FileText, Clock, Star, TrendingDown, CheckCircle, Award } from "lucide-react"
 
 export function LandingPage() {
   return (
@@ -15,17 +15,19 @@ export function LandingPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
-              <Hexagon className="w-4 h-4 text-white" />
+              <Activity className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-semibold tracking-tight">Nexus</span>
+            <span className="text-xl font-semibold tracking-tight">SODO Hospital</span>
           </div>
           <div className="hidden md:flex items-center space-x-8 text-sm">
-            <a href="#" className="text-slate-400 hover:text-white transition-colors">Articles</a>
-            <a href="#" className="text-slate-400 hover:text-white transition-colors">Authors</a>
-            <a href="#" className="text-slate-400 hover:text-white transition-colors">Categories</a>
-            <button className="bg-white text-slate-900 px-4 py-2 rounded-lg font-medium hover:bg-slate-100 transition-all duration-200 hover:scale-105">
-              Get Started
-            </button>
+            <Link href="/documents" className="text-slate-400 hover:text-white transition-colors">Documents</Link>
+            <Link href="/teams" className="text-slate-400 hover:text-white transition-colors">Teams</Link>
+            <Link href="/reports" className="text-slate-400 hover:text-white transition-colors">Reports</Link>
+            <Link href="/dashboard">
+              <button className="bg-white text-slate-900 px-4 py-2 rounded-lg font-medium hover:bg-slate-100 transition-all duration-200 hover:scale-105">
+                Access Dashboard
+              </button>
+            </Link>
           </div>
         </div>
       </nav>
@@ -38,108 +40,114 @@ export function LandingPage() {
             <div className="mb-6">
               <div className="inline-flex items-center space-x-2 bg-green-500/10 border border-green-500/20 px-3 py-1 rounded-full text-xs font-medium text-green-400 mb-6">
                 <Sparkles className="w-3 h-3" />
-                <span>Meet Nexus Platform</span>
+                <span>SODO Hospital Management System</span>
               </div>
               <h1 className="sm:text-5xl lg:text-6xl leading-tight text-4xl font-bold tracking-tight mb-4">
-                Empowering <span className="bg-gradient-to-r from-green-400 to-purple-400 bg-clip-text text-transparent">innovation</span>
-                {' '}through stories
+                Streamline Your <span className="bg-gradient-to-r from-green-400 to-purple-400 bg-clip-text text-transparent">Hospital</span>
+                {' '}Document Workflow
               </h1>
               <p className="leading-relaxed max-w-lg text-lg text-slate-400">
-                Where technology meets creativity. Discover insights, share knowledge, and build the future together.
+                Efficiently manage license renewals, support letters, and authentication documents with our comprehensive administrative platform.
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <button className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 hover:scale-105 shadow-lg">
-                Start Reading
-              </button>
-              <button className="border border-slate-600 text-slate-300 px-6 py-3 rounded-lg font-medium hover:border-slate-500 hover:text-white transition-all duration-200">
-                Learn More
-              </button>
+              <Link href="/dashboard">
+                <button className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 hover:scale-105 shadow-lg">
+                  Access Dashboard
+                </button>
+              </Link>
+              <Link href="/documents">
+                <button className="border border-slate-600 text-slate-300 px-6 py-3 rounded-lg font-medium hover:border-slate-500 hover:text-white transition-all duration-200">
+                  View Documents
+                </button>
+              </Link>
             </div>
           </div>
 
-          {/* Featured Authors */}
+          {/* Administrative Teams */}
           <div className="glass-card rounded-2xl p-6 flex flex-col justify-between col-span-1 lg:col-span-2 fade-in fade-in-delay-1 hover:scale-105 transition-transform duration-300">
             <div>
               <div className="flex items-center space-x-2 mb-3">
                 <Users className="w-5 h-5 text-green-400" />
-                <h3 className="text-lg font-semibold">Featured Authors</h3>
+                <h3 className="text-lg font-semibold">Our Teams</h3>
               </div>
-              <p className="text-sm text-slate-400 mb-4">Our community of expert writers and thought leaders</p>
+              <p className="text-sm text-slate-400 mb-4">9 departments working together seamlessly</p>
             </div>
             <div className="flex -space-x-3">
-              <img src="https://images.unsplash.com/photo-1460904577954-8fadb262612c?w=1080&q=80" className="w-12 h-12 object-cover border-slate-700 border-2 rounded-full" alt="Sarah Chen" />
-              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full border-2 border-slate-700" alt="Marcus Rodriguez" />
-              <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full border-2 border-slate-700" alt="Elena Kowalski" />
+              <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 object-cover border-slate-700 border-2 rounded-full" alt="Department Lead" />
+              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full border-2 border-slate-700" alt="Team Member" />
+              <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full border-2 border-slate-700" alt="Administrator" />
               <div className="w-12 h-12 rounded-full border-2 border-slate-700 bg-slate-800 flex items-center justify-center text-xs font-medium">
-                +12
+                +45
               </div>
             </div>
           </div>
 
-          {/* Latest Articles */}
+          {/* Documents Processed */}
           <div className="gradient-border fade-in fade-in-delay-2 hover:scale-105 transition-transform duration-300">
             <div className="gradient-border-inner flex flex-col h-full glow-card pt-6 pr-6 pb-6 pl-6 justify-between">
               <div className="flex space-x-3 items-start">
                 <div>
-                  <h3 className="text-lg font-semibold mb-1">Latest Articles</h3>
-                  <p className="text-sm text-slate-400">Fresh insights on tech, design, and innovation</p>
+                  <h3 className="text-lg font-semibold mb-1">Documents Processed</h3>
+                  <p className="text-sm text-slate-400">Licenses, letters, and authentication docs</p>
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-2xl font-bold text-green-400">247</span>
-                <p className="text-xs text-slate-500">published this month</p>
+                <span className="text-2xl font-bold text-green-400">1,247</span>
+                <p className="text-xs text-slate-500">completed this year</p>
               </div>
             </div>
           </div>
 
-          {/* Newsletter */}
+          {/* Staff Portal */}
           <div className="glass-card flex flex-col col-span-1 sm:col-span-1 lg:col-span-1 row-span-2 fade-in fade-in-delay-3 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 flex bg-gradient-to-r from-green-400 to-emerald-400 rounded-2xl items-center justify-center">
-                <Mail className="w-8 h-8 text-white" />
+                <Briefcase className="w-8 h-8 text-white" />
               </div>
             </div>
             <div className="text-center">
-              <h3 className="text-lg font-semibold mb-2">Weekly Digest</h3>
-              <p className="text-sm text-slate-400 mb-4">Get curated content delivered to your inbox</p>
-              <button className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors">
-                Subscribe
-              </button>
+              <h3 className="text-lg font-semibold mb-2">Staff Portal</h3>
+              <p className="text-sm text-slate-400 mb-4">Access your dashboard and track document progress</p>
+              <Link href="/dashboard">
+                <button className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors">
+                  Sign In
+                </button>
+              </Link>
             </div>
           </div>
 
-          {/* Categories */}
+          {/* Document Types */}
           <div className="glass-card flex flex-col fade-in fade-in-delay-4 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
             <div className="flex items-center space-x-2 mb-3">
-              <Grid3x3 className="w-5 h-5 text-orange-400" />
-              <h3 className="text-lg font-semibold tracking-tight">Categories</h3>
+              <FileText className="w-5 h-5 text-orange-400" />
+              <h3 className="text-lg font-semibold tracking-tight">Document Types</h3>
             </div>
             <div>
-              <span className="text-3xl font-semibold text-orange-400">20+</span>
-              <p className="text-sm text-slate-400">New topics to discover</p>
+              <span className="text-3xl font-semibold text-orange-400">3</span>
+              <p className="text-sm text-slate-400">Main document categories</p>
             </div>
           </div>
 
-          {/* Videos */}
+          {/* Pending Approvals */}
           <div className="glass-card flex flex-col fade-in fade-in-delay-4 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
             <div>
-              <span className="text-3xl font-semibold text-blue-500">300</span>
-              <p className="text-sm text-slate-400">Topics to explore now</p>
+              <span className="text-3xl font-semibold text-amber-400">32</span>
+              <p className="text-sm text-slate-400">Awaiting review</p>
             </div>
             <div className="flex mb-3 space-x-2 items-center">
-              <h3 className="text-lg font-semibold">Videos</h3>
-              <Video className="w-5 h-5 text-blue-500" />
+              <h3 className="text-lg font-semibold">Approvals</h3>
+              <Clock className="w-5 h-5 text-amber-400" />
             </div>
           </div>
 
-          {/* Testimonial */}
+          {/* Staff Testimonial */}
           <div className="glass-card flex flex-col col-span-1 sm:col-span-2 lg:col-span-3 fade-in fade-in-delay-5 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
             <div className="flex mb-4 space-x-4 items-center">
-              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full" alt="Isabella Chen" />
+              <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full" alt="Dr. Ahmed Hassan" />
               <div>
-                <p className="font-semibold">Isabella Chen</p>
-                <p className="text-xs text-slate-400">CEO &amp; Founder, TechVision</p>
+                <p className="font-semibold">Dr. Ahmed Hassan</p>
+                <p className="text-xs text-slate-400">Director of Administration, SODO Hospital</p>
               </div>
               <div className="flex text-yellow-400 ml-auto">
                 <Star className="w-4 h-4 fill-current" />
@@ -147,25 +155,25 @@ export function LandingPage() {
                 <Star className="w-4 h-4 fill-current" />
               </div>
             </div>
-            <div className="text-base font-normal text-white mt-4">&quot;Nexus revolutionizes collaboration with its seamless platform, fostering creativity and connection like never before.&quot;</div>
+            <div className="text-base font-normal text-white mt-4">&quot;The system reduced our document processing time from 7 days to 4.2 days, significantly improving our workflow efficiency and staff productivity.&quot;</div>
           </div>
 
-          {/* Global Community */}
+          {/* Processing Time */}
           <div className="glass-card rounded-2xl p-6 flex flex-col justify-center items-center text-center fade-in fade-in-delay-6 hover:scale-105 transition-transform duration-300">
             <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center mb-3">
-              <Globe className="w-6 h-6 text-white" />
+              <TrendingDown className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-sm font-semibold mb-1">Global Reach</h3>
-            <p className="text-xs text-slate-400">50+ countries</p>
+            <h3 className="text-sm font-semibold mb-1">Avg. Processing</h3>
+            <p className="text-xs text-slate-400">4.2 days</p>
           </div>
 
-          {/* Creator Hub */}
+          {/* Success Rate */}
           <div className="glass-card flex flex-col fade-in fade-in-delay-7 hover:scale-105 transition-transform duration-300 text-center rounded-2xl pt-6 pr-6 pb-6 pl-6 items-center justify-center">
             <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mb-3">
-              <PenTool className="w-6 h-6 text-white" />
+              <CheckCircle className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-sm font-semibold mb-1">Creator Hub</h3>
-            <p className="text-xs text-slate-400">Share your story</p>
+            <h3 className="text-sm font-semibold mb-1">Success Rate</h3>
+            <p className="text-xs text-slate-400">98% approved</p>
           </div>
 
         </div>
@@ -174,7 +182,7 @@ export function LandingPage() {
       {/* Footer */}
       <footer className="max-w-7xl mx-auto px-6 py-16 border-t border-slate-800">
         <div className="pt-8 flex flex-col md:flex-row justify-between items-center fade-in fade-in-delay-1">
-          <p className="text-slate-400 text-sm">© 2024 Nexus. All rights reserved.</p>
+          <p className="text-slate-400 text-sm">© 2024 SODO Hospital. All rights reserved.</p>
         </div>
       </footer>
 
