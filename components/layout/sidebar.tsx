@@ -53,7 +53,7 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
 
       <nav className="flex-1 overflow-y-auto py-4 relative z-10">
         <ul className="space-y-1 px-2">
-          <NavItem href="/" icon={<LayoutDashboard size={20} />} label="Dashboard" active={pathname === "/"} />
+          <NavItem href="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" active={pathname === "/dashboard"} />
           <NavItem href="/tasks" icon={<CheckSquare size={20} />} label="Tasks" active={pathname === "/tasks"} />
           <NavItem
             href="/tasks/kanban"
