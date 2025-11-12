@@ -11,16 +11,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-gray-100 relative overflow-hidden">
-      {/* Animated gradient background effect */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-900">
-          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top,rgba(79,70,229,0.15),transparent_50%)] animate-gradient-x"></div>
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_bottom,rgba(59,130,246,0.15),transparent_70%)] animate-gradient-x animation-delay-1000"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
-          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-purple-500/30 to-transparent"></div>
-        </div>
-      </div>
+    <div className="flex flex-col h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100 relative overflow-hidden">
+      {/* Background Effects - Match landing page */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-400/10 via-transparent to-transparent pointer-events-none z-0"></div>
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-purple-400/5 via-transparent to-transparent pointer-events-none z-0"></div>
 
       <TopBar />
       <div className="flex flex-1 overflow-hidden relative z-10">
