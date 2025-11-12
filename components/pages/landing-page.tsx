@@ -36,7 +36,7 @@ export function LandingPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 auto-rows-[180px] gap-4">
 
           {/* Hero Section */}
-          <div className="col-span-1 sm:col-span-2 lg:col-span-3 row-span-2 flex flex-col fade-in pt-8 pr-8 pb-8 pl-8 justify-center">
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3 row-span-2 flex flex-col fade-in pt-8 pr-8 pb-12 pl-8 justify-center">
             <div className="mb-6">
               <div className="inline-flex items-center space-x-2 bg-green-500/10 border border-green-500/20 px-3 py-1 rounded-full text-xs font-medium text-green-400 mb-6">
                 <Sparkles className="w-3 h-3" />
@@ -50,7 +50,7 @@ export function LandingPage() {
                 Efficiently manage license renewals, support letters, and authentication documents with our comprehensive administrative platform.
               </p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 mb-8">
               <Link href="/dashboard">
                 <button className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 hover:scale-105 shadow-lg">
                   Access Dashboard
