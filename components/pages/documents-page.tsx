@@ -252,7 +252,7 @@ export function DocumentsPage() {
               placeholder="Search documents..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-full text-gray-300"
+              className="pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 w-full text-gray-300"
             />
           </div>
 
@@ -281,7 +281,7 @@ export function DocumentsPage() {
 
           <Button
             size="sm"
-            className="text-sm font-normal bg-blue-600 hover:bg-blue-700"
+            className="text-sm font-normal bg-green-600 hover:bg-green-700"
             onClick={() => setIsSheetOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -302,7 +302,7 @@ export function DocumentsPage() {
             <Progress
               value={licenseRenewals}
               className="h-2 bg-gray-700/50"
-              indicatorClassName="bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_10px_rgba(79,70,229,0.4)]"
+              indicatorClassName="bg-gradient-to-r from-green-500 to-emerald-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]"
             />
           </div>
           <div>
@@ -313,7 +313,7 @@ export function DocumentsPage() {
             <Progress
               value={supportLetters}
               className="h-2 bg-gray-700/50"
-              indicatorClassName="bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_10px_rgba(79,70,229,0.4)]"
+              indicatorClassName="bg-gradient-to-r from-green-500 to-emerald-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]"
             />
           </div>
           <div>
@@ -324,7 +324,7 @@ export function DocumentsPage() {
             <Progress
               value={authentication}
               className="h-2 bg-gray-700/50"
-              indicatorClassName="bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_10px_rgba(79,70,229,0.4)]"
+              indicatorClassName="bg-gradient-to-r from-green-500 to-emerald-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]"
             />
           </div>
         </div>
@@ -341,7 +341,7 @@ export function DocumentsPage() {
               ? "No documents match your search criteria. Try adjusting your search."
               : "There are no documents in this category. Upload a new document to get started."}
           </p>
-          <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setIsSheetOpen(true)}>
+          <Button className="bg-green-600 hover:bg-green-700" onClick={() => setIsSheetOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Upload New Document
           </Button>
