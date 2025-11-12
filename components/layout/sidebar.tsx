@@ -7,15 +7,10 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   CheckSquare,
-  FileText,
-  Users,
   BarChart,
-  Building2,
   Settings,
   LogIn,
   ChevronDown,
-  LayoutGrid,
-  Calendar,
   UserCircle,
   ClipboardCheck,
 } from "lucide-react"
@@ -57,40 +52,15 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto py-4 relative z-10">
         <ul className="space-y-1 px-2">
           <NavItem href="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" active={pathname === "/dashboard"} />
-          <NavItem href="/tasks" icon={<CheckSquare size={20} />} label="Tasks" active={pathname === "/tasks"} />
-          <NavItem
-            href="/tasks/kanban"
-            icon={<LayoutGrid size={20} />}
-            label="Kanban Board"
-            active={pathname === "/tasks/kanban"}
-          />
-          <NavItem
-            href="/tasks/calendar"
-            icon={<Calendar size={20} />}
-            label="Calendar"
-            active={pathname === "/tasks/calendar"}
-          />
-          <NavItem
-            href="/documents"
-            icon={<FileText size={20} />}
-            label="Documents"
-            active={pathname === "/documents"}
-          />
+          <NavItem href="/people" icon={<UserCircle size={20} />} label="People" active={pathname === "/people"} />
           <NavItem
             href="/permits"
             icon={<ClipboardCheck size={20} />}
             label="Permits"
             active={pathname === "/permits"}
           />
-          <NavItem href="/people" icon={<UserCircle size={20} />} label="People" active={pathname === "/people"} />
-          <NavItem href="/teams" icon={<Users size={20} />} label="Teams" active={pathname === "/teams"} />
+          <NavItem href="/tasks" icon={<CheckSquare size={20} />} label="Tasks" active={pathname === "/tasks"} />
           <NavItem href="/reports" icon={<BarChart size={20} />} label="Reports" active={pathname === "/reports"} />
-          <NavItem
-            href="/departments"
-            icon={<Building2 size={20} />}
-            label="Departments"
-            active={pathname === "/departments"}
-          />
           <NavItem href="/settings" icon={<Settings size={20} />} label="Settings" active={pathname === "/settings"} />
         </ul>
       </nav>
