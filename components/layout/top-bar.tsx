@@ -11,7 +11,7 @@ export function TopBar() {
   return (
     <div className="bg-gray-800 py-3 px-6 flex items-center justify-center text-sm">
       <span className="mr-2">We might win Hospital of the Year!</span>
-      <a href="#" className="text-blue-400 hover:text-blue-300">
+      <a href="#" className="text-green-400 hover:text-green-300 font-medium">
         SUPPORT US
       </a>
       <button className="ml-auto text-gray-400 hover:text-gray-300" onClick={() => setShowAnnouncement(false)}>

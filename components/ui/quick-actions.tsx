@@ -28,7 +28,7 @@ export function QuickActions({ onActionClick }: QuickActionsProps) {
               variant="outline"
               size="sm"
               onClick={() => onActionClick(action.prompt)}
-              className="justify-start gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 hover:border-blue-500 text-gray-300 hover:text-white transition-all h-auto py-3"
+              className="justify-start gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 hover:border-green-500 text-gray-300 hover:text-white transition-all h-auto py-3"
             >
               <Icon className="w-4 h-4" />
               <span className="text-xs">{action.label}</span>

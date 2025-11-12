@@ -37,8 +37,8 @@ export function ChatMessage({ message, onSuggestionClick }: ChatMessageProps) {
         className={cn(
           "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
           isUser
-            ? "bg-blue-600 text-white"
-            : "bg-gradient-to-br from-purple-600 to-blue-600 text-white"
+            ? "bg-green-600 text-white"
+            : "bg-gradient-to-br from-green-500 to-green-600 text-white"
         )}
       >
         {isUser ? <User className="w-4 h-4" /> : <Bot className="w-5 h-5" />}
@@ -50,14 +50,14 @@ export function ChatMessage({ message, onSuggestionClick }: ChatMessageProps) {
           className={cn(
             "rounded-2xl px-4 py-2.5 text-sm",
             isUser
-              ? "bg-blue-600 text-white"
+              ? "bg-green-600 text-white"
               : "bg-gray-800 text-gray-100 border border-gray-700"
           )}
         >
           <div className="whitespace-pre-wrap break-words">
             {message.content}
             {message.isStreaming && (
-              <span className="inline-block w-1 h-4 ml-1 bg-blue-400 animate-pulse" />
+              <span className="inline-block w-1 h-4 ml-1 bg-green-400 animate-pulse" />
             )}
           </div>
 
@@ -66,7 +66,7 @@ export function ChatMessage({ message, onSuggestionClick }: ChatMessageProps) {
             <Link href={message.metadata.link}>
               <Button
                 variant="link"
-                className="mt-2 p-0 h-auto text-blue-400 hover:text-blue-300 text-xs"
+                className="mt-2 p-0 h-auto text-green-400 hover:text-green-300 text-xs"
               >
                 Go to {message.metadata.link.replace("/", "")} →
               </Button>

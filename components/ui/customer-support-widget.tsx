@@ -57,7 +57,7 @@ export function CustomerSupportWidget() {
         <Button
           onClick={toggleSupport}
           size="lg"
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-600 hover:from-purple-700 hover:via-blue-700 hover:to-cyan-700 text-white z-50 group transition-all duration-300 hover:scale-110 animate-pulse hover:animate-none"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl bg-gradient-to-br from-green-500 to-green-600 hover:from-purple-700 hover:via-blue-700 hover:to-cyan-700 text-white z-50 group transition-all duration-300 hover:scale-110 animate-pulse hover:animate-none"
         >
           <HelpCircle className="w-6 h-6 group-hover:scale-110 transition-transform" />
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900" />
@@ -68,13 +68,13 @@ export function CustomerSupportWidget() {
       {isOpen && (
         <div className="fixed bottom-6 right-6 w-[450px] h-[700px] z-50 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
-          <div className="relative p-6 border-b border-gray-700 bg-gradient-to-r from-purple-600/20 via-blue-600/20 to-cyan-600/20">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 to-blue-600/10" />
+          <div className="relative p-6 border-b border-gray-700 bg-gradient-to-r from-green-500/10 to-green-600/10">
+            <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-green-600/10" />
 
             <div className="relative flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="w-5 h-5 text-blue-400" />
+                  <Sparkles className="w-5 h-5 text-green-400" />
                   <h3 className="font-bold text-white text-lg">Customer Support</h3>
                 </div>
                 <p className="text-sm text-gray-400">
@@ -108,14 +108,14 @@ export function CustomerSupportWidget() {
             <TabsList className="grid w-full grid-cols-4 bg-gray-800 border-b border-gray-700 rounded-none">
               <TabsTrigger
                 value="chat"
-                className="data-[state=active]:bg-gray-900 data-[state=active]:text-blue-400"
+                className="data-[state=active]:bg-gray-900 data-[state=active]:text-green-400"
               >
                 <MessageCircle className="w-4 h-4 mr-1.5" />
                 Chat
               </TabsTrigger>
               <TabsTrigger
                 value="ticket"
-                className="data-[state=active]:bg-gray-900 data-[state=active]:text-blue-400 relative"
+                className="data-[state=active]:bg-gray-900 data-[state=active]:text-green-400 relative"
               >
                 <Ticket className="w-4 h-4 mr-1.5" />
                 Ticket
@@ -127,14 +127,14 @@ export function CustomerSupportWidget() {
               </TabsTrigger>
               <TabsTrigger
                 value="faq"
-                className="data-[state=active]:bg-gray-900 data-[state=active]:text-blue-400"
+                className="data-[state=active]:bg-gray-900 data-[state=active]:text-green-400"
               >
                 <BookOpen className="w-4 h-4 mr-1.5" />
                 FAQ
               </TabsTrigger>
               <TabsTrigger
                 value="limitations"
-                className="data-[state=active]:bg-gray-900 data-[state=active]:text-blue-400"
+                className="data-[state=active]:bg-gray-900 data-[state=active]:text-green-400"
               >
                 <AlertCircle className="w-4 h-4 mr-1.5" />
                 Limits
@@ -190,9 +190,9 @@ export function CustomerSupportWidget() {
               <ScrollArea className="h-full p-6">
                 <div className="space-y-4">
                   <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-                    <Ticket className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <Ticket className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="font-semibold text-blue-400 mb-1">Submit a Support Ticket</h4>
+                      <h4 className="font-semibold text-green-400 mb-1">Submit a Support Ticket</h4>
                       <p className="text-sm text-gray-400">
                         Get detailed assistance from our support team. We typically respond within 24 hours.
                       </p>
@@ -225,7 +225,7 @@ export function CustomerSupportWidget() {
               <span>Powered by SODO Hospital</span>
               <a
                 href="#"
-                className="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors"
+                className="flex items-center gap-1 text-green-400 hover:text-green-300 transition-colors"
               >
                 Visit Help Center
                 <ExternalLink className="w-3 h-3" />

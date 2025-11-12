@@ -14,7 +14,7 @@ export function PageActions({ searchPlaceholder, buttonText }: PageActionsProps)
         <input
           type="text"
           placeholder={searchPlaceholder}
-          className="pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-64 text-gray-300"
+          className="pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 w-64 text-gray-300"
         />
       </div>
       <Button
@@ -25,7 +25,7 @@ export function PageActions({ searchPlaceholder, buttonText }: PageActionsProps)
         <Filter className="h-4 w-4 mr-2" />
         Filters
       </Button>
-      <Button size="sm" className="text-sm font-normal bg-blue-600 hover:bg-blue-700">
+      <Button size="sm" className="text-sm font-normal bg-green-600 hover:bg-green-700">
         <Plus className="h-4 w-4 mr-2" />
         {buttonText}
       </Button>

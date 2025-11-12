@@ -81,7 +81,7 @@ export function ActionCardWidget({ title, description, actions, icon, status }: 
       <CardHeader>
         <div className="flex items-start gap-3">
           {icon && (
-            <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
+            <div className="p-2 rounded-lg bg-green-500/10 text-green-400">
               {icon}
             </div>
           )}
@@ -140,7 +140,7 @@ interface ProgressWidgetProps {
 export function ProgressWidget({ label, value, max, showPercentage = true, color = "blue" }: ProgressWidgetProps) {
   const percentage = Math.round((value / max) * 100)
   const colorClasses = {
-    blue: "bg-blue-600",
+    blue: "bg-green-600",
     green: "bg-green-600",
     amber: "bg-amber-600",
     red: "bg-red-600"
@@ -194,7 +194,7 @@ export function ListWidget({ items, title }: ListWidgetProps) {
           >
             <div className="flex items-center gap-3 flex-1">
               {item.icon && (
-                <div className="text-blue-400">
+                <div className="text-green-400">
                   {item.icon}
                 </div>
               )}
@@ -244,7 +244,7 @@ export function QuickActionButtonsWidget({ actions }: QuickActionButtonsProps) {
           variant={action.variant || "outline"}
           size="sm"
           onClick={action.onClick}
-          className="border-gray-700 hover:border-blue-500 hover:bg-gray-800"
+          className="border-gray-700 hover:border-green-500 hover:bg-gray-800"
         >
           {action.icon}
           {action.label}
@@ -314,7 +314,7 @@ interface DocumentCardWidgetProps {
 
 export function DocumentCardWidget({ title, status, type, date, progress, actions }: DocumentCardWidgetProps) {
   const statusConfig = {
-    processing: { color: "text-blue-400", icon: Clock, label: "Processing" },
+    processing: { color: "text-green-400", icon: Clock, label: "Processing" },
     completed: { color: "text-green-400", icon: CheckCircle, label: "Completed" },
     pending: { color: "text-amber-400", icon: Clock, label: "Pending" },
     error: { color: "text-red-400", icon: AlertCircle, label: "Error" }
@@ -327,7 +327,7 @@ export function DocumentCardWidget({ title, status, type, date, progress, action
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3 flex-1">
-            <FileText className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <FileText className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <CardTitle className="text-white text-base mb-1">{title}</CardTitle>
               <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -356,7 +356,7 @@ export function DocumentCardWidget({ title, status, type, date, progress, action
               variant="outline"
               size="sm"
               onClick={action.onClick}
-              className="border-gray-700 hover:border-blue-500"
+              className="border-gray-700 hover:border-green-500"
             >
               {action.label}
             </Button>
