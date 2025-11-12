@@ -391,9 +391,9 @@ export async function searchChecklists(query: string) {
 }
 
 /**
- * Validate checklist items format
+ * Validate checklist items format (internal utility)
  */
-export function validateChecklistItems(items: any[]): {
+function validateChecklistItems(items: any[]): {
   valid: boolean
   error?: string
 } {

@@ -1,4 +1,5 @@
-"use server"
+// Role hierarchy and permissions utilities
+// Note: Only async functions have "use server" directive
 
 import { db, users } from "@/lib/db"
 import { eq } from "drizzle-orm"
@@ -67,6 +68,8 @@ export function canManagePeople(role: string): boolean {
 
 // Get current user with role from database
 export async function getCurrentUser() {
+  "use server"
+
   try {
     const user = await stackServerApp.getUser()
     if (!user) return null
@@ -87,6 +90,8 @@ export async function getCurrentUser() {
 
 // Get user role by ID
 export async function getUserRole(userId: string): Promise<string | null> {
+  "use server"
+
   try {
     const [user] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId)).limit(1)
 
@@ -99,6 +104,8 @@ export async function getUserRole(userId: string): Promise<string | null> {
 
 // Authorization wrapper for server actions
 export async function requireRole(allowedRoles: UserRoleType[]) {
+  "use server"
+
   const user = await getCurrentUser()
 
   if (!user) {
