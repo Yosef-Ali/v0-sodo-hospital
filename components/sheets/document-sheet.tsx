@@ -141,11 +141,11 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
         <form onSubmit={handleSubmit} className="space-y-6 py-6 relative z-10">
           {currentStep === 1 && (
             <div className="space-y-4">
-              <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center bg-gradient-to-b from-blue-900/10 to-transparent">
+              <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center bg-gradient-to-b from-green-900/10 to-transparent">
                 {selectedFile ? (
                   <div className="space-y-2">
                     <div className="flex items-center justify-center">
-                      <div className="bg-gradient-to-r from-blue-900/60 to-purple-900/60 p-2 rounded-lg shadow-[0_0_10px_rgba(79,70,229,0.3)]">
+                      <div className="bg-gradient-to-r from-green-900/60 to-emerald-900/60 p-2 rounded-lg shadow-[0_0_10px_rgba(34,197,94,0.3)]">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="24"
@@ -156,7 +156,7 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="text-blue-400"
+                          className="text-green-400"
                         >
                           <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                           <polyline points="14 2 14 8 20 8" />
@@ -180,7 +180,7 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
                   </div>
                 ) : (
                   <>
-                    <Upload className="h-10 w-10 text-blue-400 mx-auto mb-4" />
+                    <Upload className="h-10 w-10 text-green-400 mx-auto mb-4" />
                     <h3 className="text-white text-lg font-medium mb-1">Drag and drop your file</h3>
                     <p className="text-gray-400 text-sm mb-4">or click to browse files</p>
                     <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} />
@@ -334,7 +334,7 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
                 type="button"
                 onClick={nextStep}
                 disabled={!isStepValid()}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-[0_0_15px_rgba(79,70,229,0.4)] disabled:opacity-50 disabled:shadow-none disabled:from-gray-700 disabled:to-gray-700"
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-[0_0_15px_rgba(34,197,94,0.4)] disabled:opacity-50 disabled:shadow-none disabled:from-gray-700 disabled:to-gray-700"
               >
                 Next
               </Button>
@@ -342,7 +342,7 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
               <Button
                 type="submit"
                 disabled={!isStepValid()}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-[0_0_15px_rgba(79,70,229,0.4)] disabled:opacity-50 disabled:shadow-none disabled:from-gray-700 disabled:to-gray-700"
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-[0_0_15px_rgba(34,197,94,0.4)] disabled:opacity-50 disabled:shadow-none disabled:from-gray-700 disabled:to-gray-700"
               >
                 Upload Document
               </Button>
@@ -356,7 +356,7 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
                   key={index}
                   className={`h-2 w-2 rounded-full ${
                     currentStep > index
-                      ? "bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_5px_rgba(79,70,229,0.5)]"
+                      ? "bg-gradient-to-r from-green-500 to-emerald-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]"
                       : "bg-gray-600"
                   }`}
                 />

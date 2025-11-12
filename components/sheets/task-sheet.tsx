@@ -241,7 +241,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
                 type="button"
                 onClick={nextStep}
                 disabled={!isStepValid()}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-[0_0_15px_rgba(79,70,229,0.4)] disabled:opacity-50 disabled:shadow-none disabled:from-gray-700 disabled:to-gray-700"
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-[0_0_15px_rgba(34,197,94,0.4)] disabled:opacity-50 disabled:shadow-none disabled:from-gray-700 disabled:to-gray-700"
               >
                 Next
               </Button>
@@ -249,7 +249,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
               <Button
                 type="submit"
                 disabled={!isStepValid()}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-[0_0_15px_rgba(79,70,229,0.4)] disabled:opacity-50 disabled:shadow-none disabled:from-gray-700 disabled:to-gray-700"
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 shadow-[0_0_15px_rgba(34,197,94,0.4)] disabled:opacity-50 disabled:shadow-none disabled:from-gray-700 disabled:to-gray-700"
               >
                 Create Task
               </Button>
@@ -263,7 +263,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
                   key={index}
                   className={`h-2 w-2 rounded-full ${
                     currentStep > index
-                      ? "bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_5px_rgba(79,70,229,0.5)]"
+                      ? "bg-gradient-to-r from-green-500 to-emerald-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]"
                       : "bg-gray-600"
                   }`}
                 />
