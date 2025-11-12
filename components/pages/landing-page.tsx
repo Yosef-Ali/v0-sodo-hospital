@@ -8,7 +8,7 @@ export function LandingPage() {
     <div className="min-h-screen antialiased overflow-x-hidden text-slate-100 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Background Effects */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-400/10 via-transparent to-transparent pointer-events-none"></div>
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-purple-400/5 via-transparent to-transparent pointer-events-none"></div>
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-green-400/5 via-transparent to-transparent pointer-events-none"></div>
 
       {/* Navigation */}
       <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 fade-in">
@@ -43,7 +43,7 @@ export function LandingPage() {
                 <span>SODO Hospital Management System</span>
               </div>
               <h1 className="sm:text-5xl lg:text-6xl leading-tight text-4xl font-bold tracking-tight mb-4">
-                Streamline Your <span className="bg-gradient-to-r from-green-400 to-purple-400 bg-clip-text text-transparent">Hospital</span>
+                Streamline Your <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">Hospital</span>
                 {' '}Document Workflow
               </h1>
               <p className="leading-relaxed max-w-lg text-lg text-slate-400">
@@ -160,7 +160,7 @@ export function LandingPage() {
 
           {/* Processing Time */}
           <div className="glass-card rounded-2xl p-6 flex flex-col justify-center items-center text-center fade-in fade-in-delay-6 hover:scale-105 transition-transform duration-300">
-            <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center mb-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mb-3">
               <TrendingDown className="w-6 h-6 text-white" />
             </div>
             <h3 className="text-sm font-semibold mb-1">Avg. Processing</h3>
@@ -205,7 +205,7 @@ export function LandingPage() {
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .gradient-border {
-          background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(168, 85, 247, 0.2));
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2));
           padding: 1px;
           border-radius: 16px;
         }

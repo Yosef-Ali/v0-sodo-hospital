@@ -121,11 +121,11 @@ function NavItem({ href, label, icon, active }: NavItemProps) {
         href={href}
         className={`flex items-center px-4 py-2 text-sm rounded-md transition-all duration-200 ${
           active
-            ? "bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-white border border-blue-500/20"
+            ? "bg-gradient-to-r from-green-600/20 to-green-500/20 text-white border border-green-500/20"
             : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
         }`}
       >
-        <span className={`mr-3 ${active ? "text-blue-400" : ""}`}>{icon}</span>
+        <span className={`mr-3 ${active ? "text-green-400" : ""}`}>{icon}</span>
         <span>{label}</span>
       </Link>
     </li>
@@ -142,10 +142,10 @@ function PopularItem({ label, count }: PopularItemProps) {
     <li>
       <Link
         href="#"
-        className="flex items-center justify-between px-2 py-1 text-sm text-gray-400 hover:text-white rounded transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-900/20 hover:to-purple-900/20"
+        className="flex items-center justify-between px-2 py-1 text-sm text-gray-400 hover:text-white rounded transition-all duration-200 hover:bg-gradient-to-r hover:from-green-900/20 hover:to-green-800/20"
       >
         <span>{label}</span>
-        <span className="text-xs bg-gradient-to-r from-blue-900/60 to-purple-900/60 px-1.5 py-0.5 rounded">
+        <span className="text-xs bg-gradient-to-r from-green-900/60 to-green-800/60 px-1.5 py-0.5 rounded">
           {count}
         </span>
       </Link>
