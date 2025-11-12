@@ -43,8 +43,8 @@ export function LandingPage() {
                 <span>SODO Hospital Management System</span>
               </div>
               <h1 className="sm:text-5xl lg:text-6xl leading-tight text-4xl font-bold tracking-tight mb-4">
-                Streamline Your <span className="bg-gradient-to-r from-green-400 to-purple-400 bg-clip-text text-transparent">Hospital</span>
-                {' '}Document Workflow
+                <span className="bg-gradient-to-r from-green-400 to-purple-400 bg-clip-text text-transparent">Hospital</span>
+                {' '}Document Management
               </h1>
               <p className="leading-relaxed max-w-lg text-lg text-slate-400">
                 Efficiently manage license renewals, support letters, and authentication documents with our comprehensive administrative platform.
