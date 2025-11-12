@@ -11,7 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx lib/db/seed.ts"
+    "db:seed": "tsx lib/db/seed.ts",
+    "db:seed-mvp": "tsx lib/db/seed-mvp.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "latest",
