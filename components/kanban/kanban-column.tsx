@@ -26,7 +26,7 @@ export function KanbanColumn({ id, title, tasks, allTasks }: KanbanColumnProps) 
       ref={setNodeRef}
       className={cn(
         "flex flex-col h-full bg-gray-800 rounded-lg border border-gray-700 overflow-hidden transition-colors",
-        isOver && "border-blue-500 bg-gray-750",
+        isOver && "border-green-500 bg-gray-750",
       )}
     >
       <div className="p-4 border-b border-gray-700">

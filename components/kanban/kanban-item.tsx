@@ -9,7 +9,7 @@ interface KanbanItemProps {
 
 export function KanbanItem({ task }: KanbanItemProps) {
   const priorityColors = {
-    low: "bg-blue-900 text-blue-300",
+    low: "bg-green-900 text-green-300",
     medium: "bg-yellow-900 text-yellow-300",
     high: "bg-red-900 text-red-300",
   }

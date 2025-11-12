@@ -23,7 +23,7 @@ export function TaskCard({
 }: TaskCardProps) {
   const statusColors = {
     pending: "bg-gray-600",
-    "in-progress": "bg-blue-600",
+    "in-progress": "bg-green-600",
     completed: "bg-green-600",
     urgent: "bg-red-600",
   }
@@ -36,7 +36,7 @@ export function TaskCard({
   }
 
   const priorityColors = {
-    low: "bg-blue-900 text-blue-300",
+    low: "bg-green-900 text-green-300",
     medium: "bg-yellow-900 text-yellow-300",
     high: "bg-red-900 text-red-300",
   }
@@ -77,7 +77,7 @@ export function TaskCard({
         </div>
       </div>
       <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center bg-gray-800/30">
-        <button className="text-xs text-blue-400 hover:text-blue-300 font-medium">View Details</button>
+        <button className="text-xs text-green-400 hover:text-green-300 font-medium">View Details</button>
         <DropdownMenu>
           <DropdownMenuTrigger className="text-xs text-gray-400 hover:text-gray-300 font-medium flex items-center">
             <MoreHorizontal size={14} className="mr-1" />
