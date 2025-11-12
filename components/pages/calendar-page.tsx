@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { NewEventSheet } from "@/components/calendar/new-event-sheet"
 
 export function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -110,10 +111,7 @@ export function CalendarPage() {
               </Button>
             </div>
           </div>
-          <Button className="bg-green-600 hover:bg-green-700">
-            <Plus className="w-4 h-4 mr-2" />
-            New Event
-          </Button>
+          <NewEventSheet selectedDate={currentDate} />
         </div>
       </div>
 
