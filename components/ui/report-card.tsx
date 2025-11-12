@@ -43,7 +43,7 @@ export function ReportCard({ title, description, lastGenerated, frequency, forma
         </div>
       </div>
       <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center">
-        <button className="text-xs text-blue-400 hover:text-blue-300 font-medium">View Report</button>
+        <button className="text-xs text-green-400 hover:text-green-300 font-medium">View Report</button>
         <button className="text-xs text-gray-400 hover:text-gray-300 font-medium flex items-center">
           <Download size={12} className="mr-1" />
           Download

@@ -31,7 +31,7 @@ export function LimitationsSection() {
         {SYSTEM_LIMITATIONS.map((category, idx) => (
           <Card key={idx} className="bg-gray-800 border-gray-700 p-6">
             <div className="flex items-center gap-2 mb-4">
-              <Badge variant="outline" className="border-blue-500 text-blue-400">
+              <Badge variant="outline" className="border-green-500 text-green-400">
                 {category.category}
               </Badge>
             </div>
@@ -61,7 +61,7 @@ export function LimitationsSection() {
       <div className="text-center pt-4">
         <p className="text-sm text-gray-400">
           Need higher limits?{" "}
-          <span className="text-blue-400 hover:text-blue-300 cursor-pointer">
+          <span className="text-green-400 hover:text-green-300 cursor-pointer">
             Contact our sales team
           </span>{" "}
           for Enterprise options.

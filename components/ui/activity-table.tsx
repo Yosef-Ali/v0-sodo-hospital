@@ -139,7 +139,7 @@ function ActivityRow({ avatar, name, action, department, time, status }: Activit
               ? "bg-yellow-900 text-yellow-300"
               : status === "completed"
                 ? "bg-green-900 text-green-300"
-                : "bg-blue-900 text-green-300"
+                : "bg-green-900 text-green-300"
           }`}
         >
           {status}

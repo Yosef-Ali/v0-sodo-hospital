@@ -120,7 +120,7 @@ export function CustomerSupportWidget() {
                 <Ticket className="w-4 h-4 mr-1.5" />
                 Ticket
                 {ticketCount > 0 && (
-                  <Badge className="ml-1 h-4 px-1 text-xs bg-blue-600">
+                  <Badge className="ml-1 h-4 px-1 text-xs bg-green-600">
                     {ticketCount}
                   </Badge>
                 )}
@@ -155,7 +155,7 @@ export function CustomerSupportWidget() {
 
                   {isTyping && (
                     <div className="flex gap-3 mb-4">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-600 to-emerald-600 flex items-center justify-center">
                         <Sparkles className="w-5 h-5 text-white" />
                       </div>
                       <div className="bg-gray-800 border border-gray-700 rounded-2xl px-4 py-3">
@@ -189,7 +189,7 @@ export function CustomerSupportWidget() {
             <TabsContent value="ticket" className="flex-1 m-0 overflow-hidden">
               <ScrollArea className="h-full p-6">
                 <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <div className="flex items-start gap-3 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
                     <Ticket className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <h4 className="font-semibold text-green-400 mb-1">Submit a Support Ticket</h4>
