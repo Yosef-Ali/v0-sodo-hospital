@@ -3,7 +3,8 @@
 import type React from "react"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 import {
   LayoutDashboard,
   CheckSquare,
@@ -13,10 +14,13 @@ import {
   Building2,
   Settings,
   LogIn,
+  LogOut,
   ChevronDown,
   LayoutGrid,
+  UserCog,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
 
 interface SidebarProps {
   open: boolean
@@ -25,6 +29,32 @@ interface SidebarProps {
 
 export function Sidebar({ open, setOpen }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    // Get initial user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+    })
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleSignOut = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/login")
+  }
 
   return (
     <div
@@ -75,18 +105,49 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
             label="Departments"
             active={pathname === "/departments"}
           />
+          {user && (
+            <NavItem href="/users" icon={<UserCog size={20} />} label="Users" active={pathname === "/users"} />
+          )}
           <NavItem href="/settings" icon={<Settings size={20} />} label="Settings" active={pathname === "/settings"} />
         </ul>
       </nav>
 
       <div className="p-4 border-t border-gray-700/50 relative z-10">
-        <div className="text-sm text-gray-400 mb-2">
-          Sign in to unlock all features and access your personal dashboard.
-        </div>
-        <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-2 px-4 rounded flex items-center justify-center">
-          <LogIn className="mr-2" size={16} />
-          SIGN IN
-        </button>
+        {user ? (
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-medium">
+                {user.email?.[0]?.toUpperCase() || "U"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">
+                  {user.user_metadata?.full_name || "User"}
+                </p>
+                <p className="text-xs text-gray-400 truncate">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="w-full bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center border border-gray-700"
+            >
+              <LogOut className="mr-2" size={16} />
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="text-sm text-gray-400 mb-2">
+              Sign in to unlock all features and access your personal dashboard.
+            </div>
+            <Link
+              href="/login"
+              className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-2 px-4 rounded-lg font-medium transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center"
+            >
+              <LogIn className="mr-2" size={16} />
+              SIGN IN
+            </Link>
+          </>
+        )}
       </div>
 
       <div className="p-4 border-t border-gray-700/50 relative z-10">
@@ -121,11 +182,11 @@ function NavItem({ href, label, icon, active }: NavItemProps) {
         href={href}
         className={`flex items-center px-4 py-2 text-sm rounded-md transition-all duration-200 ${
           active
-            ? "bg-gradient-to-r from-blue-600/20 to-purple-600/20 text-white border border-blue-500/20"
+            ? "bg-gradient-to-r from-green-500/20 to-green-600/20 text-white border border-green-500/30"
             : "text-gray-400 hover:bg-gray-800/50 hover:text-white"
         }`}
       >
-        <span className={`mr-3 ${active ? "text-blue-400" : ""}`}>{icon}</span>
+        <span className={`mr-3 ${active ? "text-green-400" : ""}`}>{icon}</span>
         <span>{label}</span>
       </Link>
     </li>
@@ -142,10 +203,10 @@ function PopularItem({ label, count }: PopularItemProps) {
     <li>
       <Link
         href="#"
-        className="flex items-center justify-between px-2 py-1 text-sm text-gray-400 hover:text-white rounded transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-900/20 hover:to-purple-900/20"
+        className="flex items-center justify-between px-2 py-1 text-sm text-gray-400 hover:text-white rounded transition-all duration-200 hover:bg-gradient-to-r hover:from-green-500/10 hover:to-green-600/10"
       >
         <span>{label}</span>
-        <span className="text-xs bg-gradient-to-r from-blue-900/60 to-purple-900/60 px-1.5 py-0.5 rounded">
+        <span className="text-xs bg-gradient-to-r from-green-900/40 to-green-800/40 px-1.5 py-0.5 rounded">
           {count}
         </span>
       </Link>
