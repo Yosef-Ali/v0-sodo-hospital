@@ -1,213 +1,216 @@
 "use client"
 
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { CustomerSupportWidget } from "@/components/ui/customer-support-widget"
-import {
-  FileText,
-  Clock,
-  Shield,
-  CheckCircle,
-  Users,
-  TrendingUp,
-  ArrowRight,
-  Star
-} from "lucide-react"
+import { Hexagon, Sparkles, Users, Mail, Grid3x3, Video, Star, Globe, PenTool } from "lucide-react"
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 px-6 py-24 sm:py-32 lg:px-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.1),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(147,51,234,0.1),transparent_50%)]" />
+    <div className="min-h-screen antialiased overflow-x-hidden text-slate-100 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Background Effects */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-400/10 via-transparent to-transparent pointer-events-none"></div>
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-purple-400/5 via-transparent to-transparent pointer-events-none"></div>
 
-        <div className="relative mx-auto max-w-7xl">
-          <div className="text-center">
-            <div className="inline-flex items-center rounded-full border border-gray-700 bg-gray-800 px-4 py-2 text-sm text-gray-300 mb-8">
-              <Star className="h-4 w-4 text-blue-400 mr-2" />
-              Professional Document Management System
+      {/* Navigation */}
+      <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 fade-in">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
+              <Hexagon className="w-4 h-4 text-white" />
             </div>
-
-            <h1 className="text-5xl font-bold tracking-tight text-white sm:text-7xl mb-6">
-              Streamline Your
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">
-                Document Workflow
-              </span>
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-gray-400">
-              Manage administrative tasks, process documents efficiently, and track progress with our comprehensive hospital document management system.
-            </p>
-
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Link href="/dashboard">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg">
-                  Get Started
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/documents">
-                <Button variant="outline" size="lg" className="border-gray-700 text-gray-300 hover:bg-gray-800 px-8 py-6 text-lg">
-                  View Documents
-                </Button>
-              </Link>
-            </div>
+            <span className="text-xl font-semibold tracking-tight">Nexus</span>
+          </div>
+          <div className="hidden md:flex items-center space-x-8 text-sm">
+            <a href="#" className="text-slate-400 hover:text-white transition-colors">Articles</a>
+            <a href="#" className="text-slate-400 hover:text-white transition-colors">Authors</a>
+            <a href="#" className="text-slate-400 hover:text-white transition-colors">Categories</a>
+            <button className="bg-white text-slate-900 px-4 py-2 rounded-lg font-medium hover:bg-slate-100 transition-all duration-200 hover:scale-105">
+              Get Started
+            </button>
           </div>
         </div>
-      </section>
+      </nav>
 
-      {/* Stats Section */}
-      <section className="bg-gray-800 py-16 sm:py-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="flex flex-col items-center justify-center rounded-lg border border-gray-700 bg-gray-900 p-8 text-center">
-              <div className="text-4xl font-bold text-blue-400 mb-2">1,200+</div>
-              <div className="text-sm text-gray-400">Documents Processed</div>
+      <div className="max-w-7xl mr-auto ml-auto pt-16 pr-6 pb-8 pl-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 auto-rows-[180px] gap-4">
+
+          {/* Hero Section */}
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3 row-span-2 flex flex-col fade-in pt-8 pr-8 pb-8 pl-8 justify-center">
+            <div className="mb-6">
+              <div className="inline-flex items-center space-x-2 bg-green-500/10 border border-green-500/20 px-3 py-1 rounded-full text-xs font-medium text-green-400 mb-6">
+                <Sparkles className="w-3 h-3" />
+                <span>Meet Nexus Platform</span>
+              </div>
+              <h1 className="sm:text-5xl lg:text-6xl leading-tight text-4xl font-bold tracking-tight mb-4">
+                Empowering <span className="bg-gradient-to-r from-green-400 to-purple-400 bg-clip-text text-transparent">innovation</span>
+                {' '}through stories
+              </h1>
+              <p className="leading-relaxed max-w-lg text-lg text-slate-400">
+                Where technology meets creativity. Discover insights, share knowledge, and build the future together.
+              </p>
             </div>
-            <div className="flex flex-col items-center justify-center rounded-lg border border-gray-700 bg-gray-900 p-8 text-center">
-              <div className="text-4xl font-bold text-green-400 mb-2">98%</div>
-              <div className="text-sm text-gray-400">Success Rate</div>
-            </div>
-            <div className="flex flex-col items-center justify-center rounded-lg border border-gray-700 bg-gray-900 p-8 text-center">
-              <div className="text-4xl font-bold text-amber-400 mb-2">4.2</div>
-              <div className="text-sm text-gray-400">Days Avg Processing</div>
-            </div>
-            <div className="flex flex-col items-center justify-center rounded-lg border border-gray-700 bg-gray-900 p-8 text-center">
-              <div className="text-4xl font-bold text-purple-400 mb-2">24/7</div>
-              <div className="text-sm text-gray-400">System Availability</div>
+            <div className="flex items-center space-x-4">
+              <button className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 hover:scale-105 shadow-lg">
+                Start Reading
+              </button>
+              <button className="border border-slate-600 text-slate-300 px-6 py-3 rounded-lg font-medium hover:border-slate-500 hover:text-white transition-all duration-200">
+                Learn More
+              </button>
             </div>
           </div>
+
+          {/* Featured Authors */}
+          <div className="glass-card rounded-2xl p-6 flex flex-col justify-between col-span-1 lg:col-span-2 fade-in fade-in-delay-1 hover:scale-105 transition-transform duration-300">
+            <div>
+              <div className="flex items-center space-x-2 mb-3">
+                <Users className="w-5 h-5 text-green-400" />
+                <h3 className="text-lg font-semibold">Featured Authors</h3>
+              </div>
+              <p className="text-sm text-slate-400 mb-4">Our community of expert writers and thought leaders</p>
+            </div>
+            <div className="flex -space-x-3">
+              <img src="https://images.unsplash.com/photo-1460904577954-8fadb262612c?w=1080&q=80" className="w-12 h-12 object-cover border-slate-700 border-2 rounded-full" alt="Sarah Chen" />
+              <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full border-2 border-slate-700" alt="Marcus Rodriguez" />
+              <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full border-2 border-slate-700" alt="Elena Kowalski" />
+              <div className="w-12 h-12 rounded-full border-2 border-slate-700 bg-slate-800 flex items-center justify-center text-xs font-medium">
+                +12
+              </div>
+            </div>
+          </div>
+
+          {/* Latest Articles */}
+          <div className="gradient-border fade-in fade-in-delay-2 hover:scale-105 transition-transform duration-300">
+            <div className="gradient-border-inner flex flex-col h-full glow-card pt-6 pr-6 pb-6 pl-6 justify-between">
+              <div className="flex space-x-3 items-start">
+                <div>
+                  <h3 className="text-lg font-semibold mb-1">Latest Articles</h3>
+                  <p className="text-sm text-slate-400">Fresh insights on tech, design, and innovation</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-2xl font-bold text-green-400">247</span>
+                <p className="text-xs text-slate-500">published this month</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Newsletter */}
+          <div className="glass-card flex flex-col col-span-1 sm:col-span-1 lg:col-span-1 row-span-2 fade-in fade-in-delay-3 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 flex bg-gradient-to-r from-green-400 to-emerald-400 rounded-2xl items-center justify-center">
+                <Mail className="w-8 h-8 text-white" />
+              </div>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-semibold mb-2">Weekly Digest</h3>
+              <p className="text-sm text-slate-400 mb-4">Get curated content delivered to your inbox</p>
+              <button className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors">
+                Subscribe
+              </button>
+            </div>
+          </div>
+
+          {/* Categories */}
+          <div className="glass-card flex flex-col fade-in fade-in-delay-4 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
+            <div className="flex items-center space-x-2 mb-3">
+              <Grid3x3 className="w-5 h-5 text-orange-400" />
+              <h3 className="text-lg font-semibold tracking-tight">Categories</h3>
+            </div>
+            <div>
+              <span className="text-3xl font-semibold text-orange-400">20+</span>
+              <p className="text-sm text-slate-400">New topics to discover</p>
+            </div>
+          </div>
+
+          {/* Videos */}
+          <div className="glass-card flex flex-col fade-in fade-in-delay-4 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
+            <div>
+              <span className="text-3xl font-semibold text-blue-500">300</span>
+              <p className="text-sm text-slate-400">Topics to explore now</p>
+            </div>
+            <div className="flex mb-3 space-x-2 items-center">
+              <h3 className="text-lg font-semibold">Videos</h3>
+              <Video className="w-5 h-5 text-blue-500" />
+            </div>
+          </div>
+
+          {/* Testimonial */}
+          <div className="glass-card flex flex-col col-span-1 sm:col-span-2 lg:col-span-3 fade-in fade-in-delay-5 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
+            <div className="flex mb-4 space-x-4 items-center">
+              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full" alt="Isabella Chen" />
+              <div>
+                <p className="font-semibold">Isabella Chen</p>
+                <p className="text-xs text-slate-400">CEO &amp; Founder, TechVision</p>
+              </div>
+              <div className="flex text-yellow-400 ml-auto">
+                <Star className="w-4 h-4 fill-current" />
+                <Star className="w-4 h-4 fill-current" />
+                <Star className="w-4 h-4 fill-current" />
+              </div>
+            </div>
+            <div className="text-base font-normal text-white mt-4">&quot;Nexus revolutionizes collaboration with its seamless platform, fostering creativity and connection like never before.&quot;</div>
+          </div>
+
+          {/* Global Community */}
+          <div className="glass-card rounded-2xl p-6 flex flex-col justify-center items-center text-center fade-in fade-in-delay-6 hover:scale-105 transition-transform duration-300">
+            <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center mb-3">
+              <Globe className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-sm font-semibold mb-1">Global Reach</h3>
+            <p className="text-xs text-slate-400">50+ countries</p>
+          </div>
+
+          {/* Creator Hub */}
+          <div className="glass-card flex flex-col fade-in fade-in-delay-7 hover:scale-105 transition-transform duration-300 text-center rounded-2xl pt-6 pr-6 pb-6 pl-6 items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mb-3">
+              <PenTool className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-sm font-semibold mb-1">Creator Hub</h3>
+            <p className="text-xs text-slate-400">Share your story</p>
+          </div>
+
         </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="bg-gray-900 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Everything You Need to Manage Documents
-            </h2>
-            <p className="mt-4 text-lg text-gray-400">
-              Comprehensive tools designed for hospital administrative efficiency
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {/* Feature 1 */}
-            <div className="group relative rounded-xl border border-gray-700 bg-gray-800 p-8 hover:border-blue-500 transition-all duration-300">
-              <div className="mb-4 inline-flex rounded-lg bg-blue-500/10 p-3 text-blue-400 group-hover:bg-blue-500/20 transition-colors">
-                <FileText className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Document Processing</h3>
-              <p className="text-gray-400">
-                Handle license renewals, support letters, and authentication documents with ease.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="group relative rounded-xl border border-gray-700 bg-gray-800 p-8 hover:border-green-500 transition-all duration-300">
-              <div className="mb-4 inline-flex rounded-lg bg-green-500/10 p-3 text-green-400 group-hover:bg-green-500/20 transition-colors">
-                <Clock className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Time Tracking</h3>
-              <p className="text-gray-400">
-                Monitor processing times and identify bottlenecks in your workflow.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="group relative rounded-xl border border-gray-700 bg-gray-800 p-8 hover:border-amber-500 transition-all duration-300">
-              <div className="mb-4 inline-flex rounded-lg bg-amber-500/10 p-3 text-amber-400 group-hover:bg-amber-500/20 transition-colors">
-                <Shield className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Secure & Compliant</h3>
-              <p className="text-gray-400">
-                Enterprise-grade security with full compliance for healthcare documentation.
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="group relative rounded-xl border border-gray-700 bg-gray-800 p-8 hover:border-purple-500 transition-all duration-300">
-              <div className="mb-4 inline-flex rounded-lg bg-purple-500/10 p-3 text-purple-400 group-hover:bg-purple-500/20 transition-colors">
-                <CheckCircle className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Approval Workflows</h3>
-              <p className="text-gray-400">
-                Streamlined approval processes for Ministry of Labor, HERQA, and internal reviews.
-              </p>
-            </div>
-
-            {/* Feature 5 */}
-            <div className="group relative rounded-xl border border-gray-700 bg-gray-800 p-8 hover:border-pink-500 transition-all duration-300">
-              <div className="mb-4 inline-flex rounded-lg bg-pink-500/10 p-3 text-pink-400 group-hover:bg-pink-500/20 transition-colors">
-                <Users className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Team Collaboration</h3>
-              <p className="text-gray-400">
-                Work together seamlessly with role-based access and real-time updates.
-              </p>
-            </div>
-
-            {/* Feature 6 */}
-            <div className="group relative rounded-xl border border-gray-700 bg-gray-800 p-8 hover:border-cyan-500 transition-all duration-300">
-              <div className="mb-4 inline-flex rounded-lg bg-cyan-500/10 p-3 text-cyan-400 group-hover:bg-cyan-500/20 transition-colors">
-                <TrendingUp className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Analytics & Insights</h3>
-              <p className="text-gray-400">
-                Track performance metrics and generate comprehensive reports.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="relative isolate overflow-hidden bg-gray-800 px-6 py-24 sm:py-32 lg:px-8">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10" />
-        <div className="relative mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Ready to Transform Your Workflow?
-          </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-400">
-            Start managing your hospital documents more efficiently today. Join hundreds of administrators who trust our system.
-          </p>
-          <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Link href="/dashboard">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg">
-                Access Dashboard
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+      </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 border-t border-gray-800">
-        <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <p className="text-sm text-gray-400">
-              © 2025 SODO Hospital Document Management. All rights reserved.
-            </p>
-            <div className="flex gap-6">
-              <Link href="/documents" className="text-sm text-gray-400 hover:text-white transition-colors">
-                Documents
-              </Link>
-              <Link href="/tasks" className="text-sm text-gray-400 hover:text-white transition-colors">
-                Tasks
-              </Link>
-              <Link href="/dashboard" className="text-sm text-gray-400 hover:text-white transition-colors">
-                Dashboard
-              </Link>
-            </div>
-          </div>
+      <footer className="max-w-7xl mx-auto px-6 py-16 border-t border-slate-800">
+        <div className="pt-8 flex flex-col md:flex-row justify-between items-center fade-in fade-in-delay-1">
+          <p className="text-slate-400 text-sm">© 2024 Nexus. All rights reserved.</p>
         </div>
       </footer>
 
-      {/* Customer Support Widget */}
-      <CustomerSupportWidget />
+      <style jsx>{`
+        .fade-in { opacity: 0; transform: translateY(20px); animation: fadeInUp 0.8s ease-out forwards; }
+        .fade-in-delay-1 { animation-delay: 0.1s; }
+        .fade-in-delay-2 { animation-delay: 0.2s; }
+        .fade-in-delay-3 { animation-delay: 0.3s; }
+        .fade-in-delay-4 { animation-delay: 0.4s; }
+        .fade-in-delay-5 { animation-delay: 0.5s; }
+        .fade-in-delay-6 { animation-delay: 0.6s; }
+        .fade-in-delay-7 { animation-delay: 0.7s; }
+        .fade-in-delay-8 { animation-delay: 0.8s; }
+        @keyframes fadeInUp {
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .glass-card {
+          backdrop-filter: blur(8px);
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-border {
+          background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(168, 85, 247, 0.2));
+          padding: 1px;
+          border-radius: 16px;
+        }
+        .gradient-border-inner {
+          background: rgb(15, 23, 42);
+          border-radius: 15px;
+          height: 100%;
+          width: 100%;
+        }
+        .glow-card {
+          box-shadow: 0 0 40px rgba(34, 197, 94, 0.15);
+        }
+      `}</style>
     </div>
   )
 }
