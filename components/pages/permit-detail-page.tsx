@@ -33,12 +33,12 @@ import {
   ThumbsUp,
   ThumbsDown,
   History,
-  ListTodo,
 } from "lucide-react"
 import { getPermitById, transitionPermitStatus } from "@/lib/actions/v2/permits"
 import { formatEC, gregorianToEC } from "@/lib/dates/ethiopian"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { ChecklistPanel } from "@/components/permit/checklist-panel"
 
 interface PermitDetailPageProps {
   permitId: string
@@ -308,41 +308,17 @@ export function PermitDetailPage({ permitId }: PermitDetailPageProps) {
 
           {/* Checklist */}
           {checklist && (
-            <Card className="bg-gray-800 border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <ListTodo className="h-5 w-5 mr-2 text-green-500" />
-                {checklist.name}
-              </h3>
-
-              <div className="space-y-3">
-                {checklist.items?.map((item: any, index: number) => (
-                  <div
-                    key={index}
-                    className="flex items-start space-x-3 p-3 rounded-lg bg-gray-900/50 border border-gray-700"
-                  >
-                    <Checkbox
-                      id={`item-${index}`}
-                      className="mt-1"
-                      disabled
-                    />
-                    <div className="flex-1">
-                      <label
-                        htmlFor={`item-${index}`}
-                        className="text-sm text-gray-300 cursor-pointer"
-                      >
-                        {item.label}
-                        {item.required && (
-                          <span className="text-red-400 ml-1">*</span>
-                        )}
-                      </label>
-                      {item.hint && (
-                        <p className="text-xs text-gray-500 mt-1">{item.hint}</p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
+            <ChecklistPanel
+              checklist={checklist}
+              permitId={permitId}
+              userRole="USER"
+              canEdit={true}
+              onItemUpdate={async (itemId, updates) => {
+                // TODO: Implement checklist item update
+                console.log("Update item:", itemId, updates)
+                await loadPermit()
+              }}
+            />
           )}
 
           {/* History */}

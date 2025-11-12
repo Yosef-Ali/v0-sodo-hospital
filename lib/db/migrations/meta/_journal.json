@@ -15,6 +15,13 @@
       "when": 1762972462405,
       "tag": "0001_petite_sumo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1762977203767,
+      "tag": "0002_wakeful_krista_starr",
+      "breakpoints": true
     }
   ]
 }

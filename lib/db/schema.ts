@@ -5,7 +5,7 @@ import { relations } from "drizzle-orm"
 export const taskStatusEnum = pgEnum("task_status", ["pending", "in-progress", "completed", "urgent"])
 export const taskPriorityEnum = pgEnum("task_priority", ["low", "medium", "high"])
 export const documentStatusEnum = pgEnum("document_status", ["pending", "approved", "review"])
-export const userRoleEnum = pgEnum("user_role", ["ADMIN", "HR", "LOGISTICS", "FINANCE", "USER"])
+export const userRoleEnum = pgEnum("user_role", ["ADMIN", "HR_MANAGER", "HR", "LOGISTICS", "FINANCE", "USER"])
 export const permitCategoryEnum = pgEnum("permit_category", ["WORK_PERMIT", "RESIDENCE_ID", "LICENSE", "PIP"])
 export const permitStatusEnum = pgEnum("permit_status", ["PENDING", "SUBMITTED", "APPROVED", "REJECTED", "EXPIRED"])
 
@@ -149,12 +149,33 @@ export const permits = pgTable("permits", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
-// Checklists table (permit requirements)
+// Checklists table (permit requirements templates with versioning)
 export const checklists = pgTable("checklists", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 255 }).notNull(),
+  category: permitCategoryEnum("category"), // optional: link to permit type
   items: jsonb("items").$type<Array<{ label: string; required: boolean; hint?: string }>>().notNull(),
+  version: integer("version").default(1).notNull(),
+  active: boolean("active").default(true).notNull(), // only active templates used for new permits
+  createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Permit checklist items (progress tracking for each permit)
+export const permitChecklistItems = pgTable("permit_checklist_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  permitId: uuid("permit_id").references(() => permits.id).notNull(),
+  label: varchar("label", { length: 500 }).notNull(),
+  required: boolean("required").default(false).notNull(),
+  hint: text("hint"),
+  completed: boolean("completed").default(false).notNull(),
+  completedBy: uuid("completed_by").references(() => users.id),
+  completedAt: timestamp("completed_at"),
+  fileUrls: jsonb("file_urls").$type<string[]>().default([]),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
 // Permit history table (audit trail)
@@ -328,12 +349,28 @@ export const permitsRelations = relations(permits, ({ one, many }) => ({
     fields: [permits.checklistId],
     references: [checklists.id],
   }),
+  checklistItems: many(permitChecklistItems),
   tasks: many(tasksV2),
   history: many(permitHistory),
 }))
 
-export const checklistsRelations = relations(checklists, ({ many }) => ({
+export const checklistsRelations = relations(checklists, ({ one, many }) => ({
   permits: many(permits),
+  createdBy: one(users, {
+    fields: [checklists.createdBy],
+    references: [users.id],
+  }),
+}))
+
+export const permitChecklistItemsRelations = relations(permitChecklistItems, ({ one }) => ({
+  permit: one(permits, {
+    fields: [permitChecklistItems.permitId],
+    references: [permits.id],
+  }),
+  completedBy: one(users, {
+    fields: [permitChecklistItems.completedBy],
+    references: [users.id],
+  }),
 }))
 
 export const permitHistoryRelations = relations(permitHistory, ({ one }) => ({
@@ -392,6 +429,8 @@ export type Permit = typeof permits.$inferSelect
 export type NewPermit = typeof permits.$inferInsert
 export type Checklist = typeof checklists.$inferSelect
 export type NewChecklist = typeof checklists.$inferInsert
+export type PermitChecklistItem = typeof permitChecklistItems.$inferSelect
+export type NewPermitChecklistItem = typeof permitChecklistItems.$inferInsert
 export type PermitHistory = typeof permitHistory.$inferSelect
 export type NewPermitHistory = typeof permitHistory.$inferInsert
 export type TaskV2 = typeof tasksV2.$inferSelect

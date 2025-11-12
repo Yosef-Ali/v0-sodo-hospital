@@ -1,5 +1,5 @@
-import { SettingsPage } from "@/components/pages/settings-page"
+import { SettingsOrganizationPage } from "@/components/pages/settings/organization-page"
 
 export default function SettingsRoute() {
-  return <SettingsPage />
+  return <SettingsOrganizationPage />
 }

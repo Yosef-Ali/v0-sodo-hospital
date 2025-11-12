@@ -1,7 +1,7 @@
 "use server"
 
 import { db, checklists, permits, type Checklist, type NewChecklist } from "@/lib/db"
-import { eq, desc, like, sql } from "drizzle-orm"
+import { eq, desc, like, sql, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 export type ChecklistItem = {
@@ -10,31 +10,39 @@ export type ChecklistItem = {
   hint?: string
 }
 
+// Re-export types for components
+export type { Checklist }
+
 /**
  * Get all checklists with optional search
  */
 export async function getChecklists(params?: {
   query?: string
+  search?: string
   limit?: number
   offset?: number
+  activeOnly?: boolean
 }) {
-  const { query, limit = 50, offset = 0 } = params || {}
+  const { query, search, limit = 50, offset = 0, activeOnly = false } = params || {}
+  const searchTerm = search || query
 
   try {
-    let queryBuilder = db
-      .select({
-        checklist: checklists,
-        permitCount: sql<number>`cast(count(${permits.id}) as integer)`,
-      })
-      .from(checklists)
-      .leftJoin(permits, eq(checklists.id, permits.checklistId))
-      .groupBy(checklists.id)
+    let queryBuilder = db.select().from(checklists)
+
+    const conditions: any[] = []
 
     // Search by name
-    if (query) {
-      queryBuilder = queryBuilder.where(
-        like(checklists.name, `%${query}%`)
-      ) as any
+    if (searchTerm) {
+      conditions.push(like(checklists.name, `%${searchTerm}%`))
+    }
+
+    // Filter active only
+    if (activeOnly) {
+      conditions.push(eq(checklists.active, true))
+    }
+
+    if (conditions.length > 0) {
+      queryBuilder = queryBuilder.where(and(...conditions)) as any
     }
 
     const result = await queryBuilder
