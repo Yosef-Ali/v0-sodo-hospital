@@ -9,11 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
 import type { Task } from "@/components/pages/tasks-page"
 
 interface TaskSheetProps {
@@ -28,33 +23,75 @@ export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
     description: "",
     status: "pending",
     priority: "medium",
-    dueDate: format(new Date(), "yyyy-MM-dd"),
+    dueDate: new Date().toISOString().split("T")[0],
     assignee: "",
     category: "",
   })
-  const [date, setDate] = useState<Date | undefined>(new Date())
-  const [currentStep, setCurrentStep] = useState(1)
-  const totalSteps = 3
+
+  // Predefined options
+  const categories = [
+    { value: "work_permit", label: "Work Permit" },
+    { value: "residence_id", label: "Residence ID" },
+    { value: "license", label: "Professional License" },
+    { value: "document_verification", label: "Document Verification" },
+    { value: "interview", label: "Interview" },
+    { value: "onboarding", label: "Onboarding" },
+  ]
+
+  const quickTitles: Record<string, string[]> = {
+    work_permit: [
+      "Review Work Permit Application",
+      "Submit Work Permit Documents",
+      "Follow up on Work Permit Status",
+      "Renew Work Permit",
+    ],
+    residence_id: [
+      "Review Residence ID Application",
+      "Submit Residence ID Documents",
+      "Follow up on Residence ID Status",
+      "Renew Residence ID",
+    ],
+    license: [
+      "Review License Application",
+      "Submit License Documents",
+      "Schedule License Exam",
+      "Renew Professional License",
+    ],
+    document_verification: [
+      "Verify Educational Certificates",
+      "Verify Employment Contract",
+      "Verify Health Certificate",
+      "Verify Passport Copy",
+    ],
+    interview: [
+      "Conduct Candidate Interview",
+      "Conduct Exit Interview",
+      "Conduct Performance Review",
+    ],
+    onboarding: [
+      "Prepare Onboarding Materials",
+      "Conduct Orientation Session",
+      "Complete HR Paperwork",
+    ],
+  }
+
+  // Sample people - you can fetch from database
+  const people = [
+    { value: "person1", label: "Dr. Sarah Johnson" },
+    { value: "person2", label: "Nurse Maria Garcia" },
+    { value: "person3", label: "Dr. Ahmed Hassan" },
+    { value: "person4", label: "Admin John Doe" },
+  ]
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setDate(date)
-      setFormData((prev) => ({ ...prev, dueDate: format(date, "yyyy-MM-dd") }))
-    }
-  }
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSubmit(formData)
+    onOpenChange(false)
 
     // Reset form
     setFormData({
@@ -62,213 +99,194 @@ export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
       description: "",
       status: "pending",
       priority: "medium",
-      dueDate: format(new Date(), "yyyy-MM-dd"),
+      dueDate: new Date().toISOString().split("T")[0],
       assignee: "",
       category: "",
     })
-    setCurrentStep(1)
-  }
-
-  const nextStep = () => {
-    setCurrentStep((prev) => Math.min(prev + 1, totalSteps))
-  }
-
-  const prevStep = () => {
-    setCurrentStep((prev) => Math.max(prev - 1, 1))
-  }
-
-  const isStepValid = () => {
-    if (currentStep === 1) {
-      return formData.title.trim() !== "" && formData.description.trim() !== ""
-    }
-    if (currentStep === 2) {
-      return formData.status !== "" && formData.priority !== "" && formData.dueDate !== ""
-    }
-    if (currentStep === 3) {
-      return formData.assignee.trim() !== "" && formData.category.trim() !== ""
-    }
-    return true
   }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-md">
+      <SheetContent className="bg-gray-800 border-gray-700 w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="text-white">Create New Task</SheetTitle>
           <SheetDescription className="text-gray-400">
-            Step {currentStep} of {totalSteps}:{" "}
-            {currentStep === 1 ? "Basic Information" : currentStep === 2 ? "Task Details" : "Assignment"}
+            Fill in the details below. Use dropdowns for quick selection.
           </SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 py-6 relative z-10">
-          {currentStep === 1 && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Task Title</Label>
-                <Input
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="Enter task title"
-                  className="bg-gray-700 border-gray-600"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Enter task description"
-                  className="bg-gray-700 border-gray-600 min-h-[100px]"
-                  required
-                />
-              </div>
-            </div>
-          )}
-
-          {currentStep === 2 && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value)}>
-                  <SelectTrigger className="bg-gray-700 border-gray-600">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-700 border-gray-600">
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Select value={formData.priority} onValueChange={(value) => handleSelectChange("priority", value)}>
-                  <SelectTrigger className="bg-gray-700 border-gray-600">
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-700 border-gray-600">
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Due Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal bg-gray-700 border-gray-600 hover:bg-gray-600",
-                        !date && "text-muted-foreground",
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-gray-700 border-gray-600">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={handleDateChange}
-                      initialFocus
-                      className="bg-gray-700 text-white"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          )}
-
-          {currentStep === 3 && (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="assignee">Assignee</Label>
-                <Input
-                  id="assignee"
-                  name="assignee"
-                  value={formData.assignee}
-                  onChange={handleChange}
-                  placeholder="Enter assignee name"
-                  className="bg-gray-700 border-gray-600"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <Input
-                  id="category"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  placeholder="Enter category"
-                  className="bg-gray-700 border-gray-600"
-                  required
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="flex justify-between pt-4">
-            {currentStep > 1 ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={prevStep}
-                className="bg-transparent border-gray-600 hover:bg-gray-800/50 hover:border-gray-500 text-gray-300"
-              >
-                Previous
-              </Button>
-            ) : (
-              <div></div>
-            )}
-
-            {currentStep < totalSteps ? (
-              <Button
-                type="button"
-                onClick={nextStep}
-                disabled={!isStepValid()}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-[0_0_15px_rgba(79,70,229,0.4)] disabled:opacity-50 disabled:shadow-none disabled:from-gray-700 disabled:to-gray-700"
-              >
-                Next
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                disabled={!isStepValid()}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-[0_0_15px_rgba(79,70,229,0.4)] disabled:opacity-50 disabled:shadow-none disabled:from-gray-700 disabled:to-gray-700"
-              >
-                Create Task
-              </Button>
-            )}
+        <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+          {/* Category */}
+          <div className="space-y-2">
+            <Label htmlFor="category" className="text-gray-300">
+              Category *
+            </Label>
+            <Select
+              value={formData.category}
+              onValueChange={(value) => setFormData({ ...formData, category: value, title: "" })}
+            >
+              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                {categories.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value} className="text-white">
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="flex justify-center mt-4">
-            <div className="flex space-x-2">
-              {Array.from({ length: totalSteps }).map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-2 w-2 rounded-full ${
-                    currentStep > index
-                      ? "bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_5px_rgba(79,70,229,0.5)]"
-                      : "bg-gray-600"
-                  }`}
+          {/* Quick Title Selection (based on category) */}
+          {formData.category && (
+            <div className="space-y-2">
+              <Label htmlFor="title" className="text-gray-300">
+                Task Title *
+              </Label>
+              <Select
+                value={formData.title}
+                onValueChange={(value) => setFormData({ ...formData, title: value })}
+              >
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select or type custom title" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {quickTitles[formData.category]?.map((title) => (
+                    <SelectItem key={title} value={title} className="text-white">
+                      {title}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="custom" className="text-white">
+                    + Custom Title
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Custom title input */}
+              {formData.title === "custom" && (
+                <Input
+                  placeholder="Enter custom title"
+                  className="bg-gray-700 border-gray-600 text-white mt-2"
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 />
-              ))}
+              )}
             </div>
+          )}
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description" className="text-gray-300">
+              Description *
+            </Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Enter task description"
+              className="bg-gray-700 border-gray-600 text-white min-h-[100px]"
+              required
+            />
+          </div>
+
+          {/* Status and Priority */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="status" className="text-gray-300">
+                Status *
+              </Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => setFormData({ ...formData, status: value })}
+              >
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="pending" className="text-white">Pending</SelectItem>
+                  <SelectItem value="in-progress" className="text-white">In Progress</SelectItem>
+                  <SelectItem value="completed" className="text-white">Completed</SelectItem>
+                  <SelectItem value="urgent" className="text-white">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="priority" className="text-gray-300">
+                Priority *
+              </Label>
+              <Select
+                value={formData.priority}
+                onValueChange={(value) => setFormData({ ...formData, priority: value })}
+              >
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  <SelectItem value="low" className="text-white">Low</SelectItem>
+                  <SelectItem value="medium" className="text-white">Medium</SelectItem>
+                  <SelectItem value="high" className="text-white">High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Due Date */}
+          <div className="space-y-2">
+            <Label htmlFor="dueDate" className="text-gray-300">
+              Due Date *
+            </Label>
+            <Input
+              id="dueDate"
+              name="dueDate"
+              type="date"
+              value={formData.dueDate}
+              onChange={handleChange}
+              className="bg-gray-700 border-gray-600 text-white"
+              required
+            />
+          </div>
+
+          {/* Assignee */}
+          <div className="space-y-2">
+            <Label htmlFor="assignee" className="text-gray-300">
+              Assignee *
+            </Label>
+            <Select
+              value={formData.assignee}
+              onValueChange={(value) => setFormData({ ...formData, assignee: value })}
+            >
+              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectValue placeholder="Select assignee" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                {people.map((person) => (
+                  <SelectItem key={person.value} value={person.value} className="text-white">
+                    {person.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="flex-1 bg-gray-700 border-gray-600 hover:bg-gray-600"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 bg-green-600 hover:bg-green-700"
+              disabled={!formData.category || !formData.title || !formData.description || !formData.assignee}
+            >
+              Create Task
+            </Button>
           </div>
         </form>
       </SheetContent>
