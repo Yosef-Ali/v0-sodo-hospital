@@ -164,7 +164,7 @@ export function KanbanBoard() {
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-white">Task Board</h2>
-        <Button onClick={() => setIsSheetOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => setIsSheetOpen(true)} className="bg-green-600 hover:bg-green-700">
           <Plus className="mr-2 h-4 w-4" /> New Task
         </Button>
       </div>
