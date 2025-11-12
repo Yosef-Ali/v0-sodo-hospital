@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useUser } from "@stackframe/stack"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +23,7 @@ interface UserProfile {
 }
 
 export function UsersManagement() {
+  const currentUser = useUser()
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -34,25 +35,21 @@ export function UsersManagement() {
 
   useEffect(() => {
     fetchUsers()
-  }, [])
+  }, [currentUser])
 
   const fetchUsers = async () => {
     try {
-      const supabase = createClient()
-
-      // This would typically fetch from a users table
+      // This would typically fetch from a users table via API
       // For now, we'll show the current user
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
+      if (currentUser) {
         const mockUsers: UserProfile[] = [
           {
-            id: user.id,
-            email: user.email || "",
-            full_name: user.user_metadata?.full_name || "Current User",
+            id: currentUser.id,
+            email: currentUser.primaryEmail || "",
+            full_name: currentUser.displayName || "Current User",
             role: "admin",
-            created_at: user.created_at,
-            last_sign_in: user.last_sign_in_at || user.created_at,
+            created_at: currentUser.createdAt?.toISOString() || new Date().toISOString(),
+            last_sign_in: new Date().toISOString(),
           },
         ]
         setUsers(mockUsers)
@@ -71,11 +68,9 @@ export function UsersManagement() {
     setError(null)
 
     try {
-      const supabase = createClient()
-
       // In a real implementation, you would:
-      // 1. Create a user invitation record
-      // 2. Send an invitation email
+      // 1. Create a user invitation record in your database
+      // 2. Send an invitation email via Stack Auth API
       // For now, we'll just show a success message
 
       setInviteMessage(`Invitation sent to ${inviteEmail}!`)

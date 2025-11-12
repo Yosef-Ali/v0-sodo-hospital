@@ -4,7 +4,6 @@ import type React from "react"
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
 import {
   LayoutDashboard,
   CheckSquare,
@@ -20,7 +19,7 @@ import {
   UserCog,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { createClient } from "@/lib/supabase/client"
+import { useUser } from "@stackframe/stack"
 
 interface SidebarProps {
   open: boolean
@@ -30,30 +29,11 @@ interface SidebarProps {
 export function Sidebar({ open, setOpen }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-
-  useEffect(() => {
-    const supabase = createClient()
-
-    // Get initial user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-    })
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
+  const user = useUser()
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/login")
+    await user?.signOut()
+    router.push("/")
   }
 
   return (
@@ -117,13 +97,13 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-medium">
-                {user.email?.[0]?.toUpperCase() || "U"}
+                {user.primaryEmail?.[0]?.toUpperCase() || "U"}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">
-                  {user.user_metadata?.full_name || "User"}
+                  {user.displayName || "User"}
                 </p>
-                <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                <p className="text-xs text-gray-400 truncate">{user.primaryEmail}</p>
               </div>
             </div>
             <button
