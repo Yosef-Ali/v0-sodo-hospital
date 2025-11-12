@@ -1,0 +1,225 @@
+{
+  "app": {
+    "title": "ሶዶ ሆስፒታል ኦፕስ",
+    "tagline": "የኢትዮጵያ ሆስፒታል ኦፕሬሽን አስተዳደር"
+  },
+  "nav": {
+    "dashboard": "ዳሽቦርድ",
+    "people": "ሰዎች",
+    "permits": "ፈቃዶች",
+    "tasks": "ተግባራት",
+    "documents": "ሰነዶች",
+    "reports": "ሪፖርቶች",
+    "settings": "ቅንብሮች",
+    "teams": "ቡድኖች",
+    "departments": "ክፍሎች"
+  },
+  "actions": {
+    "add": "ጨምር",
+    "save": "አስቀምጥ",
+    "edit": "አርትዕ",
+    "delete": "ሰርዝ",
+    "cancel": "ሰርዝ",
+    "confirm": "አረጋግጥ",
+    "search": "ፈልግ",
+    "filter": "አጣራ",
+    "export": "ወደ ውጭ ላክ",
+    "import": "ከውጭ አስገባ",
+    "upload": "አስቀምጥ",
+    "download": "አውርድ",
+    "view": "ይመልከቱ",
+    "close": "ዝጋ",
+    "submit": "አስገባ",
+    "next": "ቀጣይ",
+    "previous": "ቀደም ያለው",
+    "create": "ፍጠር"
+  },
+  "common": {
+    "name": "ስም",
+    "email": "ኢሜይል",
+    "phone": "ስልክ",
+    "status": "ሁኔታ",
+    "date": "ቀን",
+    "description": "መግለጫ",
+    "notes": "ማስታወሻዎች",
+    "category": "ምድብ",
+    "type": "ዓይነት",
+    "priority": "ቅድሚያ",
+    "assignee": "ተመድበው",
+    "dueDate": "የመጨረሻ ቀን",
+    "createdAt": "የተፈጠረበት ቀን",
+    "updatedAt": "የተዘመነበት ቀን",
+    "loading": "በመስራት ላይ...",
+    "noData": "ምንም መረጃ የለም",
+    "error": "ስህተት",
+    "success": "ተሳክቷል"
+  },
+  "person": {
+    "firstName": "ስም",
+    "lastName": "የአባት ስም",
+    "fullName": "ሙሉ ስም",
+    "nationality": "ዜግነት",
+    "passportNo": "የፓስፖርት ቁጥር",
+    "guardian": "አሳዳጊ",
+    "dependents": "ጥገኞች",
+    "addDependent": "ጥገኛ ጨምር",
+    "createPerson": "ሰው ፍጠር",
+    "editPerson": "ሰው አርትዕ",
+    "viewPerson": "ሰው ይመልከቱ",
+    "deletePerson": "ሰው ሰርዝ"
+  },
+  "permit": {
+    "permit": "ፈቃድ",
+    "permits": "ፈቃዶች",
+    "category": "የፈቃድ ምድብ",
+    "status": "የፈቃድ ሁኔታ",
+    "person": "ሰው",
+    "checklist": "የማረጋገጫ ዝርዝር",
+    "createPermit": "ፈቃድ ፍጠር",
+    "editPermit": "ፈቃድ አርትዕ",
+    "viewPermit": "ፈቃድ ይመልከቱ",
+    "deletePermit": "ፈቃድ ሰርዝ",
+    "categories": {
+      "WORK_PERMIT": "የስራ ፈቃድ",
+      "RESIDENCE_ID": "የመኖሪያ መለያ",
+      "LICENSE": "የሙያ ፍቃድ (ጤና ሚኒስቴር)",
+      "PIP": "ቅድመ-ማስመጣት ፈቃድ (ኢፌዳ)"
+    },
+    "statuses": {
+      "PENDING": "በመጠባበቅ ላይ",
+      "SUBMITTED": "ቀርቧል",
+      "APPROVED": "ፀድቋል",
+      "REJECTED": "ውድቅ ተደርጓል",
+      "EXPIRED": "ጊዜው አልፏል"
+    },
+    "expiringIn": "በ{{days}} ቀናት ውስጥ ጊዜው ያልፋል",
+    "expired": "ጊዜው አልፏል",
+    "submitPermit": "ፈቃድ አስገባ",
+    "approvePermit": "ፈቃድ ፀድቅ",
+    "rejectPermit": "ፈቃድ ውድቅ አድርግ"
+  },
+  "task": {
+    "task": "ተግባር",
+    "tasks": "ተግባራት",
+    "createTask": "ተግባር ፍጠር",
+    "editTask": "ተግባር አርትዕ",
+    "viewTask": "ተግባር ይመልከቱ",
+    "deleteTask": "ተግባር ሰርዝ",
+    "assignTask": "ተግባር መድብ",
+    "completeTask": "ተግባር አጠናቅ",
+    "statuses": {
+      "pending": "በመጠባበቅ ላይ",
+      "in-progress": "በሂደት ላይ",
+      "completed": "ተጠናቅቋል",
+      "urgent": "አስቸኳይ"
+    },
+    "priorities": {
+      "low": "ዝቅተኛ",
+      "medium": "መካከለኛ",
+      "high": "ከፍተኛ"
+    }
+  },
+  "document": {
+    "document": "ሰነድ",
+    "documents": "ሰነዶች",
+    "uploadDocument": "ሰነድ አስቀምጥ",
+    "viewDocument": "ሰነድ ይመልከቱ",
+    "downloadDocument": "ሰነድ አውርድ",
+    "deleteDocument": "ሰነድ ሰርዝ",
+    "fileType": "የፋይል ዓይነት",
+    "fileSize": "የፋይል መጠን",
+    "issuedBy": "የተሰጠው በ",
+    "issueDate": "የተሰጠበት ቀን",
+    "expiryDate": "የመጨረሻ ቀን",
+    "number": "የሰነድ ቁጥር",
+    "types": {
+      "passport": "ፓስፖርት",
+      "birth_certificate": "የልደት ሰርተፊኬት",
+      "marriage_certificate": "የጋብቻ ሰርተፊኬት",
+      "contract": "የስራ ውል",
+      "visa": "ቪዛ",
+      "other": "ሌላ"
+    }
+  },
+  "checklist": {
+    "checklist": "የማረጋገጫ ዝርዝር",
+    "items": "የዝርዝር ንጥሎች",
+    "completed": "ተጠናቅቋል",
+    "pending": "በመጠባበቅ ላይ",
+    "required": "አስፈላጊ",
+    "optional": "አማራጭ",
+    "hint": "ፍንጭ",
+    "markComplete": "እንደተጠናቀቀ ምልክት አድርግ"
+  },
+  "auth": {
+    "login": "ግባ",
+    "logout": "ውጣ",
+    "email": "ኢሜይል",
+    "password": "የይለፍ ቃል",
+    "forgotPassword": "የይለፍ ቃል ረሱ?",
+    "rememberMe": "አስታውሰኝ",
+    "signIn": "ግባ",
+    "signOut": "ውጣ",
+    "unauthorized": "ያልተፈቀደ",
+    "forbidden": "የተከለከለ - ፈቃድ የለዎትም"
+  },
+  "roles": {
+    "ADMIN": "አስተዳዳሪ",
+    "HR": "የሰው ኃይል አስተዳዳሪ",
+    "LOGISTICS": "የሎጂስቲክስ አስተዳዳሪ",
+    "FINANCE": "የፋይናንስ አስተዳዳሪ",
+    "USER": "ተጠቃሚ"
+  },
+  "calendar": {
+    "ethiopian": "የኢትዮጵያ ቀን መቁጠሪያ",
+    "gregorian": "የግሪጎሪያን ቀን መቁጠሪያ",
+    "today": "ዛሬ",
+    "months": {
+      "1": "መስከረም",
+      "2": "ጥቅምት",
+      "3": "ኅዳር",
+      "4": "ታኅሳስ",
+      "5": "ጥር",
+      "6": "የካቲት",
+      "7": "መጋቢት",
+      "8": "ሚያዝያ",
+      "9": "ግንቦት",
+      "10": "ሰኔ",
+      "11": "ኃምሌ",
+      "12": "ነሐሴ",
+      "13": "ጳጉሜን"
+    }
+  },
+  "export": {
+    "exportCSV": "እንደ CSV ላክ",
+    "exportPDF": "እንደ PDF ላክ",
+    "monthly": "ወርሃዊ ሪፖርት",
+    "expiringPermits": "ጊዜው ያለፈ ፈቃዶች ሪፖርት",
+    "dhis2": "DHIS2 መላኪያ"
+  },
+  "dashboard": {
+    "welcome": "እንኳን ደህና መጡ ሶዶ ሆስፒታል ኦፕስ",
+    "expiringPermits": "በቅርቡ ጊዜው የሚያልፉ ፈቃዶች",
+    "upcomingTasks": "መጪ ተግባራት",
+    "recentActivity": "የቅርብ ጊዜ እንቅስቃሴ",
+    "statistics": "ስታቲስቲክስ",
+    "viewAll": "ሁሉንም ይመልከቱ"
+  },
+  "validation": {
+    "required": "ይህ መስክ አስፈላጊ ነው",
+    "invalidEmail": "ልክ ያልሆነ ኢሜይል አድራሻ",
+    "invalidPhone": "ልክ ያልሆነ ስልክ ቁጥር",
+    "invalidDate": "ልክ ያልሆነ ቀን",
+    "minLength": "ዝቅተኛ ርዝመት {{min}} ቁምፊዎች ነው",
+    "maxLength": "ከፍተኛ ርዝመት {{max}} ቁምፊዎች ነው"
+  },
+  "messages": {
+    "saveSuccess": "በተሳካ ሁኔታ ተቀምጧል",
+    "deleteSuccess": "በተሳካ ሁኔታ ተሰርዟል",
+    "createSuccess": "በተሳካ ሁኔታ ተፈጥሯል",
+    "updateSuccess": "በተሳካ ሁኔታ ተዘምኗል",
+    "errorOccurred": "ስህተት ተከስቷል",
+    "confirmDelete": "ይህን ንጥል መሰረዝ እርግጠኛ ነዎት?",
+    "unsavedChanges": "ያልተቀመጡ ለውጦች አሉዎት። መውጣት እርግጠኛ ነዎት?"
+  }
+}

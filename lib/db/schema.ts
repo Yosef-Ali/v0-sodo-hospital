@@ -5,14 +5,19 @@ import { relations } from "drizzle-orm"
 export const taskStatusEnum = pgEnum("task_status", ["pending", "in-progress", "completed", "urgent"])
 export const taskPriorityEnum = pgEnum("task_priority", ["low", "medium", "high"])
 export const documentStatusEnum = pgEnum("document_status", ["pending", "approved", "review"])
+export const userRoleEnum = pgEnum("user_role", ["ADMIN", "HR", "LOGISTICS", "FINANCE", "USER"])
+export const permitCategoryEnum = pgEnum("permit_category", ["WORK_PERMIT", "RESIDENCE_ID", "LICENSE", "PIP"])
+export const permitStatusEnum = pgEnum("permit_status", ["PENDING", "SUBMITTED", "APPROVED", "REJECTED", "EXPIRED"])
 
 // Users table (minimal - main auth handled by Stack Auth)
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   stackAuthId: varchar("stack_auth_id", { length: 255 }).unique(),
-  email: varchar("email", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
   name: varchar("name", { length: 255 }),
-  role: varchar("role", { length: 100 }),
+  password: varchar("password", { length: 255 }), // bcrypt hashed for email/password auth
+  role: userRoleEnum("role").default("USER").notNull(),
+  locale: varchar("locale", { length: 10 }).default("en"), // for i18n preference
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -112,6 +117,87 @@ export const teamMembers = pgTable("team_members", {
   userId: uuid("user_id").references(() => users.id).notNull(),
   role: varchar("role", { length: 100 }),
   joinedAt: timestamp("joined_at").defaultNow().notNull(),
+})
+
+// ============ MVP ENTITIES ============
+
+// People table (hospital staff, patients, dependents)
+export const people = pgTable("people", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  firstName: varchar("first_name", { length: 255 }).notNull(),
+  lastName: varchar("last_name", { length: 255 }).notNull(),
+  nationality: varchar("nationality", { length: 100 }),
+  passportNo: varchar("passport_no", { length: 100 }),
+  phone: varchar("phone", { length: 50 }),
+  email: varchar("email", { length: 255 }),
+  guardianId: uuid("guardian_id").references((): any => people.id), // self-reference for dependents
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Permits table (work permits, residence, licenses, etc)
+export const permits = pgTable("permits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  category: permitCategoryEnum("category").notNull(),
+  status: permitStatusEnum("status").default("PENDING").notNull(),
+  personId: uuid("person_id").references(() => people.id).notNull(),
+  dueDate: timestamp("due_date"), // Gregorian UTC
+  dueDateEC: varchar("due_date_ec", { length: 20 }), // Ethiopian calendar "YYYY-MM-DD"
+  checklistId: uuid("checklist_id").references(() => checklists.id),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Checklists table (permit requirements)
+export const checklists = pgTable("checklists", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }).notNull(),
+  items: jsonb("items").$type<Array<{ label: string; required: boolean; hint?: string }>>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
+// Permit history table (audit trail)
+export const permitHistory = pgTable("permit_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  permitId: uuid("permit_id").references(() => permits.id).notNull(),
+  fromStatus: permitStatusEnum("from_status").notNull(),
+  toStatus: permitStatusEnum("to_status").notNull(),
+  changedBy: uuid("changed_by").references(() => users.id).notNull(),
+  notes: text("notes"),
+  changedAt: timestamp("changed_at").defaultNow().notNull(),
+})
+
+// Update Tasks to link to permits
+export const tasksV2 = pgTable("tasks_v2", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  status: taskStatusEnum("status").default("pending").notNull(),
+  priority: taskPriorityEnum("priority").default("medium").notNull(),
+  dueDate: timestamp("due_date"),
+  assigneeId: uuid("assignee_id").references(() => users.id),
+  permitId: uuid("permit_id").references(() => permits.id), // NEW: link to permit
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+})
+
+// Update Documents to link to people
+export const documentsV2 = pgTable("documents_v2", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  type: varchar("type", { length: 100 }).notNull(), // passport, birth_certificate, etc.
+  title: varchar("title", { length: 500 }),
+  issuedBy: varchar("issued_by", { length: 255 }),
+  number: varchar("number", { length: 100 }),
+  issueDate: timestamp("issue_date"),
+  expiryDate: timestamp("expiry_date"),
+  fileUrl: text("file_url"),
+  fileSize: integer("file_size"), // bytes
+  mimeType: varchar("mime_type", { length: 100 }),
+  personId: uuid("person_id").references(() => people.id), // NEW: owner is a person
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 
 // Relations
@@ -221,6 +307,64 @@ export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
   }),
 }))
 
+// MVP Relations
+export const peopleRelations = relations(people, ({ one, many }) => ({
+  guardian: one(people, {
+    fields: [people.guardianId],
+    references: [people.id],
+    relationName: "dependents",
+  }),
+  dependents: many(people, { relationName: "dependents" }),
+  permits: many(permits),
+  documents: many(documentsV2),
+}))
+
+export const permitsRelations = relations(permits, ({ one, many }) => ({
+  person: one(people, {
+    fields: [permits.personId],
+    references: [people.id],
+  }),
+  checklist: one(checklists, {
+    fields: [permits.checklistId],
+    references: [checklists.id],
+  }),
+  tasks: many(tasksV2),
+  history: many(permitHistory),
+}))
+
+export const checklistsRelations = relations(checklists, ({ many }) => ({
+  permits: many(permits),
+}))
+
+export const permitHistoryRelations = relations(permitHistory, ({ one }) => ({
+  permit: one(permits, {
+    fields: [permitHistory.permitId],
+    references: [permits.id],
+  }),
+  user: one(users, {
+    fields: [permitHistory.changedBy],
+    references: [users.id],
+  }),
+}))
+
+export const tasksV2Relations = relations(tasksV2, ({ one }) => ({
+  assignee: one(users, {
+    fields: [tasksV2.assigneeId],
+    references: [users.id],
+  }),
+  permit: one(permits, {
+    fields: [tasksV2.permitId],
+    references: [permits.id],
+  }),
+}))
+
+export const documentsV2Relations = relations(documentsV2, ({ one }) => ({
+  person: one(people, {
+    fields: [documentsV2.personId],
+    references: [people.id],
+  }),
+}))
+
 // Type exports
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -240,3 +384,17 @@ export type Comment = typeof comments.$inferSelect
 export type NewComment = typeof comments.$inferInsert
 export type TeamMember = typeof teamMembers.$inferSelect
 export type NewTeamMember = typeof teamMembers.$inferInsert
+
+// MVP Type exports
+export type Person = typeof people.$inferSelect
+export type NewPerson = typeof people.$inferInsert
+export type Permit = typeof permits.$inferSelect
+export type NewPermit = typeof permits.$inferInsert
+export type Checklist = typeof checklists.$inferSelect
+export type NewChecklist = typeof checklists.$inferInsert
+export type PermitHistory = typeof permitHistory.$inferSelect
+export type NewPermitHistory = typeof permitHistory.$inferInsert
+export type TaskV2 = typeof tasksV2.$inferSelect
+export type NewTaskV2 = typeof tasksV2.$inferInsert
+export type DocumentV2 = typeof documentsV2.$inferSelect
+export type NewDocumentV2 = typeof documentsV2.$inferInsert

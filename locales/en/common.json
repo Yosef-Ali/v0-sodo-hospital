@@ -1,0 +1,225 @@
+{
+  "app": {
+    "title": "Soddo Hospital Ops",
+    "tagline": "Ethiopian Hospital Operations Management"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "people": "People",
+    "permits": "Permits",
+    "tasks": "Tasks",
+    "documents": "Documents",
+    "reports": "Reports",
+    "settings": "Settings",
+    "teams": "Teams",
+    "departments": "Departments"
+  },
+  "actions": {
+    "add": "Add",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "upload": "Upload",
+    "download": "Download",
+    "view": "View",
+    "close": "Close",
+    "submit": "Submit",
+    "next": "Next",
+    "previous": "Previous",
+    "create": "Create"
+  },
+  "common": {
+    "name": "Name",
+    "email": "Email",
+    "phone": "Phone",
+    "status": "Status",
+    "date": "Date",
+    "description": "Description",
+    "notes": "Notes",
+    "category": "Category",
+    "type": "Type",
+    "priority": "Priority",
+    "assignee": "Assignee",
+    "dueDate": "Due Date",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "loading": "Loading...",
+    "noData": "No data available",
+    "error": "Error",
+    "success": "Success"
+  },
+  "person": {
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "fullName": "Full Name",
+    "nationality": "Nationality",
+    "passportNo": "Passport Number",
+    "guardian": "Guardian",
+    "dependents": "Dependents",
+    "addDependent": "Add Dependent",
+    "createPerson": "Create Person",
+    "editPerson": "Edit Person",
+    "viewPerson": "View Person",
+    "deletePerson": "Delete Person"
+  },
+  "permit": {
+    "permit": "Permit",
+    "permits": "Permits",
+    "category": "Permit Category",
+    "status": "Permit Status",
+    "person": "Person",
+    "checklist": "Checklist",
+    "createPermit": "Create Permit",
+    "editPermit": "Edit Permit",
+    "viewPermit": "View Permit",
+    "deletePermit": "Delete Permit",
+    "categories": {
+      "WORK_PERMIT": "Work Permit",
+      "RESIDENCE_ID": "Residence ID",
+      "LICENSE": "Professional License (MOH)",
+      "PIP": "Pre-Import Permit (EFDA)"
+    },
+    "statuses": {
+      "PENDING": "Pending",
+      "SUBMITTED": "Submitted",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "EXPIRED": "Expired"
+    },
+    "expiringIn": "Expiring in {{days}} days",
+    "expired": "Expired",
+    "submitPermit": "Submit Permit",
+    "approvePermit": "Approve Permit",
+    "rejectPermit": "Reject Permit"
+  },
+  "task": {
+    "task": "Task",
+    "tasks": "Tasks",
+    "createTask": "Create Task",
+    "editTask": "Edit Task",
+    "viewTask": "View Task",
+    "deleteTask": "Delete Task",
+    "assignTask": "Assign Task",
+    "completeTask": "Complete Task",
+    "statuses": {
+      "pending": "Pending",
+      "in-progress": "In Progress",
+      "completed": "Completed",
+      "urgent": "Urgent"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    }
+  },
+  "document": {
+    "document": "Document",
+    "documents": "Documents",
+    "uploadDocument": "Upload Document",
+    "viewDocument": "View Document",
+    "downloadDocument": "Download Document",
+    "deleteDocument": "Delete Document",
+    "fileType": "File Type",
+    "fileSize": "File Size",
+    "issuedBy": "Issued By",
+    "issueDate": "Issue Date",
+    "expiryDate": "Expiry Date",
+    "number": "Document Number",
+    "types": {
+      "passport": "Passport",
+      "birth_certificate": "Birth Certificate",
+      "marriage_certificate": "Marriage Certificate",
+      "contract": "Employment Contract",
+      "visa": "Visa",
+      "other": "Other"
+    }
+  },
+  "checklist": {
+    "checklist": "Checklist",
+    "items": "Checklist Items",
+    "completed": "Completed",
+    "pending": "Pending",
+    "required": "Required",
+    "optional": "Optional",
+    "hint": "Hint",
+    "markComplete": "Mark Complete"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password?",
+    "rememberMe": "Remember Me",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Forbidden - You don't have permission"
+  },
+  "roles": {
+    "ADMIN": "Administrator",
+    "HR": "HR Manager",
+    "LOGISTICS": "Logistics Manager",
+    "FINANCE": "Finance Manager",
+    "USER": "User"
+  },
+  "calendar": {
+    "ethiopian": "Ethiopian Calendar",
+    "gregorian": "Gregorian Calendar",
+    "today": "Today",
+    "months": {
+      "1": "Meskerem",
+      "2": "Tikimt",
+      "3": "Hidar",
+      "4": "Tahsas",
+      "5": "Tir",
+      "6": "Yekatit",
+      "7": "Megabit",
+      "8": "Miazia",
+      "9": "Ginbot",
+      "10": "Sene",
+      "11": "Hamle",
+      "12": "Nehase",
+      "13": "Pagumen"
+    }
+  },
+  "export": {
+    "exportCSV": "Export as CSV",
+    "exportPDF": "Export as PDF",
+    "monthly": "Monthly Report",
+    "expiringPermits": "Expiring Permits Report",
+    "dhis2": "DHIS2 Export"
+  },
+  "dashboard": {
+    "welcome": "Welcome to Soddo Hospital Ops",
+    "expiringPermits": "Permits Expiring Soon",
+    "upcomingTasks": "Upcoming Tasks",
+    "recentActivity": "Recent Activity",
+    "statistics": "Statistics",
+    "viewAll": "View All"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Invalid email address",
+    "invalidPhone": "Invalid phone number",
+    "invalidDate": "Invalid date",
+    "minLength": "Minimum length is {{min}} characters",
+    "maxLength": "Maximum length is {{max}} characters"
+  },
+  "messages": {
+    "saveSuccess": "Saved successfully",
+    "deleteSuccess": "Deleted successfully",
+    "createSuccess": "Created successfully",
+    "updateSuccess": "Updated successfully",
+    "errorOccurred": "An error occurred",
+    "confirmDelete": "Are you sure you want to delete this item?",
+    "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?"
+  }
+}
