@@ -195,7 +195,7 @@ export function TicketForm({ onSubmit, onCancel }: TicketFormProps) {
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
         >
           {isSubmitting ? (
             <>

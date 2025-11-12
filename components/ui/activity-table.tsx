@@ -15,19 +15,19 @@ export function ActivityTable() {
           <div className="flex-1">
             <div className="text-sm font-medium mb-1 text-gray-300">Authenticated</div>
             <div className="h-2 bg-gray-700 rounded-full">
-              <div className="h-2 bg-blue-500 rounded-full w-[40%]"></div>
+              <div className="h-2 bg-green-500 rounded-full w-[40%]"></div>
             </div>
           </div>
           <div className="flex-1">
             <div className="text-sm font-medium mb-1 text-gray-300">Under Review</div>
             <div className="h-2 bg-gray-700 rounded-full">
-              <div className="h-2 bg-blue-500 rounded-full w-[20%]"></div>
+              <div className="h-2 bg-green-500 rounded-full w-[20%]"></div>
             </div>
           </div>
           <div className="flex-1">
             <div className="text-sm font-medium mb-1 text-gray-300">Pending Submission</div>
             <div className="h-2 bg-gray-700 rounded-full">
-              <div className="h-2 bg-blue-500 rounded-full w-[10%]"></div>
+              <div className="h-2 bg-green-500 rounded-full w-[10%]"></div>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ function ActivityRow({ avatar, name, action, department, time, status }: Activit
               ? "bg-yellow-900 text-yellow-300"
               : status === "completed"
                 ? "bg-green-900 text-green-300"
-                : "bg-blue-900 text-blue-300"
+                : "bg-blue-900 text-green-300"
           }`}
         >
           {status}
