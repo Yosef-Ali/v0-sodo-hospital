@@ -15,6 +15,7 @@ import {
   LogIn,
   ChevronDown,
   LayoutGrid,
+  Calendar,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -60,6 +61,12 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
             icon={<LayoutGrid size={20} />}
             label="Kanban Board"
             active={pathname === "/tasks/kanban"}
+          />
+          <NavItem
+            href="/tasks/calendar"
+            icon={<Calendar size={20} />}
+            label="Calendar"
+            active={pathname === "/tasks/calendar"}
           />
           <NavItem
             href="/documents"
