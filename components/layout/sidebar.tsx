@@ -12,6 +12,7 @@ import {
   LogIn,
   UserCircle,
   ClipboardCheck,
+  Calendar,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -59,6 +60,7 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
             active={pathname === "/permits"}
           />
           <NavItem href="/tasks" icon={<CheckSquare size={20} />} label="Tasks" active={pathname === "/tasks"} />
+          <NavItem href="/calendar" icon={<Calendar size={20} />} label="Calendar" active={pathname === "/calendar"} />
           <NavItem href="/reports" icon={<BarChart size={20} />} label="Reports" active={pathname === "/reports"} />
           <NavItem href="/settings" icon={<Settings size={20} />} label="Settings" active={pathname === "/settings"} />
         </ul>
