@@ -1,18 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { PageHeader } from "@/components/ui/page-header"
 import { TaskCard } from "@/components/ui/task-card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Search, Filter, Plus, Calendar, SortAsc, Loader2 } from "lucide-react"
+import { Search, Filter, Plus, Calendar, SortAsc } from "lucide-react"
 import { TaskSheet } from "@/components/sheets/task-sheet"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { getTasks, getTaskStats, createTask } from "@/lib/actions/v2/tasks"
 
 // Task type definition
 export interface Task {
@@ -27,111 +26,158 @@ export interface Task {
   createdAt: string
 }
 
+// Sample tasks data
+const initialTasks: Task[] = [
+  {
+    id: "task-1",
+    title: "License Renewal Processing",
+    description: "Review and process hospital license renewal applications from various departments.",
+    status: "urgent",
+    dueDate: "2023-05-15",
+    assignee: "Dr. Samuel",
+    category: "Administrative",
+    priority: "high",
+    createdAt: "2023-05-01",
+  },
+  {
+    id: "task-2",
+    title: "Patient Record Verification",
+    description: "Verify and update patient records in the system to ensure accuracy and completeness.",
+    status: "in-progress",
+    dueDate: "2023-05-20",
+    assignee: "Nurse Johnson",
+    category: "Records",
+    priority: "medium",
+    createdAt: "2023-05-02",
+  },
+  {
+    id: "task-3",
+    title: "Medical Supply Inventory",
+    description: "Conduct inventory check of medical supplies and update the procurement list.",
+    status: "pending",
+    dueDate: "2023-05-25",
+    assignee: "Store Manager",
+    category: "Inventory",
+    priority: "low",
+    createdAt: "2023-05-03",
+  },
+  {
+    id: "task-4",
+    title: "Staff Training Documentation",
+    description: "Update training records for all staff who completed the recent infection control workshop.",
+    status: "completed",
+    dueDate: "2023-05-10",
+    assignee: "HR Director",
+    category: "Training",
+    priority: "medium",
+    createdAt: "2023-05-04",
+  },
+  {
+    id: "task-5",
+    title: "Equipment Maintenance Schedule",
+    description: "Create maintenance schedule for all critical medical equipment for the next quarter.",
+    status: "pending",
+    dueDate: "2023-05-18",
+    assignee: "Maintenance Head",
+    category: "Maintenance",
+    priority: "high",
+    createdAt: "2023-05-05",
+  },
+  {
+    id: "task-6",
+    title: "Insurance Claim Processing",
+    description: "Process pending insurance claims for patients treated in the last month.",
+    status: "in-progress",
+    dueDate: "2023-05-22",
+    assignee: "Finance Officer",
+    category: "Finance",
+    priority: "medium",
+    createdAt: "2023-05-06",
+  },
+  {
+    id: "task-7",
+    title: "Department Budget Review",
+    description: "Review and approve departmental budget proposals for the next fiscal year.",
+    status: "pending",
+    dueDate: "2023-06-15",
+    assignee: "Finance Director",
+    category: "Finance",
+    priority: "high",
+    createdAt: "2023-05-07",
+  },
+  {
+    id: "task-8",
+    title: "Medication Error Report",
+    description: "Compile and analyze medication error reports from all departments for the quality committee.",
+    status: "urgent",
+    dueDate: "2023-05-16",
+    assignee: "Quality Officer",
+    category: "Quality",
+    priority: "high",
+    createdAt: "2023-05-08",
+  },
+  {
+    id: "task-9",
+    title: "New Staff Orientation",
+    description: "Prepare orientation materials for new staff joining next week.",
+    status: "in-progress",
+    dueDate: "2023-05-19",
+    assignee: "HR Assistant",
+    category: "HR",
+    priority: "medium",
+    createdAt: "2023-05-09",
+  },
+]
+
 export function TasksPage() {
-  const [tasks, setTasks] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
-  const [taskCounts, setTaskCounts] = useState({
-    all: 0,
-    pending: 0,
-    "in-progress": 0,
-    completed: 0,
-    urgent: 0,
-  })
   const { toast } = useToast()
 
-  // Load tasks and stats on mount and when tab changes
-  useEffect(() => {
-    loadTasks()
-    loadStats()
-  }, [activeTab])
-
-  const loadTasks = async () => {
-    setLoading(true)
-
-    const filters: any = { limit: 100 }
-    if (activeTab !== "all") {
-      filters.status = activeTab
+  // Filter tasks based on active tab and search query
+  const filteredTasks = tasks.filter((task) => {
+    // Filter by tab
+    if (activeTab !== "all" && task.status !== activeTab) {
+      return false
     }
 
-    const result = await getTasks(filters)
-    if (result.success) {
-      setTasks(result.data)
+    // Filter by search query
+    if (
+      searchQuery &&
+      !task.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !task.description.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !task.assignee.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      !task.category.toLowerCase().includes(searchQuery.toLowerCase())
+    ) {
+      return false
     }
 
-    setLoading(false)
-  }
-
-  const loadStats = async () => {
-    const result = await getTaskStats()
-    if (result.success) {
-      setTaskCounts({
-        all: result.data.total,
-        pending: result.data.byStatus.pending,
-        "in-progress": result.data.byStatus["in-progress"],
-        completed: result.data.byStatus.completed,
-        urgent: result.data.byStatus.urgent,
-      })
-    }
-  }
-
-  // Filter tasks based on search query (tabs filtered by server)
-  const filteredTasks = tasks.filter((item) => {
-    const task = item.task
-    const person = item.person
-    const assignee = item.assignee
-
-    if (!searchQuery) return true
-
-    const searchLower = searchQuery.toLowerCase()
-
-    return (
-      task.title?.toLowerCase().includes(searchLower) ||
-      task.description?.toLowerCase().includes(searchLower) ||
-      assignee?.name?.toLowerCase().includes(searchLower) ||
-      person?.firstName?.toLowerCase().includes(searchLower) ||
-      person?.lastName?.toLowerCase().includes(searchLower)
-    )
+    return true
   })
 
-  // Handle adding a new task
-  const handleAddTask = async (newTaskData: Omit<Task, "id" | "createdAt">) => {
-    try {
-      const result = await createTask({
-        title: newTaskData.title,
-        description: newTaskData.description,
-        status: newTaskData.status,
-        priority: newTaskData.priority,
-        dueDate: new Date(newTaskData.dueDate),
-        // Note: assigneeId would need to be mapped from the person value
-        // For now, we'll leave it null - you can enhance this later
-        assigneeId: undefined,
-      })
+  // Count tasks by status
+  const taskCounts = {
+    all: tasks.length,
+    pending: tasks.filter((task) => task.status === "pending").length,
+    "in-progress": tasks.filter((task) => task.status === "in-progress").length,
+    completed: tasks.filter((task) => task.status === "completed").length,
+    urgent: tasks.filter((task) => task.status === "urgent").length,
+  }
 
-      if (result.success) {
-        toast({
-          title: "Task Created",
-          description: `"${newTaskData.title}" has been created successfully.`,
-        })
-        setIsSheetOpen(false)
-        loadTasks()
-        loadStats()
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to create task",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      })
-    }
+  // Handle adding a new task
+  const handleAddTask = (newTask: Omit<Task, "id" | "createdAt">) => {
+    const id = `task-${tasks.length + 1}`
+    const createdAt = new Date().toISOString().split("T")[0]
+
+    setTasks([...tasks, { id, createdAt, ...newTask }])
+    setIsSheetOpen(false)
+
+    toast({
+      title: "Task Created",
+      description: `"${newTask.title}" has been created successfully.`,
+    })
   }
 
   return (
@@ -216,11 +262,7 @@ export function TasksPage() {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-        </div>
-      ) : filteredTasks.length === 0 ? (
+      {filteredTasks.length === 0 ? (
         <div className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700 p-8 text-center">
           <div className="mx-auto w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center mb-4">
             <Search className="h-6 w-6 text-gray-400" />
@@ -238,24 +280,18 @@ export function TasksPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTasks.map((item) => {
-            const task = item.task
-            const assignee = item.assignee
-            const person = item.person
-
-            return (
-              <TaskCard
-                key={task.id}
-                title={task.title}
-                description={task.description || ""}
-                status={task.status}
-                dueDate={task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : ""}
-                assignee={assignee?.name || "Unassigned"}
-                category={person ? `${person.firstName} ${person.lastName}` : "General"}
-                priority={task.priority}
-              />
-            )
-          })}
+          {filteredTasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              title={task.title}
+              description={task.description}
+              status={task.status}
+              dueDate={task.dueDate}
+              assignee={task.assignee}
+              category={task.category}
+              priority={task.priority}
+            />
+          ))}
         </div>
       )}
 
