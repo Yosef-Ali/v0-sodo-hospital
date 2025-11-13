@@ -9,7 +9,7 @@ const getCachedDashboardData = unstable_cache(
     const [taskStatsResult, permitStatsResult, permitsResult] = await Promise.all([
       getTaskStats(),
       getPermitStats(),
-      getPermits({ limit: 10 })
+      getPermits({ limit: 5 })
     ])
 
     return {
