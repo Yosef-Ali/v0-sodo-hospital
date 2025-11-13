@@ -6,31 +6,8 @@ export function ActivityTable() {
   return (
     <div className="bg-gray-800 rounded-lg border border-gray-700 shadow-sm">
       <div className="p-4 border-b border-gray-700">
-        <h3 className="font-medium text-white">Document Processing Status</h3>
-        <p className="text-sm text-gray-400 mt-1">45 documents in process</p>
-      </div>
-
-      <div className="p-4 border-b border-gray-700">
-        <div className="flex space-x-4">
-          <div className="flex-1">
-            <div className="text-sm font-medium mb-1 text-gray-300">Authenticated</div>
-            <div className="h-2 bg-gray-700 rounded-full">
-              <div className="h-2 bg-green-500 rounded-full w-[40%]"></div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="text-sm font-medium mb-1 text-gray-300">Under Review</div>
-            <div className="h-2 bg-gray-700 rounded-full">
-              <div className="h-2 bg-green-500 rounded-full w-[20%]"></div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="text-sm font-medium mb-1 text-gray-300">Pending Submission</div>
-            <div className="h-2 bg-gray-700 rounded-full">
-              <div className="h-2 bg-green-500 rounded-full w-[10%]"></div>
-            </div>
-          </div>
-        </div>
+        <h3 className="font-medium text-white">Recent Activity</h3>
+        <p className="text-sm text-gray-400 mt-1">Latest system actions and updates</p>
       </div>
 
       <div className="overflow-x-auto">
