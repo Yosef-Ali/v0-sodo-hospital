@@ -20,7 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Plus } from "lucide-react"
+import { Plus, Loader2 } from "lucide-react"
+import { createCalendarEvent } from "@/lib/actions/v2/calendar-events"
+import { toast } from "sonner"
 
 interface NewEventSheetProps {
   selectedDate?: Date
@@ -28,6 +30,7 @@ interface NewEventSheetProps {
 
 export function NewEventSheet({ selectedDate }: NewEventSheetProps) {
   const [open, setOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
     type: "",
@@ -93,21 +96,55 @@ export function NewEventSheet({ selectedDate }: NewEventSheetProps) {
     { value: "person4", label: "Admin John Doe" },
   ]
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Event created:", formData)
-    // TODO: Save to database
-    setOpen(false)
-    // Reset form
-    setFormData({
-      title: "",
-      type: "",
-      date: "",
-      time: "",
-      relatedTo: "",
-      relatedItem: "",
-      notes: "",
-    })
+    setIsLoading(true)
+
+    try {
+      // Parse the date and time
+      const startDate = new Date(formData.date)
+      const allDay = formData.time === "all-day"
+
+      // Create the event data
+      const eventData = {
+        title: formData.title,
+        description: formData.notes || null,
+        type: formData.type as "permit" | "deadline" | "meeting" | "interview" | "other",
+        startDate,
+        endDate: null, // For now, single time slot events
+        startTime: allDay ? null : formData.time,
+        endTime: null,
+        allDay,
+        location: null,
+        relatedPersonId: formData.relatedItem || null,
+        relatedPermitId: null,
+        createdBy: null, // TODO: Add user ID from auth
+      }
+
+      const result = await createCalendarEvent(eventData)
+
+      if (result.success) {
+        toast.success("Event created successfully!")
+        setOpen(false)
+        // Reset form
+        setFormData({
+          title: "",
+          type: "",
+          date: selectedDate ? selectedDate.toISOString().split("T")[0] : "",
+          time: "",
+          relatedTo: "",
+          relatedItem: "",
+          notes: "",
+        })
+      } else {
+        toast.error(result.error || "Failed to create event")
+      }
+    } catch (error) {
+      console.error("Error creating event:", error)
+      toast.error("An unexpected error occurred")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -268,15 +305,23 @@ export function NewEventSheet({ selectedDate }: NewEventSheetProps) {
               variant="outline"
               onClick={() => setOpen(false)}
               className="flex-1 bg-gray-700 border-gray-600 hover:bg-gray-600"
+              disabled={isLoading}
             >
               Cancel
             </Button>
             <Button
               type="submit"
               className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!formData.type || !formData.title || !formData.date || !formData.time}
+              disabled={!formData.type || !formData.title || !formData.date || !formData.time || isLoading}
             >
-              Create Event
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Event"
+              )}
             </Button>
           </div>
         </form>

@@ -1,13 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { NewEventSheet } from "@/components/calendar/new-event-sheet"
+import { getCalendarEvents } from "@/lib/actions/v2/calendar-events"
+import type { CalendarEvent } from "@/lib/db/schema"
 
 export function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   const daysInMonth = new Date(
     currentDate.getFullYear(),
@@ -45,22 +49,33 @@ export function CalendarPage() {
     )
   }
 
-  // Sample events - you can replace with actual data
-  const events: Record<number, { title: string; time: string; type: string }[]> = {
-    5: [
-      { title: "Dr. Johnson Work Permit Review", time: "9:00 AM", type: "permit" },
-      { title: "Team Meeting", time: "2:00 PM", type: "meeting" },
-    ],
-    12: [
-      { title: "Nurse Garcia Residence ID Deadline", time: "All Day", type: "deadline" },
-    ],
-    18: [
-      { title: "License Application Review", time: "10:30 AM", type: "permit" },
-    ],
-    25: [
-      { title: "Monthly HR Review", time: "3:00 PM", type: "meeting" },
-    ],
-  }
+  // Fetch events for the current month
+  useEffect(() => {
+    async function fetchEvents() {
+      setIsLoading(true)
+      const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+      const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59)
+
+      const result = await getCalendarEvents({ startDate, endDate })
+      if (result.success && result.data) {
+        setEvents(result.data)
+      }
+      setIsLoading(false)
+    }
+
+    fetchEvents()
+  }, [currentDate])
+
+  // Group events by day
+  const eventsByDay: Record<number, CalendarEvent[]> = {}
+  events.forEach((event) => {
+    const eventDate = new Date(event.startDate)
+    const day = eventDate.getDate()
+    if (!eventsByDay[day]) {
+      eventsByDay[day] = []
+    }
+    eventsByDay[day].push(event)
+  })
 
   const getEventColor = (type: string) => {
     switch (type) {
@@ -70,6 +85,8 @@ export function CalendarPage() {
         return "bg-red-500/20 text-red-400 border-red-500/50"
       case "meeting":
         return "bg-green-500/20 text-green-400 border-green-500/50"
+      case "interview":
+        return "bg-purple-500/20 text-purple-400 border-purple-500/50"
       default:
         return "bg-gray-500/20 text-gray-400 border-gray-500/50"
     }
@@ -143,7 +160,7 @@ export function CalendarPage() {
             {/* Days of the month */}
             {Array.from({ length: daysInMonth }).map((_, index) => {
               const day = index + 1
-              const dayEvents = events[day] || []
+              const dayEvents = eventsByDay[day] || []
 
               return (
                 <div
@@ -164,17 +181,24 @@ export function CalendarPage() {
 
                   {/* Events for this day */}
                   <div className="space-y-1">
-                    {dayEvents.map((event, eventIndex) => (
-                      <div
-                        key={eventIndex}
-                        className={`text-xs p-1.5 rounded border ${getEventColor(
-                          event.type
-                        )} cursor-pointer hover:opacity-80 transition-opacity`}
-                      >
-                        <div className="font-medium truncate">{event.title}</div>
-                        <div className="text-xs opacity-75">{event.time}</div>
-                      </div>
-                    ))}
+                    {isLoading ? (
+                      <div className="text-xs text-gray-500">Loading...</div>
+                    ) : (
+                      dayEvents.map((event) => (
+                        <div
+                          key={event.id}
+                          className={`text-xs p-1.5 rounded border ${getEventColor(
+                            event.type
+                          )} cursor-pointer hover:opacity-80 transition-opacity`}
+                          title={event.description || ""}
+                        >
+                          <div className="font-medium truncate">{event.title}</div>
+                          <div className="text-xs opacity-75">
+                            {event.allDay ? "All Day" : event.startTime || ""}
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )
@@ -198,6 +222,10 @@ export function CalendarPage() {
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 rounded bg-green-500/40 border border-green-500/50" />
             <span className="text-gray-300">Meeting</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 rounded bg-purple-500/40 border border-purple-500/50" />
+            <span className="text-gray-300">Interview</span>
           </div>
         </div>
       </div>
