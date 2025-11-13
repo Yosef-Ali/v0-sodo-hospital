@@ -1,4 +1,4 @@
-import { db, users, checklists, people, permits } from "./index"
+import { db, users, checklists, people, permits, tasksV2, calendarEvents, activityLogs } from "./index"
 import bcrypt from "bcryptjs"
 
 async function seedMVP() {
@@ -317,12 +317,253 @@ async function seedMVP() {
 
     console.log("✓ Created 4 sample permits")
 
+    // Get created permits for tasks and calendar events
+    const allPermits = await db.query.permits.findMany()
+    const permit1 = allPermits[0]
+    const permit2 = allPermits[1]
+    const permit3 = allPermits[2]
+
+    // Seed sample tasks
+    console.log("Creating sample tasks...")
+
+    const taskData = [
+      {
+        title: "Review work permit documents for John Smith",
+        description: "Verify all required documents are complete and valid",
+        status: "pending" as const,
+        priority: "high" as const,
+        dueDate: new Date("2025-06-20"),
+        assigneeId: adminUser.id,
+        permitId: permit1?.id,
+        notes: "Urgent - submission deadline approaching",
+      },
+      {
+        title: "Submit residence ID application",
+        description: "Submit completed application to immigration office",
+        status: "in-progress" as const,
+        priority: "high" as const,
+        dueDate: new Date("2025-06-25"),
+        assigneeId: adminUser.id,
+        permitId: permit2?.id,
+        notes: "Documents ready for submission",
+      },
+      {
+        title: "Follow up on MOH license status",
+        description: "Contact Ministry of Health for application status update",
+        status: "pending" as const,
+        priority: "medium" as const,
+        dueDate: new Date("2025-06-30"),
+        assigneeId: adminUser.id,
+        permitId: allPermits[2]?.id,
+        notes: "Follow up every 2 weeks",
+      },
+      {
+        title: "Prepare documents for product import permit",
+        description: "Gather all required documentation for EFDA PIP application",
+        status: "pending" as const,
+        priority: "low" as const,
+        dueDate: new Date("2025-07-15"),
+        assigneeId: adminUser.id,
+        permitId: permit3?.id,
+      },
+      {
+        title: "Schedule medical examination for new staff",
+        description: "Arrange health certificate and required medical tests",
+        status: "completed" as const,
+        priority: "medium" as const,
+        dueDate: new Date("2025-05-15"),
+        assigneeId: adminUser.id,
+        completedAt: new Date("2025-05-14"),
+        notes: "Health certificate obtained",
+      },
+      {
+        title: "Renew work permit for existing staff member",
+        description: "Process work permit renewal 3 months before expiry",
+        status: "pending" as const,
+        priority: "urgent" as const,
+        dueDate: new Date("2025-05-20"),
+        assigneeId: adminUser.id,
+        notes: "Expiring soon - high priority",
+      },
+      {
+        title: "Translate educational certificates",
+        description: "Get official translation of degree certificates from home country",
+        status: "in-progress" as const,
+        priority: "medium" as const,
+        dueDate: new Date("2025-07-01"),
+        assigneeId: adminUser.id,
+      },
+      {
+        title: "Update staff residence permit database",
+        description: "Maintain current records of all staff residence permits",
+        status: "completed" as const,
+        priority: "low" as const,
+        dueDate: new Date("2025-05-10"),
+        assigneeId: adminUser.id,
+        completedAt: new Date("2025-05-09"),
+      },
+    ]
+
+    for (const task of taskData) {
+      await db.insert(tasksV2).values(task).onConflictDoNothing()
+    }
+
+    console.log("✓ Created 8 sample tasks")
+
+    // Seed calendar events
+    console.log("Creating calendar events...")
+
+    const eventData = [
+      {
+        title: "Work Permit Interview - John Smith",
+        description: "Interview at Ministry of Labor for work permit application",
+        type: "interview" as const,
+        startDate: new Date("2025-06-25T10:00:00"),
+        startTime: "10:00 AM",
+        endTime: "11:00 AM",
+        allDay: false,
+        location: "Ministry of Labor, Main Office",
+        relatedPersonId: person1?.id,
+        relatedPermitId: permit1?.id,
+        createdBy: adminUser.id,
+      },
+      {
+        title: "Residence ID Submission Deadline",
+        description: "Final date to submit residence ID application",
+        type: "deadline" as const,
+        startDate: new Date("2025-07-01T00:00:00"),
+        allDay: true,
+        relatedPersonId: person1?.id,
+        relatedPermitId: permit2?.id,
+        createdBy: adminUser.id,
+      },
+      {
+        title: "Team Meeting - Permit Status Review",
+        description: "Monthly review of all active permit applications",
+        type: "meeting" as const,
+        startDate: new Date("2025-06-18T14:00:00"),
+        startTime: "02:00 PM",
+        endTime: "03:30 PM",
+        allDay: false,
+        location: "HR Conference Room",
+        createdBy: adminUser.id,
+      },
+      {
+        title: "MOH License Expiry - Sarah Johnson",
+        description: "Ministry of Health license expiration date",
+        type: "permit" as const,
+        startDate: new Date("2025-12-31T00:00:00"),
+        allDay: true,
+        relatedPersonId: person2?.id,
+        relatedPermitId: allPermits[2]?.id,
+        createdBy: adminUser.id,
+      },
+      {
+        title: "EFDA Office Visit",
+        description: "Submit product import permit application in person",
+        type: "other" as const,
+        startDate: new Date("2025-06-30T09:00:00"),
+        startTime: "09:00 AM",
+        endTime: "10:00 AM",
+        allDay: false,
+        location: "EFDA Head Office, Addis Ababa",
+        relatedPersonId: person3?.id,
+        relatedPermitId: permit3?.id,
+        createdBy: adminUser.id,
+      },
+    ]
+
+    for (const event of eventData) {
+      await db.insert(calendarEvents).values(event).onConflictDoNothing()
+    }
+
+    console.log("✓ Created 5 calendar events")
+
+    // Seed activity logs
+    console.log("Creating activity logs...")
+
+    const activityData = [
+      {
+        userId: adminUser.id,
+        action: "Created work permit application",
+        entityType: "permit",
+        entityId: permit1?.id || crypto.randomUUID(),
+        details: { category: "WORK_PERMIT", status: "PENDING" },
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      },
+      {
+        userId: adminUser.id,
+        action: "Submitted residence ID application",
+        entityType: "permit",
+        entityId: permit2?.id || crypto.randomUUID(),
+        details: { category: "RESIDENCE_ID", status: "SUBMITTED" },
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
+      },
+      {
+        userId: adminUser.id,
+        action: "Approved MOH license",
+        entityType: "permit",
+        entityId: allPermits[2]?.id || crypto.randomUUID(),
+        details: { category: "LICENSE", status: "APPROVED" },
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24), // 1 day ago
+      },
+      {
+        userId: adminUser.id,
+        action: "Created task for document review",
+        entityType: "task",
+        entityId: crypto.randomUUID(),
+        details: { title: "Review work permit documents", priority: "high" },
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3), // 3 hours ago
+      },
+      {
+        userId: adminUser.id,
+        action: "Completed medical examination task",
+        entityType: "task",
+        entityId: crypto.randomUUID(),
+        details: { title: "Schedule medical examination", status: "completed" },
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
+      },
+      {
+        userId: adminUser.id,
+        action: "Created calendar event for interview",
+        entityType: "calendar_event",
+        entityId: crypto.randomUUID(),
+        details: { title: "Work Permit Interview - John Smith", type: "interview" },
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
+      },
+      {
+        userId: adminUser.id,
+        action: "Updated permit status",
+        entityType: "permit",
+        entityId: permit1?.id || crypto.randomUUID(),
+        details: { from: "PENDING", to: "SUBMITTED" },
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6), // 6 hours ago
+      },
+      {
+        userId: adminUser.id,
+        action: "Added new person to database",
+        entityType: "person",
+        entityId: person1?.id || crypto.randomUUID(),
+        details: { name: "John Smith", nationality: "United Kingdom" },
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
+      },
+    ]
+
+    for (const activity of activityData) {
+      await db.insert(activityLogs).values(activity).onConflictDoNothing()
+    }
+
+    console.log("✓ Created 8 activity logs")
+
     console.log("✅ MVP database seeded successfully!")
     console.log("\n📋 Summary:")
     console.log("  - Admin user: admin@example.org / Admin123!")
     console.log("  - 4 permit checklists created")
     console.log("  - 4 sample people (1 with dependent)")
     console.log("  - 4 sample permits across all categories")
+    console.log("  - 8 sample tasks (pending, in-progress, completed, urgent)")
+    console.log("  - 5 calendar events (meetings, deadlines, interviews)")
+    console.log("  - 8 activity logs for recent actions")
   } catch (error) {
     console.error("❌ Error seeding MVP database:", error)
     throw error
