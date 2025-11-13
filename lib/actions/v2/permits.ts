@@ -1,9 +1,37 @@
 "use server"
 
 import { db, permits, people, checklists, permitHistory, tasksV2, users, type Permit, type NewPermit, type PermitHistory } from "@/lib/db"
-import { eq, desc, and, gte, lte, sql, or } from "drizzle-orm"
+import { eq, desc, and, gte, lte, lt, sql, or } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { gregorianToEC, formatEC } from "@/lib/dates/ethiopian"
+import { addDays, subDays } from "date-fns"
+
+export interface PermitStatsSummary {
+  total: number
+  byStatus: {
+    PENDING: number
+    SUBMITTED: number
+    APPROVED: number
+    REJECTED: number
+    EXPIRED: number
+  }
+  byCategory: {
+    WORK_PERMIT: number
+    RESIDENCE_ID: number
+    LICENSE: number
+    PIP: number
+  }
+  trends: {
+    PENDING: number
+    SUBMITTED: number
+    APPROVED: number
+    REJECTED: number
+    EXPIRED: number
+    total: number
+  }
+  expiringSoonCount: number
+  backlogOlderThan30Days: number
+}
 
 /**
  * Get all permits with optional filters and pagination
@@ -423,7 +451,7 @@ export async function getExpiringPermits(daysAhead: number = 30) {
 /**
  * Get permit statistics
  */
-export async function getPermitStats() {
+export async function getPermitStats(): Promise<{ success: true; data: PermitStatsSummary } | { success: false; error: string }> {
   try {
     const stats = await db
       .select({
@@ -434,19 +462,91 @@ export async function getPermitStats() {
       .from(permits)
       .groupBy(permits.status, permits.category)
 
-    // Aggregate by status
     const byStatus = stats.reduce((acc, stat) => {
       acc[stat.status] = (acc[stat.status] || 0) + stat.count
       return acc
     }, {} as Record<string, number>)
 
-    // Aggregate by category
     const byCategory = stats.reduce((acc, stat) => {
       acc[stat.category] = (acc[stat.category] || 0) + stat.count
       return acc
     }, {} as Record<string, number>)
 
     const total = stats.reduce((sum, stat) => sum + stat.count, 0)
+
+    const now = new Date()
+    const currentWindowStart = subDays(now, 7)
+    const previousWindowStart = subDays(currentWindowStart, 7)
+
+    const currentWindow = await db
+      .select({
+        status: permits.status,
+        count: sql<number>`cast(count(*) as integer)`,
+      })
+      .from(permits)
+      .where(and(gte(permits.createdAt, currentWindowStart), lte(permits.createdAt, now)))
+      .groupBy(permits.status)
+
+    const previousWindow = await db
+      .select({
+        status: permits.status,
+        count: sql<number>`cast(count(*) as integer)`,
+      })
+      .from(permits)
+      .where(and(gte(permits.createdAt, previousWindowStart), lt(permits.createdAt, currentWindowStart)))
+      .groupBy(permits.status)
+
+    const toRecord = (rows: { status: string; count: number }[]) =>
+      rows.reduce((acc, row) => {
+        acc[row.status] = row.count
+        return acc
+      }, {} as Record<string, number>)
+
+    const currentWindowCounts = toRecord(currentWindow)
+    const previousWindowCounts = toRecord(previousWindow)
+
+    const currentWindowTotal = Object.values(currentWindowCounts).reduce((acc, value) => acc + value, 0)
+    const previousWindowTotal = Object.values(previousWindowCounts).reduce((acc, value) => acc + value, 0)
+
+    const percentChange = (current: number, previous: number) => {
+      if (previous === 0) {
+        return current === 0 ? 0 : 100
+      }
+      return ((current - previous) / previous) * 100
+    }
+
+    const expiringSoonResult = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(permits)
+      .where(
+        and(
+          sql`${permits.dueDate} IS NOT NULL`,
+          lte(permits.dueDate, addDays(now, 14)),
+          gte(permits.dueDate, now),
+          or(eq(permits.status, "PENDING"), eq(permits.status, "SUBMITTED"))
+        )
+      )
+      .limit(1)
+
+    const backlogResult = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(permits)
+      .where(
+        and(
+          lt(permits.createdAt, subDays(now, 30)),
+          or(eq(permits.status, "PENDING"), eq(permits.status, "SUBMITTED"))
+        )
+      )
+      .limit(1)
+
+    const trends = {
+      PENDING: percentChange(currentWindowCounts.PENDING || 0, previousWindowCounts.PENDING || 0),
+      SUBMITTED: percentChange(currentWindowCounts.SUBMITTED || 0, previousWindowCounts.SUBMITTED || 0),
+      APPROVED: percentChange(currentWindowCounts.APPROVED || 0, previousWindowCounts.APPROVED || 0),
+      REJECTED: percentChange(currentWindowCounts.REJECTED || 0, previousWindowCounts.REJECTED || 0),
+      EXPIRED: percentChange(currentWindowCounts.EXPIRED || 0, previousWindowCounts.EXPIRED || 0),
+      total: percentChange(currentWindowTotal, previousWindowTotal),
+    }
 
     return {
       success: true,
@@ -465,6 +565,9 @@ export async function getPermitStats() {
           LICENSE: byCategory.LICENSE || 0,
           PIP: byCategory.PIP || 0,
         },
+        trends,
+        expiringSoonCount: expiringSoonResult[0]?.count || 0,
+        backlogOlderThan30Days: backlogResult[0]?.count || 0,
       },
     }
   } catch (error) {
