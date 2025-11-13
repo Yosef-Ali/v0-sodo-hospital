@@ -2,35 +2,37 @@ import { MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Avatar } from "@/components/ui/avatar"
 
-export function ActivityTable() {
+interface ActivityTableProps {
+  activities: any[]
+}
+
+export function ActivityTable({ activities = [] }: ActivityTableProps) {
+  // Format time ago
+  const formatTimeAgo = (date: Date) => {
+    const now = new Date()
+    const diffMs = now.getTime() - new Date(date).getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return "just now"
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? "s" : ""} ago`
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`
+    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`
+  }
+
+  // Map activity types to status badges
+  const getActivityStatus = (action: string) => {
+    if (action.includes("created") || action.includes("submitted")) return "pending"
+    if (action.includes("completed") || action.includes("approved")) return "completed"
+    return "in-progress"
+  }
+
   return (
     <div className="bg-gray-800 rounded-lg border border-gray-700 shadow-sm">
       <div className="p-4 border-b border-gray-700">
-        <h3 className="font-medium text-white">Document Processing Status</h3>
-        <p className="text-sm text-gray-400 mt-1">45 documents in process</p>
-      </div>
-
-      <div className="p-4 border-b border-gray-700">
-        <div className="flex space-x-4">
-          <div className="flex-1">
-            <div className="text-sm font-medium mb-1 text-gray-300">Authenticated</div>
-            <div className="h-2 bg-gray-700 rounded-full">
-              <div className="h-2 bg-green-500 rounded-full w-[40%]"></div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="text-sm font-medium mb-1 text-gray-300">Under Review</div>
-            <div className="h-2 bg-gray-700 rounded-full">
-              <div className="h-2 bg-green-500 rounded-full w-[20%]"></div>
-            </div>
-          </div>
-          <div className="flex-1">
-            <div className="text-sm font-medium mb-1 text-gray-300">Pending Submission</div>
-            <div className="h-2 bg-gray-700 rounded-full">
-              <div className="h-2 bg-green-500 rounded-full w-[10%]"></div>
-            </div>
-          </div>
-        </div>
+        <h3 className="font-medium text-white">Recent Activity</h3>
+        <p className="text-sm text-gray-400 mt-1">{activities.length} recent activities</p>
       </div>
 
       <div className="overflow-x-auto">
@@ -40,7 +42,7 @@ export function ActivityTable() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">User</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Action</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Department
+                Entity Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Time</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
@@ -50,41 +52,37 @@ export function ActivityTable() {
             </tr>
           </thead>
           <tbody className="bg-gray-800 divide-y divide-gray-700">
-            <ActivityRow
-              avatar="/placeholder.svg?height=40&width=40"
-              name="Bethel Admin"
-              action="submitted license renewal application"
-              department="License Processing"
-              time="2 minutes ago"
-              status="pending"
-            />
-            <ActivityRow
-              avatar="/placeholder.svg?height=40&width=40"
-              name="Kalkidan"
-              action="generated support letter"
-              department="Document Processing"
-              time="1 hour ago"
-              status="completed"
-            />
-            <ActivityRow
-              avatar="/placeholder.svg?height=40&width=40"
-              name="Samuel"
-              action="uploaded authenticated documents"
-              department="Document Authentication"
-              time="3 hours ago"
-              status="in-progress"
-            />
+            {activities.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
+                  No recent activity
+                </td>
+              </tr>
+            ) : (
+              activities.map((item) => (
+                <ActivityRow
+                  key={item.activity.id}
+                  avatar="/placeholder.svg?height=40&width=40"
+                  name={item.user?.name || "Unknown User"}
+                  action={item.activity.action}
+                  department={item.activity.entityType}
+                  time={formatTimeAgo(item.activity.createdAt)}
+                  status={getActivityStatus(item.activity.action)}
+                />
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       <div className="px-6 py-3 flex items-center justify-between border-t border-gray-700">
-        <div className="text-sm text-gray-400">Showing 1-10 of 45 tasks</div>
+        <div className="text-sm text-gray-400">Showing {Math.min(activities.length, 10)} of {activities.length} activities</div>
         <div className="flex space-x-2">
           <Button
             variant="outline"
             size="sm"
             className="text-sm font-normal border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-300"
+            disabled
           >
             Previous
           </Button>
@@ -92,6 +90,7 @@ export function ActivityTable() {
             variant="outline"
             size="sm"
             className="text-sm font-normal border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-300"
+            disabled
           >
             Next
           </Button>
