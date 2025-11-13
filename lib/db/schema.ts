@@ -8,6 +8,7 @@ export const documentStatusEnum = pgEnum("document_status", ["pending", "approve
 export const userRoleEnum = pgEnum("user_role", ["ADMIN", "HR_MANAGER", "HR", "LOGISTICS", "FINANCE", "USER"])
 export const permitCategoryEnum = pgEnum("permit_category", ["WORK_PERMIT", "RESIDENCE_ID", "LICENSE", "PIP"])
 export const permitStatusEnum = pgEnum("permit_status", ["PENDING", "SUBMITTED", "APPROVED", "REJECTED", "EXPIRED"])
+export const eventTypeEnum = pgEnum("event_type", ["permit", "deadline", "meeting", "interview", "other"])
 
 // Users table (minimal - main auth handled by Stack Auth)
 export const users = pgTable("users", {
@@ -221,6 +222,25 @@ export const documentsV2 = pgTable("documents_v2", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 
+// Calendar Events table
+export const calendarEvents = pgTable("calendar_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  type: eventTypeEnum("type").notNull(),
+  startDate: timestamp("start_date").notNull(), // Gregorian UTC
+  endDate: timestamp("end_date"),
+  startTime: varchar("start_time", { length: 10 }), // "09:00 AM" format
+  endTime: varchar("end_time", { length: 10 }),
+  allDay: boolean("all_day").default(false).notNull(),
+  location: varchar("location", { length: 255 }),
+  relatedPersonId: uuid("related_person_id").references(() => people.id), // optional link to person
+  relatedPermitId: uuid("related_permit_id").references(() => permits.id), // optional link to permit
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   assignedTasks: many(tasks, { relationName: "assignee" }),
@@ -402,6 +422,21 @@ export const documentsV2Relations = relations(documentsV2, ({ one }) => ({
   }),
 }))
 
+export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
+  relatedPerson: one(people, {
+    fields: [calendarEvents.relatedPersonId],
+    references: [people.id],
+  }),
+  relatedPermit: one(permits, {
+    fields: [calendarEvents.relatedPermitId],
+    references: [permits.id],
+  }),
+  createdBy: one(users, {
+    fields: [calendarEvents.createdBy],
+    references: [users.id],
+  }),
+}))
+
 // Type exports
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -437,3 +472,5 @@ export type TaskV2 = typeof tasksV2.$inferSelect
 export type NewTaskV2 = typeof tasksV2.$inferInsert
 export type DocumentV2 = typeof documentsV2.$inferSelect
 export type NewDocumentV2 = typeof documentsV2.$inferInsert
+export type CalendarEvent = typeof calendarEvents.$inferSelect
+export type NewCalendarEvent = typeof calendarEvents.$inferInsert

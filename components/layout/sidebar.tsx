@@ -7,17 +7,12 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   CheckSquare,
-  FileText,
-  Users,
   BarChart,
-  Building2,
   Settings,
   LogIn,
-  ChevronDown,
-  LayoutGrid,
-  Calendar,
   UserCircle,
   ClipboardCheck,
+  Calendar,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -57,40 +52,16 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto py-4 relative z-10">
         <ul className="space-y-1 px-2">
           <NavItem href="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" active={pathname === "/dashboard"} />
-          <NavItem href="/tasks" icon={<CheckSquare size={20} />} label="Tasks" active={pathname === "/tasks"} />
-          <NavItem
-            href="/tasks/kanban"
-            icon={<LayoutGrid size={20} />}
-            label="Kanban Board"
-            active={pathname === "/tasks/kanban"}
-          />
-          <NavItem
-            href="/tasks/calendar"
-            icon={<Calendar size={20} />}
-            label="Calendar"
-            active={pathname === "/tasks/calendar"}
-          />
-          <NavItem
-            href="/documents"
-            icon={<FileText size={20} />}
-            label="Documents"
-            active={pathname === "/documents"}
-          />
+          <NavItem href="/people" icon={<UserCircle size={20} />} label="People" active={pathname === "/people"} />
           <NavItem
             href="/permits"
             icon={<ClipboardCheck size={20} />}
             label="Permits"
             active={pathname === "/permits"}
           />
-          <NavItem href="/people" icon={<UserCircle size={20} />} label="People" active={pathname === "/people"} />
-          <NavItem href="/teams" icon={<Users size={20} />} label="Teams" active={pathname === "/teams"} />
+          <NavItem href="/tasks" icon={<CheckSquare size={20} />} label="Tasks" active={pathname === "/tasks"} />
+          <NavItem href="/calendar" icon={<Calendar size={20} />} label="Calendar" active={pathname === "/calendar"} />
           <NavItem href="/reports" icon={<BarChart size={20} />} label="Reports" active={pathname === "/reports"} />
-          <NavItem
-            href="/departments"
-            icon={<Building2 size={20} />}
-            label="Departments"
-            active={pathname === "/departments"}
-          />
           <NavItem href="/settings" icon={<Settings size={20} />} label="Settings" active={pathname === "/settings"} />
         </ul>
       </nav>
@@ -103,21 +74,6 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
           <LogIn className="mr-2" size={16} />
           SIGN IN
         </Link>
-      </div>
-
-      <div className="p-4 border-t border-gray-700/50 relative z-10">
-        <div className="text-sm font-medium text-gray-400 mb-2">Popular Categories</div>
-        <ul className="space-y-1">
-          <PopularItem label="Administrative" count={45} />
-          <PopularItem label="Clinical" count={32} />
-          <PopularItem label="Financial" count={28} />
-          <PopularItem label="HR" count={19} />
-          <PopularItem label="Compliance" count={15} />
-        </ul>
-        <button className="text-sm text-gray-400 hover:text-gray-300 mt-2 flex items-center">
-          Show more
-          <ChevronDown size={14} className="ml-1" />
-        </button>
       </div>
     </div>
   )
@@ -143,27 +99,6 @@ function NavItem({ href, label, icon, active }: NavItemProps) {
       >
         <span className={`mr-3 ${active ? "text-green-400" : ""}`}>{icon}</span>
         <span>{label}</span>
-      </Link>
-    </li>
-  )
-}
-
-interface PopularItemProps {
-  label: string
-  count: number
-}
-
-function PopularItem({ label, count }: PopularItemProps) {
-  return (
-    <li>
-      <Link
-        href="#"
-        className="flex items-center justify-between px-2 py-1 text-sm text-gray-400 hover:text-white rounded transition-all duration-200 hover:bg-gradient-to-r hover:from-green-900/20 hover:to-green-800/20"
-      >
-        <span>{label}</span>
-        <span className="text-xs bg-gradient-to-r from-green-900/60 to-green-800/60 px-1.5 py-0.5 rounded">
-          {count}
-        </span>
       </Link>
     </li>
   )

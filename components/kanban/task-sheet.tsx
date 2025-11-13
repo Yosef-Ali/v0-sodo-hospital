@@ -28,18 +28,70 @@ export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
     category: "",
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+  // Predefined options
+  const categories = [
+    { value: "work_permit", label: "Work Permit" },
+    { value: "residence_id", label: "Residence ID" },
+    { value: "license", label: "Professional License" },
+    { value: "document_verification", label: "Document Verification" },
+    { value: "interview", label: "Interview" },
+    { value: "onboarding", label: "Onboarding" },
+  ]
+
+  const quickTitles: Record<string, string[]> = {
+    work_permit: [
+      "Review Work Permit Application",
+      "Submit Work Permit Documents",
+      "Follow up on Work Permit Status",
+      "Renew Work Permit",
+    ],
+    residence_id: [
+      "Review Residence ID Application",
+      "Submit Residence ID Documents",
+      "Follow up on Residence ID Status",
+      "Renew Residence ID",
+    ],
+    license: [
+      "Review License Application",
+      "Submit License Documents",
+      "Schedule License Exam",
+      "Renew Professional License",
+    ],
+    document_verification: [
+      "Verify Educational Certificates",
+      "Verify Employment Contract",
+      "Verify Health Certificate",
+      "Verify Passport Copy",
+    ],
+    interview: [
+      "Conduct Candidate Interview",
+      "Conduct Exit Interview",
+      "Conduct Performance Review",
+    ],
+    onboarding: [
+      "Prepare Onboarding Materials",
+      "Conduct Orientation Session",
+      "Complete HR Paperwork",
+    ],
   }
 
-  const handleSelectChange = (name: string, value: string) => {
+  // Sample people - you can fetch from database
+  const people = [
+    { value: "person1", label: "Dr. Sarah Johnson" },
+    { value: "person2", label: "Nurse Maria Garcia" },
+    { value: "person3", label: "Dr. Ahmed Hassan" },
+    { value: "person4", label: "Admin John Doe" },
+  ]
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSubmit(formData)
+    onOpenChange(false)
 
     // Reset form
     setFormData({
@@ -64,105 +116,174 @@ export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-6">
+          {/* Category */}
           <div className="space-y-2">
-            <Label htmlFor="title">Task Title</Label>
-            <Input
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              placeholder="Enter task title"
-              className="bg-gray-700 border-gray-600"
-              required
-            />
+            <Label htmlFor="category" className="text-gray-300">
+              Category *
+            </Label>
+            <Select
+              value={formData.category}
+              onValueChange={(value) => setFormData({ ...formData, category: value, title: "" })}
+            >
+              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                {categories.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value} className="text-white">
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
+          {/* Quick Title Selection (based on category) */}
+          {formData.category && (
+            <div className="space-y-2">
+              <Label htmlFor="title" className="text-gray-300">
+                Task Title *
+              </Label>
+              <Select
+                value={formData.title}
+                onValueChange={(value) => setFormData({ ...formData, title: value })}
+              >
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select or type custom title" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {quickTitles[formData.category]?.map((title) => (
+                    <SelectItem key={title} value={title} className="text-white">
+                      {title}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="custom" className="text-white">
+                    + Custom Title
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Custom title input */}
+              {formData.title === "custom" && (
+                <Input
+                  placeholder="Enter custom title"
+                  className="bg-gray-700 border-gray-600 text-white mt-2"
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description" className="text-gray-300">
+              Description *
+            </Label>
             <Textarea
               id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
               placeholder="Enter task description"
-              className="bg-gray-700 border-gray-600 min-h-[100px]"
+              className="bg-gray-700 border-gray-600 text-white min-h-[100px]"
               required
             />
           </div>
 
+          {/* Status and Priority */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => handleSelectChange("status", value)}>
-                <SelectTrigger className="bg-gray-700 border-gray-600">
+              <Label htmlFor="status" className="text-gray-300">
+                Status *
+              </Label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) => setFormData({ ...formData, status: value })}
+              >
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="pending" className="text-white">Pending</SelectItem>
+                  <SelectItem value="in-progress" className="text-white">In Progress</SelectItem>
+                  <SelectItem value="completed" className="text-white">Completed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select value={formData.priority} onValueChange={(value) => handleSelectChange("priority", value)}>
-                <SelectTrigger className="bg-gray-700 border-gray-600">
+              <Label htmlFor="priority" className="text-gray-300">
+                Priority *
+              </Label>
+              <Select
+                value={formData.priority}
+                onValueChange={(value) => setFormData({ ...formData, priority: value })}
+              >
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-700 border-gray-600">
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="low" className="text-white">Low</SelectItem>
+                  <SelectItem value="medium" className="text-white">Medium</SelectItem>
+                  <SelectItem value="high" className="text-white">High</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
+          {/* Due Date */}
           <div className="space-y-2">
-            <Label htmlFor="dueDate">Due Date</Label>
+            <Label htmlFor="dueDate" className="text-gray-300">
+              Due Date *
+            </Label>
             <Input
               id="dueDate"
               name="dueDate"
               type="date"
               value={formData.dueDate}
               onChange={handleChange}
-              className="bg-gray-700 border-gray-600"
+              className="bg-gray-700 border-gray-600 text-white"
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="assignee">Assignee</Label>
-              <Input
-                id="assignee"
-                name="assignee"
-                value={formData.assignee}
-                onChange={handleChange}
-                placeholder="Enter assignee name"
-                className="bg-gray-700 border-gray-600"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                placeholder="Enter category"
-                className="bg-gray-700 border-gray-600"
-                required
-              />
-            </div>
+          {/* Assignee */}
+          <div className="space-y-2">
+            <Label htmlFor="assignee" className="text-gray-300">
+              Assignee *
+            </Label>
+            <Select
+              value={formData.assignee}
+              onValueChange={(value) => setFormData({ ...formData, assignee: value })}
+            >
+              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                <SelectValue placeholder="Select assignee" />
+              </SelectTrigger>
+              <SelectContent className="bg-gray-700 border-gray-600">
+                {people.map((person) => (
+                  <SelectItem key={person.value} value={person.value} className="text-white">
+                    {person.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <SheetFooter>
-            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
+          {/* Actions */}
+          <SheetFooter className="gap-3 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="flex-1 bg-gray-700 border-gray-600 hover:bg-gray-600"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="flex-1 bg-green-600 hover:bg-green-700"
+              disabled={!formData.category || !formData.title || !formData.description || !formData.assignee}
+            >
               Create Task
             </Button>
           </SheetFooter>
