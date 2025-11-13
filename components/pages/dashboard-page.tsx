@@ -67,9 +67,21 @@ export function DashboardPage() {
           change="+12.5%"
           changeType="positive"
           items={[
-            { label: "Work Permits", value: String(permitStats.byCategory?.WORK_PERMIT || 0) },
-            { label: "Residence IDs", value: String(permitStats.byCategory?.RESIDENCE_ID || 0) },
-            { label: "Licenses", value: String(permitStats.byCategory?.LICENSE || 0) },
+            {
+              label: "Work Permits",
+              value: String(permitStats.byCategory?.WORK_PERMIT || 0),
+              action: { text: "View", link: "/permits?category=WORK_PERMIT" }
+            },
+            {
+              label: "Residence IDs",
+              value: String(permitStats.byCategory?.RESIDENCE_ID || 0),
+              action: { text: "View", link: "/permits?category=RESIDENCE_ID" }
+            },
+            {
+              label: "Licenses",
+              value: String(permitStats.byCategory?.LICENSE || 0),
+              action: { text: "View", link: "/permits?category=LICENSE" }
+            },
           ]}
           footer={`${permitStats.byStatus?.PENDING || 0} permits pending review`}
           buttonText="View Details"
@@ -84,9 +96,21 @@ export function DashboardPage() {
           change={String(permitStats.byStatus?.APPROVED || 0)}
           changeType="positive"
           items={[
-            { label: "Approved", value: String(permitStats.byStatus?.APPROVED || 0) },
-            { label: "Rejected", value: String(permitStats.byStatus?.REJECTED || 0) },
-            { label: "Expired", value: String(permitStats.byStatus?.EXPIRED || 0) },
+            {
+              label: "Approved",
+              value: String(permitStats.byStatus?.APPROVED || 0),
+              action: { text: "View", link: "/permits?status=APPROVED" }
+            },
+            {
+              label: "Rejected",
+              value: String(permitStats.byStatus?.REJECTED || 0),
+              action: { text: "View", link: "/permits?status=REJECTED" }
+            },
+            {
+              label: "Expired",
+              value: String(permitStats.byStatus?.EXPIRED || 0),
+              action: { text: "View", link: "/permits?status=EXPIRED" }
+            },
           ]}
           footer={`${taskStats.byStatus?.urgent || 0} urgent tasks`}
           buttonText="View Details"
@@ -101,9 +125,21 @@ export function DashboardPage() {
           change={`-${Math.max(0, (taskStats.byStatus?.completed || 0))}%`}
           changeType="negative"
           items={[
-            { label: "Urgent Tasks", value: String(taskStats.byStatus?.urgent || 0) },
-            { label: "In Progress", value: String(taskStats.byStatus?.["in-progress"] || 0) },
-            { label: "Pending", value: String(taskStats.byStatus?.pending || 0) },
+            {
+              label: "Urgent Tasks",
+              value: String(taskStats.byStatus?.urgent || 0),
+              action: { text: "View", link: "/tasks?status=urgent" }
+            },
+            {
+              label: "In Progress",
+              value: String(taskStats.byStatus?.["in-progress"] || 0),
+              action: { text: "View", link: "/tasks?status=in-progress" }
+            },
+            {
+              label: "Pending",
+              value: String(taskStats.byStatus?.pending || 0),
+              action: { text: "View", link: "/tasks?status=pending" }
+            },
           ]}
           footer={`${Math.max(0, Math.floor((taskStats.byStatus?.completed || 0) / (taskStats.total || 1) * 100))}% tasks completed`}
           buttonText="View Details"
