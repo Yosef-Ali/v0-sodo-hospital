@@ -50,8 +50,30 @@ const statusColors: Record<string, string> = {
   EXPIRED: "bg-gray-100 text-gray-800",
 }
 
+const statusLayouts: Array<{
+  key: "APPROVED" | "SUBMITTED" | "PENDING" | "REJECTED" | "EXPIRED"
+  label: string
+  color: string
+}> = [
+  { key: "APPROVED", label: "Authenticated", color: "bg-emerald-500" },
+  { key: "SUBMITTED", label: "Under Review", color: "bg-sky-500" },
+  { key: "PENDING", label: "Pending Submission", color: "bg-amber-500" },
+]
+
 export function DocumentProcessingTable({ initialPermits }: DocumentProcessingTableProps) {
   const permits = initialPermits
+  const total = permits.length
+
+  const statusCounts = statusLayouts.reduce<Record<string, number>>((acc, layout) => {
+    const count = permits.filter((item) => item.permit.status === layout.key).length
+    acc[layout.key] = count
+    return acc
+  }, {})
+
+  const getPercent = (count: number) => {
+    if (!total) return 0
+    return Math.round((count / total) * 100)
+  }
 
   const formatDate = (date: Date | null) => {
     if (!date) return "-"
@@ -74,9 +96,29 @@ export function DocumentProcessingTable({ initialPermits }: DocumentProcessingTa
       {/* Header */}
       <div className="p-4 border-b border-gray-700">
         <h3 className="font-medium text-white">Document Processing Status</h3>
-        <p className="text-sm text-gray-400 mt-1">
-          {permits.length} documents in process
-        </p>
+        <p className="text-sm text-gray-400 mt-1">{total} documents in process</p>
+      </div>
+
+      {/* Progress Bars */}
+      <div className="p-4 border-b border-gray-700">
+        <div className="flex space-x-4">
+          {statusLayouts.map((layout) => {
+            const count = statusCounts[layout.key] ?? 0
+            const percent = getPercent(count)
+
+            return (
+              <div key={layout.key} className="flex-1">
+                <div className="text-sm font-medium mb-1 text-gray-300">{layout.label}</div>
+                <div className="h-2 bg-gray-700 rounded-full">
+                  <div
+                    className={`h-2 rounded-full ${layout.color}`}
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {/* Table */}
