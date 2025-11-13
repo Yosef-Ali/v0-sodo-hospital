@@ -1,9 +1,38 @@
 "use server"
 
 import { db, tasksV2, users, permits, people, type TaskV2, type NewTaskV2 } from "@/lib/db"
-import { eq, desc, and, gte, lte, sql, or, isNull } from "drizzle-orm"
+import { eq, desc, and, gte, lte, lt, sql, or, isNull } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { gregorianToEC, formatEC } from "@/lib/dates/ethiopian"
+import { addDays, subDays } from "date-fns"
+
+export interface TaskStatsSummary {
+  total: number
+  byStatus: {
+    pending: number
+    "in-progress": number
+    completed: number
+    urgent: number
+  }
+  byPriority: {
+    low: number
+    medium: number
+    high: number
+  }
+  trends: {
+    pending: number
+    "in-progress": number
+    completed: number
+    urgent: number
+    total: number
+  }
+  completionRate: {
+    current: number
+    change: number
+  }
+  dueSoonCount: number
+  overdueCount: number
+}
 
 /**
  * Get all tasks with optional filters and pagination
@@ -361,7 +390,7 @@ export async function getTasksByPermit(permitId: string) {
 /**
  * Get task statistics
  */
-export async function getTaskStats() {
+export async function getTaskStats(): Promise<{ success: true; data: TaskStatsSummary } | { success: false; error: string }> {
   try {
     const stats = await db
       .select({
@@ -372,19 +401,98 @@ export async function getTaskStats() {
       .from(tasksV2)
       .groupBy(tasksV2.status, tasksV2.priority)
 
-    // Aggregate by status
     const byStatus = stats.reduce((acc, stat) => {
       acc[stat.status] = (acc[stat.status] || 0) + stat.count
       return acc
     }, {} as Record<string, number>)
 
-    // Aggregate by priority
     const byPriority = stats.reduce((acc, stat) => {
       acc[stat.priority] = (acc[stat.priority] || 0) + stat.count
       return acc
     }, {} as Record<string, number>)
 
     const total = stats.reduce((sum, stat) => sum + stat.count, 0)
+
+    const now = new Date()
+    const currentWindowStart = subDays(now, 7)
+    const previousWindowStart = subDays(currentWindowStart, 7)
+
+    const currentWindow = await db
+      .select({
+        status: tasksV2.status,
+        count: sql<number>`cast(count(*) as integer)`,
+      })
+      .from(tasksV2)
+      .where(and(gte(tasksV2.createdAt, currentWindowStart), lte(tasksV2.createdAt, now)))
+      .groupBy(tasksV2.status)
+
+    const previousWindow = await db
+      .select({
+        status: tasksV2.status,
+        count: sql<number>`cast(count(*) as integer)`,
+      })
+      .from(tasksV2)
+      .where(and(gte(tasksV2.createdAt, previousWindowStart), lt(tasksV2.createdAt, currentWindowStart)))
+      .groupBy(tasksV2.status)
+
+    const toRecord = (rows: { status: string; count: number }[]) =>
+      rows.reduce((acc, row) => {
+        acc[row.status] = row.count
+        return acc
+      }, {} as Record<string, number>)
+
+    const currentWindowCounts = toRecord(currentWindow)
+    const previousWindowCounts = toRecord(previousWindow)
+
+    const currentWindowTotal = Object.values(currentWindowCounts).reduce((acc, value) => acc + value, 0)
+    const previousWindowTotal = Object.values(previousWindowCounts).reduce((acc, value) => acc + value, 0)
+
+    const percentChange = (current: number, previous: number) => {
+      if (previous === 0) {
+        return current === 0 ? 0 : 100
+      }
+      return ((current - previous) / previous) * 100
+    }
+
+    const overdueCountResult = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(tasksV2)
+      .where(
+        and(
+          sql`${tasksV2.dueDate} IS NOT NULL`,
+          lt(tasksV2.dueDate, now),
+          or(eq(tasksV2.status, "pending"), eq(tasksV2.status, "in-progress"), eq(tasksV2.status, "urgent"))
+        )
+      )
+      .limit(1)
+
+    const dueSoonCountResult = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(tasksV2)
+      .where(
+        and(
+          sql`${tasksV2.dueDate} IS NOT NULL`,
+          gte(tasksV2.dueDate, now),
+          lte(tasksV2.dueDate, addDays(now, 3)),
+          or(eq(tasksV2.status, "pending"), eq(tasksV2.status, "in-progress"), eq(tasksV2.status, "urgent"))
+        )
+      )
+      .limit(1)
+
+    const currentCompletionRate = total === 0 ? 0 : ((byStatus.completed || 0) / total) * 100
+    const previousCompletionRate =
+      previousWindowTotal === 0
+        ? 0
+        : ((previousWindowCounts.completed || 0) / previousWindowTotal) * 100
+    const completionRateChange = currentCompletionRate - previousCompletionRate
+
+    const trends = {
+      pending: percentChange(currentWindowCounts.pending || 0, previousWindowCounts.pending || 0),
+      "in-progress": percentChange(currentWindowCounts["in-progress"] || 0, previousWindowCounts["in-progress"] || 0),
+      completed: percentChange(currentWindowCounts.completed || 0, previousWindowCounts.completed || 0),
+      urgent: percentChange(currentWindowCounts.urgent || 0, previousWindowCounts.urgent || 0),
+      total: percentChange(currentWindowTotal, previousWindowTotal),
+    }
 
     return {
       success: true,
@@ -401,6 +509,13 @@ export async function getTaskStats() {
           medium: byPriority.medium || 0,
           high: byPriority.high || 0,
         },
+        trends,
+        completionRate: {
+          current: currentCompletionRate,
+          change: completionRateChange,
+        },
+        dueSoonCount: dueSoonCountResult[0]?.count || 0,
+        overdueCount: overdueCountResult[0]?.count || 0,
       },
     }
   } catch (error) {
