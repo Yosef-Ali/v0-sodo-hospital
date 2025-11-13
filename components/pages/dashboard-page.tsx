@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { PageHeader } from "@/components/ui/page-header"
 import { StatusCard } from "@/components/ui/status-card"
 import { MetricCard } from "@/components/ui/metric-card"
+import { DocumentProcessingTable } from "@/components/ui/document-processing-table"
 import { FileText, Clock, AlertCircle } from "lucide-react"
 import { ActivityTable } from "@/components/ui/activity-table"
 import { getTaskStats } from "@/lib/actions/v2/tasks"
@@ -145,6 +146,11 @@ export function DashboardPage() {
           buttonText="View Details"
           buttonLink="/tasks"
         />
+      </div>
+
+      {/* Document Processing Status Table */}
+      <div className="mb-6">
+        <DocumentProcessingTable />
       </div>
 
       <ActivityTable />

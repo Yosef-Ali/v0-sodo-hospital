@@ -1,6 +1,6 @@
 import type React from "react"
 import { ChevronUp, ChevronDown } from "lucide-react"
-import Link from "next/link"
+import Link from "next/link" // For footer button link only
 
 interface MetricCardProps {
   icon: React.ReactNode
@@ -9,7 +9,7 @@ interface MetricCardProps {
   subtext: string
   change: string
   changeType: "positive" | "negative" | "neutral"
-  items: { label: string; value: string; action?: { text: string; link: string } }[]
+  items: { label: string; value: string }[]
   footer: string
   buttonText: string
   buttonLink: string
@@ -63,14 +63,7 @@ export function MetricCard({
             <div className="flex-1">
               <div className="text-sm text-gray-400">{item.label}</div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="text-sm font-medium text-white">{item.value}</div>
-              {item.action && (
-                <Link href={item.action.link} className="text-xs text-blue-400 hover:text-blue-300 font-medium whitespace-nowrap">
-                  {item.action.text}
-                </Link>
-              )}
-            </div>
+            <div className="text-sm font-medium text-white">{item.value}</div>
           </div>
         ))}
       </div>
