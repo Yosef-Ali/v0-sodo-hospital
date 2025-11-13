@@ -1,9 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   Popover,
   PopoverContent,
@@ -11,7 +9,6 @@ import {
 } from "@/components/ui/popover"
 import { MoreHorizontal, Eye, Edit2, Trash2, CheckCircle } from "lucide-react"
 import Link from "next/link"
-import { getPermits } from "@/lib/actions/v2/permits"
 
 interface Permit {
   permit: {
@@ -34,6 +31,10 @@ interface Permit {
   } | null
 }
 
+interface DocumentProcessingTableProps {
+  initialPermits: Permit[]
+}
+
 const categoryColors: Record<string, string> = {
   WORK_PERMIT: "bg-blue-100 text-blue-800",
   RESIDENCE_ID: "bg-purple-100 text-purple-800",
@@ -49,22 +50,8 @@ const statusColors: Record<string, string> = {
   EXPIRED: "bg-gray-100 text-gray-800",
 }
 
-export function DocumentProcessingTable() {
-  const [permits, setPermits] = useState<Permit[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    loadPermits()
-  }, [])
-
-  const loadPermits = async () => {
-    setLoading(true)
-    const result = await getPermits({ limit: 10 })
-    if (result.success) {
-      setPermits(result.data)
-    }
-    setLoading(false)
-  }
+export function DocumentProcessingTable({ initialPermits }: DocumentProcessingTableProps) {
+  const permits = initialPermits
 
   const formatDate = (date: Date | null) => {
     if (!date) return "-"
@@ -88,7 +75,7 @@ export function DocumentProcessingTable() {
       <div className="p-4 border-b border-gray-700">
         <h3 className="font-medium text-white">Document Processing Status</h3>
         <p className="text-sm text-gray-400 mt-1">
-          {loading ? "Loading..." : `${permits.length} documents in process`}
+          {permits.length} documents in process
         </p>
       </div>
 
@@ -118,31 +105,7 @@ export function DocumentProcessingTable() {
             </tr>
           </thead>
           <tbody className="bg-gray-800 divide-y divide-gray-700">
-            {loading ? (
-              // Loading skeleton rows
-              Array.from({ length: 5 }).map((_, idx) => (
-                <tr key={idx}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Skeleton className="h-6 w-24 bg-gray-700" />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Skeleton className="h-4 w-32 bg-gray-700" />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Skeleton className="h-6 w-20 bg-gray-700" />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Skeleton className="h-4 w-24 bg-gray-700" />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Skeleton className="h-4 w-24 bg-gray-700" />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <Skeleton className="h-8 w-8 bg-gray-700 rounded-md ml-auto" />
-                  </td>
-                </tr>
-              ))
-            ) : permits.length === 0 ? (
+            {permits.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-8 text-center text-gray-400">
                   No permits found
@@ -213,7 +176,7 @@ export function DocumentProcessingTable() {
       </div>
 
       {/* Footer with pagination */}
-      {!loading && permits.length > 0 && (
+      {permits.length > 0 && (
         <div className="px-6 py-3 flex items-center justify-between border-t border-gray-700">
           <div className="text-sm text-gray-400">Showing 1-{permits.length} of {permits.length} permits</div>
           <div className="flex space-x-2">

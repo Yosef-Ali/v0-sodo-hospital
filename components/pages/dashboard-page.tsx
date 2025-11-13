@@ -1,36 +1,22 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { PageHeader } from "@/components/ui/page-header"
 import { StatusCard } from "@/components/ui/status-card"
 import { MetricCard } from "@/components/ui/metric-card"
 import { DocumentProcessingTable } from "@/components/ui/document-processing-table"
 import { FileText, Clock, AlertCircle } from "lucide-react"
 import { ActivityTable } from "@/components/ui/activity-table"
-import { getTaskStats } from "@/lib/actions/v2/tasks"
-import { getPermitStats } from "@/lib/actions/v2/permits"
 
-export function DashboardPage() {
-  const [taskStats, setTaskStats] = useState<any>({ byStatus: {}, total: 0 })
-  const [permitStats, setPermitStats] = useState<any>({ byStatus: {}, byCategory: {}, total: 0 })
-
-  useEffect(() => {
-    loadDashboardData()
-  }, [])
-
-  const loadDashboardData = async () => {
-    // Load task stats
-    const taskStatsResult = await getTaskStats()
-    if (taskStatsResult.success) {
-      setTaskStats(taskStatsResult.data)
-    }
-
-    // Load permit stats
-    const permitStatsResult = await getPermitStats()
-    if (permitStatsResult.success) {
-      setPermitStats(permitStatsResult.data)
-    }
+interface DashboardPageProps {
+  initialData: {
+    taskStats: any
+    permitStats: any
+    permits: any[]
   }
+}
+
+export function DashboardPage({ initialData }: DashboardPageProps) {
+  const { taskStats, permitStats, permits } = initialData
 
   return (
     <div className="p-8">
@@ -150,7 +136,7 @@ export function DashboardPage() {
 
       {/* Document Processing Status Table */}
       <div className="mb-6">
-        <DocumentProcessingTable />
+        <DocumentProcessingTable initialPermits={permits} />
       </div>
 
       <ActivityTable />
