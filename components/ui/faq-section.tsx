@@ -20,7 +20,7 @@ export function FAQSection() {
       {FAQ_ITEMS.map((categoryGroup, idx) => (
         <div key={idx} className="space-y-3">
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="border-blue-500 text-blue-400">
+            <Badge variant="outline" className="border-green-500 text-green-400">
               {categoryGroup.category}
             </Badge>
           </div>
@@ -32,7 +32,7 @@ export function FAQSection() {
                 value={`item-${idx}-${itemIdx}`}
                 className="border border-gray-700 rounded-lg px-4 bg-gray-800/50 hover:bg-gray-800 transition-colors"
               >
-                <AccordionTrigger className="text-left text-white hover:text-blue-400 hover:no-underline">
+                <AccordionTrigger className="text-left text-white hover:text-green-400 hover:no-underline">
                   {item.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-gray-400 pt-2">

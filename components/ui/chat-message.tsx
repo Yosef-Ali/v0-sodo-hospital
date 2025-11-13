@@ -111,7 +111,7 @@ export function ChatMessage({ message, onSuggestionClick }: ChatMessageProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => onSuggestionClick?.(suggestion)}
-                className="text-xs bg-gray-800 border-gray-700 hover:bg-gray-700 hover:border-blue-500 text-gray-300 hover:text-white transition-all"
+                className="text-xs bg-gray-800 border-gray-700 hover:bg-gray-700 hover:border-green-500 text-gray-300 hover:text-white transition-all"
               >
                 {suggestion}
               </Button>
