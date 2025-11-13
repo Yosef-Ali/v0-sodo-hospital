@@ -4,26 +4,19 @@ import { useEffect, useState } from "react"
 import { PageHeader } from "@/components/ui/page-header"
 import { Card } from "@/components/ui/card"
 import { FileText, Clock, AlertCircle, TrendingUp } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import { ActivityTable } from "@/components/ui/activity-table"
-import { getTaskStats, getTasks } from "@/lib/actions/v2/tasks"
-import { getPermitStats, getPermits } from "@/lib/actions/v2/permits"
-import Link from "next/link"
+import { getTaskStats } from "@/lib/actions/v2/tasks"
+import { getPermitStats } from "@/lib/actions/v2/permits"
 
 export function DashboardPage() {
   const [taskStats, setTaskStats] = useState<any>({ byStatus: {}, total: 0 })
   const [permitStats, setPermitStats] = useState<any>({ byStatus: {}, byCategory: {}, total: 0 })
-  const [tasks, setTasks] = useState<any[]>([])
-  const [permits, setPermits] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadDashboardData()
   }, [])
 
   const loadDashboardData = async () => {
-    setLoading(true)
-
     // Load task stats
     const taskStatsResult = await getTaskStats()
     if (taskStatsResult.success) {
@@ -34,52 +27,6 @@ export function DashboardPage() {
     const permitStatsResult = await getPermitStats()
     if (permitStatsResult.success) {
       setPermitStats(permitStatsResult.data)
-    }
-
-    // Load recent tasks
-    const tasksResult = await getTasks({ limit: 5 })
-    if (tasksResult.success) {
-      setTasks(tasksResult.data)
-    }
-
-    // Load recent permits
-    const permitsResult = await getPermits({ limit: 5 })
-    if (permitsResult.success) {
-      setPermits(permitsResult.data)
-    }
-
-    setLoading(false)
-  }
-
-  const getTaskStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-900 text-yellow-300"
-      case "in-progress":
-        return "bg-blue-900 text-blue-300"
-      case "completed":
-        return "bg-green-900 text-green-300"
-      case "urgent":
-        return "bg-red-900 text-red-300"
-      default:
-        return "bg-gray-700 text-gray-300"
-    }
-  }
-
-  const getPermitStatusColor = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "bg-yellow-900 text-yellow-300"
-      case "SUBMITTED":
-        return "bg-blue-900 text-blue-300"
-      case "APPROVED":
-        return "bg-green-900 text-green-300"
-      case "REJECTED":
-        return "bg-red-900 text-red-300"
-      case "EXPIRED":
-        return "bg-gray-700 text-gray-400"
-      default:
-        return "bg-gray-700 text-gray-300"
     }
   }
 
