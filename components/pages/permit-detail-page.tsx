@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -156,9 +157,129 @@ export function PermitDetailPage({ permitId }: PermitDetailPageProps) {
   if (loading) {
     return (
       <div className="p-8">
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-          <p className="text-gray-400 mt-4">{t("common.loading")}</p>
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <Skeleton className="h-9 w-20" />
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+          </div>
+          <Skeleton className="h-7 w-24" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content Skeleton */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Permit Information Card */}
+            <Card className="bg-gray-800 border-gray-700 p-6">
+              <Skeleton className="h-6 w-40 mb-4" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Skeleton className="h-4 w-16 mb-2" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+                <div>
+                  <Skeleton className="h-4 w-16 mb-2" />
+                  <Skeleton className="h-6 w-24" />
+                </div>
+                <div className="col-span-2">
+                  <Skeleton className="h-4 w-16 mb-2" />
+                  <div className="space-y-1">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Person Information Card */}
+            <Card className="bg-gray-800 border-gray-700 p-6">
+              <Skeleton className="h-6 w-40 mb-4" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Skeleton className="h-4 w-12 mb-2" />
+                  <Skeleton className="h-5 w-32" />
+                </div>
+                <div>
+                  <Skeleton className="h-4 w-20 mb-2" />
+                  <Skeleton className="h-5 w-24" />
+                </div>
+                <div>
+                  <Skeleton className="h-4 w-20 mb-2" />
+                  <Skeleton className="h-5 w-28" />
+                </div>
+                <div>
+                  <Skeleton className="h-4 w-12 mb-2" />
+                  <Skeleton className="h-5 w-36" />
+                </div>
+              </div>
+            </Card>
+
+            {/* Checklist Card */}
+            <Card className="bg-gray-800 border-gray-700 p-6">
+              <Skeleton className="h-6 w-32 mb-4" />
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-4 w-48" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-4 w-40" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Skeleton className="h-5 w-5 rounded" />
+                  <Skeleton className="h-4 w-52" />
+                </div>
+              </div>
+            </Card>
+
+            {/* History Card */}
+            <Card className="bg-gray-800 border-gray-700 p-6">
+              <Skeleton className="h-6 w-24 mb-4" />
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg border border-gray-700">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Skeleton className="h-5 w-20" />
+                    <Skeleton className="h-3 w-4" />
+                    <Skeleton className="h-5 w-20" />
+                  </div>
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Sidebar Skeleton */}
+          <div className="space-y-6">
+            {/* Actions Card */}
+            <Card className="bg-gray-800 border-gray-700 p-6">
+              <Skeleton className="h-6 w-20 mb-4" />
+              <div className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-px w-full my-2" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </Card>
+
+            {/* Related Tasks Card */}
+            <Card className="bg-gray-800 border-gray-700 p-6">
+              <Skeleton className="h-6 w-28 mb-4" />
+              <div className="space-y-2">
+                <div className="p-3 rounded-lg border border-gray-700">
+                  <Skeleton className="h-4 w-full mb-1" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <div className="p-3 rounded-lg border border-gray-700">
+                  <Skeleton className="h-4 w-full mb-1" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
     )
