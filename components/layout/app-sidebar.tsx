@@ -12,8 +12,6 @@ import {
   UserCircle,
   ClipboardCheck,
   Calendar,
-  FileText,
-  Building2,
 } from "lucide-react"
 
 import {
@@ -50,16 +48,6 @@ const menuItems = [
     title: "Tasks",
     url: "/tasks",
     icon: CheckSquare,
-  },
-  {
-    title: "Documents",
-    url: "/documents",
-    icon: FileText,
-  },
-  {
-    title: "Departments",
-    url: "/departments",
-    icon: Building2,
   },
   {
     title: "Calendar",
