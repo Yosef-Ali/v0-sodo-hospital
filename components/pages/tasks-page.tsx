@@ -102,7 +102,7 @@ export function TasksPage({ initialData }: TasksPageProps) {
     <div className="p-8">
       <PageHeader title="Tasks" description="Manage and track all your hospital administrative tasks in one place." />
 
-      <div className="mt-6 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mt-[200px] mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
           <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-5">
             <TabsTrigger value="all" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
