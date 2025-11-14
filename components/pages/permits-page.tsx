@@ -36,6 +36,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
   const [stats] = useState<any>(initialData.stats)
   const [categoryFilter, setCategoryFilter] = useState<PermitCategory | "ALL">("ALL")
   const [statusFilter, setStatusFilter] = useState<PermitStatus | "ALL">("ALL")
+  const [searchQuery, setSearchQuery] = useState("")
 
   const getStatusIcon = (status: string) => {
     switch (status) {
