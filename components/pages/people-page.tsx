@@ -103,7 +103,7 @@ export function PeoplePage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="mt-[200px] grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Card className="bg-gray-800 border-gray-700 p-4">
           <div className="flex items-center justify-between">
             <div>
