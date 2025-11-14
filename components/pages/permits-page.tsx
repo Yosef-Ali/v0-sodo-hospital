@@ -213,7 +213,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
 
       {/* Permits Grid */}
       {permits.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {permits.map((item) => {
             const permit = item.permit
             const person = item.person
@@ -221,79 +221,65 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
             const dueDate = formatDueDate(permit.dueDate, permit.dueDateEC)
 
             return (
-              <Card
+              <div
                 key={permit.id}
-                className="bg-gray-800 border-gray-700 p-5 hover:border-green-500/50 transition-all cursor-pointer"
-                onClick={() => router.push(`/permits/${permit.id}`)}
+                className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-200 flex flex-col"
               >
-                {/* Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-full p-2">
-                      <Shield className="h-5 w-5 text-white" />
+                <div className="p-5 flex-1">
+                  {/* Header */}
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="bg-gray-700 p-2 rounded-md">
+                      <Shield className="h-5 w-5 text-gray-400" />
                     </div>
-                    <div>
-                      <h3 className="text-white font-medium">
-                        {getCategoryLabel(permit.category)}
-                      </h3>
-                      {person && (
-                        <p className="text-sm text-gray-400">
-                          {person.firstName} {person.lastName}
-                        </p>
-                      )}
-                    </div>
+                    <Badge className={`${getStatusColor(permit.status)} text-xs flex items-center gap-1`}>
+                      {getStatusIcon(permit.status)}
+                      {t(`permit.${permit.status.toLowerCase()}`) || permit.status}
+                    </Badge>
                   </div>
 
-                  <Badge className={`${getStatusColor(permit.status)} text-xs flex items-center gap-1`}>
-                    {getStatusIcon(permit.status)}
-                    {t(`permit.${permit.status.toLowerCase()}`) || permit.status}
-                  </Badge>
-                </div>
+                  <h3 className="font-medium text-lg mb-2 text-white">
+                    {getCategoryLabel(permit.category)}
+                  </h3>
+                  {person && (
+                    <p className="text-sm text-gray-400 mb-4">
+                      {person.firstName} {person.lastName}
+                    </p>
+                  )}
 
-                {/* Details */}
-                <div className="space-y-2 text-sm">
-                  {dueDate && (
-                    <div className="flex items-start text-gray-300">
-                      <Clock className="h-4 w-4 mr-2 text-gray-500 mt-0.5" />
-                      <div>
-                        <div className="font-medium">{dueDate.ec}</div>
-                        <div className="text-xs text-gray-500">({dueDate.gregorian})</div>
+                  {/* Details */}
+                  <div className="text-xs text-gray-500 space-y-1">
+                    {dueDate && (
+                      <div className="flex justify-between">
+                        <span>Due Date:</span>
+                        <span className="text-gray-400">{dueDate.ec}</span>
                       </div>
+                    )}
+                    {checklist && (
+                      <div className="flex justify-between">
+                        <span>Checklist:</span>
+                        <span className="text-gray-400 truncate ml-2">{checklist.name}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Created:</span>
+                      <span className="text-gray-400">{new Date(permit.createdAt).toLocaleDateString()}</span>
                     </div>
-                  )}
-
-                  {checklist && (
-                    <div className="flex items-center text-gray-300">
-                      <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                      {checklist.name}
-                    </div>
-                  )}
-
-                  {permit.notes && (
-                    <div className="text-gray-400 text-xs mt-2 line-clamp-2">
-                      {permit.notes}
-                    </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Footer */}
-                <div className="mt-4 pt-4 border-t border-gray-700 flex items-center justify-between text-xs text-gray-500">
-                  <span>
-                    {t("common.createdAt")}: {new Date(permit.createdAt).toLocaleDateString()}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-green-400 hover:text-green-300 h-7 px-2"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      router.push(`/permits/${permit.id}`)
-                    }}
+                <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center">
+                  <button
+                    onClick={() => router.push(`/permits/${permit.id}`)}
+                    className="text-xs text-green-400 hover:text-green-300 font-medium"
                   >
-                    {t("actions.view")} →
-                  </Button>
+                    View Permit
+                  </button>
+                  <button className="text-xs text-gray-400 hover:text-gray-300 font-medium">
+                    Details →
+                  </button>
                 </div>
-              </Card>
+              </div>
             )
           })}
         </div>

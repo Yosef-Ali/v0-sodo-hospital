@@ -51,55 +51,48 @@ export function TaskCard({
   }
 
   return (
-    <Link href={`/tasks/${id}`} className="block">
-      <div className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700 overflow-hidden hover:border-green-500/50 transition-all duration-200 flex flex-col cursor-pointer">
-        <div className="p-5 flex-1">
-          <div className="flex justify-between items-start mb-3">
-            <Badge className={`${statusColors[status]} text-xs font-medium flex items-center gap-1`}>
-              {statusIcons[status]}
-              {status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ")}
-            </Badge>
-            <Badge className={`${priorityColors[priority]} text-xs font-medium`}>
-              {priority.charAt(0).toUpperCase() + priority.slice(1)} Priority
-            </Badge>
+    <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-200 flex flex-col">
+      <div className="p-5 flex-1">
+        <div className="flex justify-between items-start mb-3">
+          <div className="bg-gray-700 p-2 rounded-md">
+            <CheckCircle className="h-5 w-5 text-gray-400" />
           </div>
-          <h3 className="font-medium text-lg mb-2 text-white">{title}</h3>
-          <p className="text-gray-400 text-sm mb-4 line-clamp-3">{description}</p>
-          <div className="text-xs text-gray-500 space-y-1">
-            <div className="flex justify-between">
-              <span>Due:</span>
-              <span className="text-gray-400">{formatDueDate(dueDate)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Assignee:</span>
-              <span className="text-gray-400">{assignee}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Category:</span>
-              <span className="text-gray-400">{category}</span>
-            </div>
-          </div>
+          <Badge className={`${statusColors[status]} text-xs font-medium flex items-center gap-1`}>
+            {statusIcons[status]}
+            {status.charAt(0).toUpperCase() + status.slice(1).replace("-", " ")}
+          </Badge>
         </div>
-        <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center bg-gray-800/30">
-          <span className="text-xs text-gray-400">Click to view details</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              onClick={(e) => e.preventDefault()}
-              className="text-xs text-gray-400 hover:text-gray-300 font-medium flex items-center"
-            >
-              <MoreHorizontal size={14} className="mr-1" />
-              Actions
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-gray-800/90 backdrop-blur-md border-gray-700 text-gray-300">
-              <Link href={`/tasks/${id}/edit`} onClick={(e) => e.stopPropagation()}>
-                <DropdownMenuItem className="hover:bg-gray-700/50 text-sm">Edit Task</DropdownMenuItem>
-              </Link>
-              <DropdownMenuItem className="hover:bg-gray-700/50 text-sm">Mark as Completed</DropdownMenuItem>
-              <DropdownMenuItem className="hover:bg-gray-700/50 text-sm text-red-400">Delete Task</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <h3 className="font-medium text-lg mb-2 text-white">{title}</h3>
+        <p className="text-gray-400 text-sm mb-4 line-clamp-3">{description}</p>
+        <div className="text-xs text-gray-500 space-y-1">
+          <div className="flex justify-between">
+            <span>Due Date:</span>
+            <span className="text-gray-400">{formatDueDate(dueDate)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Assignee:</span>
+            <span className="text-gray-400">{assignee}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Category:</span>
+            <span className="text-gray-400">{category}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Priority:</span>
+            <span className={`${priorityColors[priority].includes('slate') ? 'text-slate-400' : priorityColors[priority].includes('orange') ? 'text-orange-400' : 'text-rose-400'}`}>
+              {priority.charAt(0).toUpperCase() + priority.slice(1)}
+            </span>
+          </div>
         </div>
       </div>
-    </Link>
+      <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center">
+        <Link href={`/tasks/${id}`} className="text-xs text-green-400 hover:text-green-300 font-medium">
+          View Task
+        </Link>
+        <button className="text-xs text-gray-400 hover:text-gray-300 font-medium">
+          Details →
+        </button>
+      </div>
+    </div>
   )
 }

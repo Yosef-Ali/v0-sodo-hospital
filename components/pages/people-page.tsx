@@ -163,75 +163,69 @@ export function PeoplePage() {
 
       {/* People List */}
       {!loading && !error && people.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {people.map((person) => (
-            <Card
+            <div
               key={person.id}
-              className="bg-gray-800 border-gray-700 p-5 hover:border-green-500/50 transition-all cursor-pointer"
-              onClick={() => router.push(`/people/${person.id}`)}
+              className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-200 flex flex-col"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-full p-2">
-                    <User className="h-5 w-5 text-white" />
+              <div className="p-5 flex-1">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="bg-gray-700 p-2 rounded-md">
+                    <User className="h-5 w-5 text-gray-400" />
                   </div>
-                  <div>
-                    <h3 className="text-white font-medium">
-                      {person.firstName} {person.lastName}
-                    </h3>
-                    {person.nationality && (
-                      <p className="text-sm text-gray-400">{person.nationality}</p>
-                    )}
-                  </div>
+                  {person.guardianId && (
+                    <Badge className="bg-blue-900 text-blue-300 text-xs">
+                      {t('person.dependents').slice(0, -1) || 'Dependent'}
+                    </Badge>
+                  )}
                 </div>
 
-                {person.guardianId && (
-                  <Badge className="bg-blue-900 text-blue-300 text-xs">
-                    {t('person.dependents').slice(0, -1) || 'Dependent'}
-                  </Badge>
+                <h3 className="font-medium text-lg mb-2 text-white">
+                  {person.firstName} {person.lastName}
+                </h3>
+                {person.nationality && (
+                  <p className="text-sm text-gray-400 mb-4">{person.nationality}</p>
                 )}
+
+                <div className="text-xs text-gray-500 space-y-1">
+                  {person.passportNo && (
+                    <div className="flex justify-between">
+                      <span>Passport:</span>
+                      <span className="text-gray-400">{person.passportNo}</span>
+                    </div>
+                  )}
+                  {person.email && (
+                    <div className="flex justify-between">
+                      <span>Email:</span>
+                      <span className="text-gray-400 truncate ml-2">{person.email}</span>
+                    </div>
+                  )}
+                  {person.phone && (
+                    <div className="flex justify-between">
+                      <span>Phone:</span>
+                      <span className="text-gray-400">{person.phone}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span>Created:</span>
+                    <span className="text-gray-400">{new Date(person.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2 text-sm">
-                {person.passportNo && (
-                  <div className="flex items-center text-gray-300">
-                    <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                    {person.passportNo}
-                  </div>
-                )}
-
-                {person.email && (
-                  <div className="flex items-center text-gray-300">
-                    <span className="text-gray-500 mr-2">✉</span>
-                    {person.email}
-                  </div>
-                )}
-
-                {person.phone && (
-                  <div className="flex items-center text-gray-300">
-                    <span className="text-gray-500 mr-2">📞</span>
-                    {person.phone}
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-gray-700 flex items-center justify-between text-xs text-gray-500">
-                <span>
-                  {t('common.createdAt')}: {new Date(person.createdAt).toLocaleDateString()}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-green-400 hover:text-green-300 h-7 px-2"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    router.push(`/people/${person.id}`)
-                  }}
+              <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center">
+                <button
+                  onClick={() => router.push(`/people/${person.id}`)}
+                  className="text-xs text-green-400 hover:text-green-300 font-medium"
                 >
-                  {t('actions.view')} →
-                </Button>
+                  View Profile
+                </button>
+                <button className="text-xs text-gray-400 hover:text-gray-300 font-medium">
+                  Details →
+                </button>
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}

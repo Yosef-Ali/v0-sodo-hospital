@@ -28,51 +28,44 @@ export default function DocumentsLoading() {
       {/* Documents Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[...Array(6)].map((_, i) => (
-          <Card key={i} className="bg-gray-800 border-gray-700 p-5">
-            {/* Document Header */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center space-x-3 flex-1">
-                <Skeleton className="h-10 w-10 rounded" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="h-5 w-full" />
+          <div key={i} className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden flex flex-col">
+            <div className="p-5 flex-1">
+              {/* Document Header */}
+              <div className="flex justify-between items-start mb-3">
+                <Skeleton className="h-9 w-9 rounded-md" />
+                <Skeleton className="h-6 w-20" />
+              </div>
+
+              <Skeleton className="h-6 w-full mb-2" />
+              <Skeleton className="h-16 w-full mb-4" />
+
+              {/* Document Details */}
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-12" />
                   <Skeleton className="h-4 w-20" />
                 </div>
+                <div className="flex justify-between">
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="h-4 w-28" />
+                </div>
               </div>
-              <Skeleton className="h-6 w-20" />
-            </div>
-
-            {/* Document Description */}
-            <Skeleton className="h-12 w-full mb-4" />
-
-            {/* Document Details */}
-            <div className="space-y-2 mb-4">
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-28" />
-              </div>
-            </div>
-
-            {/* Tags */}
-            <div className="flex gap-2 mb-4">
-              <Skeleton className="h-6 w-16" />
-              <Skeleton className="h-6 w-20" />
-              <Skeleton className="h-6 w-18" />
             </div>
 
             {/* Footer */}
-            <div className="pt-4 border-t border-gray-700 flex items-center justify-between">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-8 w-20" />
+            <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-20" />
             </div>
-          </Card>
+          </div>
         ))}
       </div>
     </div>
