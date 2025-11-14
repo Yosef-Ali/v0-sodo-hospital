@@ -55,10 +55,18 @@ export function PeoplePage() {
     loadPeople(query)
   }
 
+  const translateWithFallback = (key: string, fallback: string) => {
+    const value = t(key)
+    return !value || value === key ? fallback : value
+  }
+
+  const pageTitle = translateWithFallback("person.persons", "People")
+  const createPersonText = translateWithFallback("person.createPerson", "Create Person")
+
   return (
     <div className="p-8">
       <PageHeader
-        title={t("person.person" + "s") || "People"}
+        title={pageTitle}
         description="Manage hospital staff, patients, and their dependents"
       />
 
@@ -112,7 +120,7 @@ export function PeoplePage() {
               className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
             >
               <Plus className="h-4 w-4 mr-2" />
-              {t("person.createPerson")}
+              {createPersonText}
             </Button>
           </div>
         </div>
@@ -156,7 +164,7 @@ export function PeoplePage() {
             className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="h-4 w-4 mr-2" />
-            {t('person.createPerson')}
+            {createPersonText}
           </Button>
         </div>
       )}
