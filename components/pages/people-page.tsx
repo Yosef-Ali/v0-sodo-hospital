@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Plus, User, Filter } from "lucide-react"
-import { getPeople, getPeopleStats, type Person } from "@/lib/actions/v2/people"
+import { getPeople, getPeopleStats } from "@/lib/actions/v2/people"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { PersonSheet } from "@/components/sheets/person-sheet"
@@ -35,9 +35,10 @@ export function PeoplePage() {
     setError(null)
 
     const result = await getPeople({ query, limit: 100 })
-    if (result.success) {
+    if (result.success && result.data) {
       setPeople(result.data)
     } else {
+      setPeople([])
       setError(result.error || "Failed to load people")
     }
 
@@ -46,8 +47,10 @@ export function PeoplePage() {
 
   const loadStats = async () => {
     const result = await getPeopleStats()
-    if (result.success) {
+    if (result.success && result.data) {
       setStats(result.data)
+    } else {
+      setStats({ total: 0, dependents: 0, withPermits: 0 })
     }
   }
 
