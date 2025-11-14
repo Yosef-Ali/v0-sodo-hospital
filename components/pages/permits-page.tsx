@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Select,
   SelectContent,
@@ -34,6 +35,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
 
   const [permits] = useState<any[]>(initialData.permits)
   const [stats] = useState<any>(initialData.stats)
+  const [activeTab, setActiveTab] = useState<"ALL" | "ACTIVE" | "EXPIRED">("ALL")
   const [categoryFilter, setCategoryFilter] = useState<PermitCategory | "ALL">("ALL")
   const [statusFilter, setStatusFilter] = useState<PermitStatus | "ALL">("ALL")
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -123,107 +125,117 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
     setSheetOpen(true)
   }
 
+  // Filter permits by active tab
+  const filteredPermitsByTab = permits.filter((item) => {
+    const permit = item.permit
+    if (activeTab === "ACTIVE") {
+      return permit.status === "APPROVED" || permit.status === "SUBMITTED"
+    }
+    if (activeTab === "EXPIRED") {
+      return permit.status === "EXPIRED" || permit.status === "REJECTED"
+    }
+    return true // ALL
+  })
+
+  // Count permits by tab
+  const permitCounts = {
+    all: permits.length,
+    active: permits.filter((item) =>
+      item.permit.status === "APPROVED" || item.permit.status === "SUBMITTED"
+    ).length,
+    expired: permits.filter((item) =>
+      item.permit.status === "EXPIRED" || item.permit.status === "REJECTED"
+    ).length,
+  }
+
+  // Apply additional filters (category and status)
+  const displayedPermits = filteredPermitsByTab.filter((item) => {
+    const permit = item.permit
+    if (categoryFilter !== "ALL" && permit.category !== categoryFilter) {
+      return false
+    }
+    if (statusFilter !== "ALL" && permit.status !== statusFilter) {
+      return false
+    }
+    return true
+  })
+
   return (
     <div className="p-8">
       {/* Header */}
       <PageHeader
-        title={t("permit.permits") || "Permits"}
+        title="Permits"
         description="Manage work permits, residence IDs, licenses, and import permits"
       />
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-6 mb-6">
-        <Card className="bg-gray-800 border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-400">{t("common.total")}</p>
-              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
-            </div>
-            <Shield className="h-8 w-8 text-green-500" />
-          </div>
-        </Card>
+      {/* Tabs, Filters and Actions */}
+      <div className="mt-[200px] mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <Tabs defaultValue="ALL" value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full md:w-auto">
+          <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-3">
+            <TabsTrigger value="ALL" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
+              All <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">{permitCounts.all}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="ACTIVE" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
+              Active <Badge className="ml-1 bg-green-500/20 text-green-300 text-xs border border-green-500/30">{permitCounts.active}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="EXPIRED" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
+              Expired <Badge className="ml-1 bg-red-500/20 text-red-300 text-xs border border-red-500/30">{permitCounts.expired}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-        <Card className="bg-gray-800 border-gray-700 p-4">
-          <div>
-            <p className="text-sm text-gray-400">{t("permit.pending")}</p>
-            <p className="text-2xl font-bold text-yellow-400 mt-1">{stats.byStatus.PENDING || 0}</p>
-          </div>
-        </Card>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <Select
+            value={categoryFilter}
+            onValueChange={(value) => setCategoryFilter(value as any)}
+          >
+            <SelectTrigger className="w-[180px] bg-gray-800/60 backdrop-blur-sm border-gray-700 text-gray-300">
+              <SelectValue placeholder="Category" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700">
+              <SelectItem value="ALL" className="text-gray-300">All Categories</SelectItem>
+              <SelectItem value="WORK_PERMIT" className="text-gray-300">Work Permit</SelectItem>
+              <SelectItem value="RESIDENCE_ID" className="text-gray-300">Residence ID</SelectItem>
+              <SelectItem value="LICENSE" className="text-gray-300">License</SelectItem>
+              <SelectItem value="PIP" className="text-gray-300">PIP</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Card className="bg-gray-800 border-gray-700 p-4">
-          <div>
-            <p className="text-sm text-gray-400">{t("permit.submitted")}</p>
-            <p className="text-2xl font-bold text-blue-400 mt-1">{stats.byStatus.SUBMITTED || 0}</p>
-          </div>
-        </Card>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => setStatusFilter(value as any)}
+          >
+            <SelectTrigger className="w-[180px] bg-gray-800/60 backdrop-blur-sm border-gray-700 text-gray-300">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-700">
+              <SelectItem value="ALL" className="text-gray-300">All Statuses</SelectItem>
+              <SelectItem value="PENDING" className="text-gray-300">Pending</SelectItem>
+              <SelectItem value="SUBMITTED" className="text-gray-300">Submitted</SelectItem>
+              <SelectItem value="APPROVED" className="text-gray-300">Approved</SelectItem>
+              <SelectItem value="REJECTED" className="text-gray-300">Rejected</SelectItem>
+              <SelectItem value="EXPIRED" className="text-gray-300">Expired</SelectItem>
+            </SelectContent>
+          </Select>
 
-        <Card className="bg-gray-800 border-gray-700 p-4">
-          <div>
-            <p className="text-sm text-gray-400">{t("permit.approved")}</p>
-            <p className="text-2xl font-bold text-green-400 mt-1">{stats.byStatus.APPROVED || 0}</p>
-          </div>
-        </Card>
-
-        <Card className="bg-gray-800 border-gray-700 p-4">
-          <div>
-            <p className="text-sm text-gray-400">{t("permit.rejected")}</p>
-            <p className="text-2xl font-bold text-red-400 mt-1">{stats.byStatus.REJECTED || 0}</p>
-          </div>
-        </Card>
-      </div>
-
-      {/* Filters and Actions */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-2 mb-6">
-        <Select
-          value={categoryFilter}
-          onValueChange={(value) => setCategoryFilter(value as any)}
-        >
-          <SelectTrigger className="w-[180px] bg-gray-800/60 backdrop-blur-sm border-gray-700 text-gray-300">
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-700">
-            <SelectItem value="ALL" className="text-gray-300">All Categories</SelectItem>
-            <SelectItem value="WORK_PERMIT" className="text-gray-300">Work Permit</SelectItem>
-            <SelectItem value="RESIDENCE_ID" className="text-gray-300">Residence ID</SelectItem>
-            <SelectItem value="LICENSE" className="text-gray-300">License</SelectItem>
-            <SelectItem value="PIP" className="text-gray-300">PIP</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={statusFilter}
-          onValueChange={(value) => setStatusFilter(value as any)}
-        >
-          <SelectTrigger className="w-[180px] bg-gray-800/60 backdrop-blur-sm border-gray-700 text-gray-300">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-700">
-            <SelectItem value="ALL" className="text-gray-300">All Statuses</SelectItem>
-            <SelectItem value="PENDING" className="text-gray-300">Pending</SelectItem>
-            <SelectItem value="SUBMITTED" className="text-gray-300">Submitted</SelectItem>
-            <SelectItem value="APPROVED" className="text-gray-300">Approved</SelectItem>
-            <SelectItem value="REJECTED" className="text-gray-300">Rejected</SelectItem>
-            <SelectItem value="EXPIRED" className="text-gray-300">Expired</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button
-          onClick={handleCreateNew}
-          size="sm"
-          className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Permit
-        </Button>
+          <Button
+            onClick={handleCreateNew}
+            size="sm"
+            className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Permit
+          </Button>
+        </div>
       </div>
 
       {/* Empty State */}
-      {permits.length === 0 && (
+      {displayedPermits.length === 0 && (
         <div className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700 p-12 text-center">
           <Shield className="h-16 w-16 text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">No permits found</h3>
           <p className="text-gray-400 mb-6">
-            {categoryFilter !== "ALL" || statusFilter !== "ALL"
+            {activeTab !== "ALL" || categoryFilter !== "ALL" || statusFilter !== "ALL"
               ? "No permits match your filters."
               : "Get started by creating your first permit."}
           </p>
@@ -238,9 +250,9 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
       )}
 
       {/* Permits Grid */}
-      {permits.length > 0 && (
+      {displayedPermits.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {permits.map((item) => {
+          {displayedPermits.map((item) => {
             const permit = item.permit
             const person = item.person
             const checklist = item.checklist
