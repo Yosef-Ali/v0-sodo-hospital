@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
