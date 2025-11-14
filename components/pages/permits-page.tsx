@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import {
@@ -14,55 +13,28 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search, Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, Shield } from "lucide-react"
-import { getPermits, getPermitStats } from "@/lib/actions/v2/permits"
+import { Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, Shield } from "lucide-react"
 import { formatEC, gregorianToEC } from "@/lib/dates/ethiopian"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 type PermitCategory = "WORK_PERMIT" | "RESIDENCE_ID" | "LICENSE" | "PIP"
 type PermitStatus = "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED" | "EXPIRED"
 
-export function PermitsPage() {
+interface PermitsPageProps {
+  initialData: {
+    permits: any[]
+    stats: any
+  }
+}
+
+export function PermitsPage({ initialData }: PermitsPageProps) {
   const { t, i18n } = useTranslation()
   const router = useRouter()
 
-  const [permits, setPermits] = useState<any[]>([])
-  const [stats, setStats] = useState<any>({ total: 0, byStatus: {}, byCategory: {} })
+  const [permits] = useState<any[]>(initialData.permits)
+  const [stats] = useState<any>(initialData.stats)
   const [categoryFilter, setCategoryFilter] = useState<PermitCategory | "ALL">("ALL")
   const [statusFilter, setStatusFilter] = useState<PermitStatus | "ALL">("ALL")
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    loadPermits()
-    loadStats()
-  }, [categoryFilter, statusFilter])
-
-  const loadPermits = async () => {
-    setLoading(true)
-    setError(null)
-
-    const filters: any = {}
-    if (categoryFilter !== "ALL") filters.category = categoryFilter
-    if (statusFilter !== "ALL") filters.status = statusFilter
-
-    const result = await getPermits(filters)
-    if (result.success) {
-      setPermits(result.data)
-    } else {
-      setError(result.error || "Failed to load permits")
-    }
-
-    setLoading(false)
-  }
-
-  const loadStats = async () => {
-    const result = await getPermitStats()
-    if (result.success) {
-      setStats(result.data)
-    }
-  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -219,31 +191,8 @@ export function PermitsPage() {
         </Select>
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-          <p className="text-gray-400 mt-4">{t("common.loading")}</p>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && !loading && (
-        <div className="bg-red-900/20 border border-red-700 rounded-lg p-4 text-center">
-          <p className="text-red-400">{error}</p>
-          <Button
-            onClick={() => loadPermits()}
-            variant="outline"
-            size="sm"
-            className="mt-4"
-          >
-            Try Again
-          </Button>
-        </div>
-      )}
-
       {/* Empty State */}
-      {!loading && !error && permits.length === 0 && (
+      {permits.length === 0 && (
         <div className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700 p-12 text-center">
           <Shield className="h-16 w-16 text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">No permits found</h3>
@@ -263,7 +212,7 @@ export function PermitsPage() {
       )}
 
       {/* Permits Grid */}
-      {!loading && !error && permits.length > 0 && (
+      {permits.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {permits.map((item) => {
             const permit = item.permit
