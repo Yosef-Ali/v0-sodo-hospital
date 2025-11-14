@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Search, Plus, User, Users, FileText, Shield } from "lucide-react"
 import { getPeople, getPeopleStats, type Person } from "@/lib/actions/v2/people"
+import { PersonSheet } from "@/components/sheets/person-sheet"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -22,6 +23,7 @@ export function PeoplePage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   // Load data on mount and when search changes
   useEffect(() => {
@@ -55,6 +57,14 @@ export function PeoplePage() {
     loadPeople(query)
   }
 
+  const handleCreatePerson = (personData: any) => {
+    console.log("New person data:", personData)
+    // TODO: Call createPerson API action
+    // After successful creation, reload the list
+    loadPeople()
+    loadStats()
+  }
+
   return (
     <div className="p-8">
       {/* Header */}
@@ -65,7 +75,7 @@ export function PeoplePage() {
         />
 
         <Button
-          onClick={() => router.push("/people/new")}
+          onClick={() => setSheetOpen(true)}
           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -191,7 +201,7 @@ export function PeoplePage() {
               : "Get started by adding your first person."}
           </p>
           <Button
-            onClick={() => router.push("/people/new")}
+            onClick={() => setSheetOpen(true)}
             className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -277,6 +287,13 @@ export function PeoplePage() {
           </p>
         </div>
       )}
+
+      {/* Person Sheet */}
+      <PersonSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onSubmit={handleCreatePerson}
+      />
     </div>
   )
 }

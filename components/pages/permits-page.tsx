@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select"
 import { Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, Shield } from "lucide-react"
 import { formatEC, gregorianToEC } from "@/lib/dates/ethiopian"
+import { PermitSheet } from "@/components/sheets/permit-sheet"
 import { useRouter } from "next/navigation"
 
 type PermitCategory = "WORK_PERMIT" | "RESIDENCE_ID" | "LICENSE" | "PIP"
@@ -35,6 +36,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
   const [stats] = useState<any>(initialData.stats)
   const [categoryFilter, setCategoryFilter] = useState<PermitCategory | "ALL">("ALL")
   const [statusFilter, setStatusFilter] = useState<PermitStatus | "ALL">("ALL")
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -96,6 +98,12 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
     }
   }
 
+  const handleCreatePermit = (permitData: any) => {
+    console.log("New permit data:", permitData)
+    // TODO: Call createPermit API action
+    // After successful creation, reload the list or navigate
+  }
+
   return (
     <div className="p-8">
       {/* Header */}
@@ -106,7 +114,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
         />
 
         <Button
-          onClick={() => router.push("/permits/new")}
+          onClick={() => setSheetOpen(true)}
           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -202,7 +210,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
               : "Get started by creating your first permit."}
           </p>
           <Button
-            onClick={() => router.push("/permits/new")}
+            onClick={() => setSheetOpen(true)}
             className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -284,6 +292,13 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
           })}
         </div>
       )}
+
+      {/* Permit Sheet */}
+      <PermitSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onSubmit={handleCreatePermit}
+      />
     </div>
   )
 }

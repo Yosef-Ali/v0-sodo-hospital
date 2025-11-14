@@ -27,6 +27,7 @@ import {
 } from "lucide-react"
 import { getTasks, getTaskStats, completeTask } from "@/lib/actions/v2/tasks"
 import { formatEC, gregorianToEC } from "@/lib/dates/ethiopian"
+import { TaskSheet } from "@/components/sheets/task-sheet"
 import { useRouter } from "next/navigation"
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "urgent"
@@ -43,6 +44,7 @@ export function TasksV2Page() {
   const [includeCompleted, setIncludeCompleted] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   useEffect(() => {
     loadTasks()
@@ -82,6 +84,14 @@ export function TasksV2Page() {
     } else {
       setError(result.error || "Failed to complete task")
     }
+  }
+
+  const handleCreateTask = (taskData: any) => {
+    console.log("New task data:", taskData)
+    // TODO: Call createTask API action
+    // After successful creation, reload the list
+    loadTasks()
+    loadStats()
   }
 
   const getStatusIcon = (status: string) => {
@@ -164,7 +174,7 @@ export function TasksV2Page() {
         />
 
         <Button
-          onClick={() => router.push("/tasks/new")}
+          onClick={() => setSheetOpen(true)}
           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -307,7 +317,7 @@ export function TasksV2Page() {
               : "Get started by creating your first task."}
           </p>
           <Button
-            onClick={() => router.push("/tasks/new")}
+            onClick={() => setSheetOpen(true)}
             className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -404,6 +414,13 @@ export function TasksV2Page() {
           })}
         </div>
       )}
+
+      {/* Task Sheet */}
+      <TaskSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onSubmit={handleCreateTask}
+      />
     </div>
   )
 }
