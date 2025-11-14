@@ -1,12 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { PageHeader } from "@/components/ui/page-header"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,49 +28,35 @@ import {
   FileText,
   Shield,
 } from "lucide-react"
-import { getTaskById, updateTask, completeTask, deleteTask } from "@/lib/actions/v2/tasks"
+import { completeTask, deleteTask } from "@/lib/actions/v2/tasks"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 
 interface TaskDetailPageProps {
-  taskId: string
+  initialData: any
 }
 
-export function TaskDetailPage({ taskId }: TaskDetailPageProps) {
+export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
   const router = useRouter()
 
-  const [task, setTask] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [task, setTask] = useState(initialData)
   const [actionLoading, setActionLoading] = useState(false)
-
-  useEffect(() => {
-    loadTask()
-  }, [taskId])
-
-  const loadTask = async () => {
-    setLoading(true)
-    setError(null)
-
-    const result = await getTaskById(taskId)
-    if (result.success) {
-      setTask(result.data)
-    } else {
-      setError(result.error || "Failed to load task")
-    }
-
-    setLoading(false)
-  }
 
   const handleCompleteTask = async () => {
     setActionLoading(true)
 
-    const result = await completeTask(taskId, "Task marked as completed")
+    const result = await completeTask(task.task.id, "Task marked as completed")
 
     if (result.success) {
-      await loadTask()
-    } else {
-      setError(result.error || "Failed to complete task")
+      // Update local state
+      setTask({
+        ...task,
+        task: {
+          ...task.task,
+          status: "completed"
+        }
+      })
+      router.refresh()
     }
 
     setActionLoading(false)
@@ -81,14 +65,13 @@ export function TaskDetailPage({ taskId }: TaskDetailPageProps) {
   const handleDeleteTask = async () => {
     setActionLoading(true)
 
-    const result = await deleteTask(taskId)
+    const result = await deleteTask(task.task.id)
 
     if (result.success) {
       router.push("/tasks")
-    } else {
-      setError(result.error || "Failed to delete task")
-      setActionLoading(false)
     }
+
+    setActionLoading(false)
   }
 
   const getStatusIcon = (status: string) => {
@@ -141,136 +124,6 @@ export function TaskDetailPage({ taskId }: TaskDetailPageProps) {
       month: "long",
       day: "numeric",
     })
-  }
-
-  if (loading) {
-    return (
-      <div className="p-8">
-        {/* Header Skeleton */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <Skeleton className="h-9 w-20" />
-            <div className="space-y-2">
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-7 w-24" />
-            <Skeleton className="h-7 w-28" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content Skeleton */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Task Information Card */}
-            <Card className="bg-gray-800 border-gray-700 p-6">
-              <Skeleton className="h-6 w-32 mb-4" />
-              <div className="space-y-4">
-                <div>
-                  <Skeleton className="h-4 w-20 mb-2" />
-                  <Skeleton className="h-16 w-full" />
-                </div>
-                <Skeleton className="h-px w-full" />
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Skeleton className="h-4 w-16 mb-2" />
-                    <Skeleton className="h-6 w-24" />
-                  </div>
-                  <div>
-                    <Skeleton className="h-4 w-16 mb-2" />
-                    <Skeleton className="h-6 w-24" />
-                  </div>
-                  <div>
-                    <Skeleton className="h-4 w-16 mb-2" />
-                    <Skeleton className="h-5 w-32" />
-                  </div>
-                  <div>
-                    <Skeleton className="h-4 w-16 mb-2" />
-                    <Skeleton className="h-5 w-32" />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Assignee Card */}
-            <Card className="bg-gray-800 border-gray-700 p-6">
-              <Skeleton className="h-6 w-32 mb-4" />
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Skeleton className="h-4 w-16 mb-2" />
-                  <Skeleton className="h-5 w-32" />
-                </div>
-                <div>
-                  <Skeleton className="h-4 w-16 mb-2" />
-                  <Skeleton className="h-5 w-40" />
-                </div>
-              </div>
-            </Card>
-
-            {/* Related Permit Card */}
-            <Card className="bg-gray-800 border-gray-700 p-6">
-              <Skeleton className="h-6 w-32 mb-4" />
-              <div className="p-4 rounded-lg border border-gray-700">
-                <div className="flex items-center justify-between mb-2">
-                  <Skeleton className="h-5 w-32" />
-                  <Skeleton className="h-5 w-20" />
-                </div>
-                <Skeleton className="h-4 w-40" />
-              </div>
-            </Card>
-          </div>
-
-          {/* Sidebar Skeleton */}
-          <div className="space-y-6">
-            {/* Actions Card */}
-            <Card className="bg-gray-800 border-gray-700 p-6">
-              <Skeleton className="h-6 w-20 mb-4" />
-              <div className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-px w-full my-2" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-            </Card>
-
-            {/* Quick Info Card */}
-            <Card className="bg-gray-800 border-gray-700 p-6">
-              <Skeleton className="h-6 w-24 mb-4" />
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-                <div className="flex justify-between">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-                <div className="flex justify-between">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (error || !task) {
-    return (
-      <div className="p-8">
-        <div className="bg-red-900/20 border border-red-700 rounded-lg p-8 text-center">
-          <p className="text-red-400 mb-4">{error || "Task not found"}</p>
-          <Button onClick={() => router.push("/tasks")} variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Tasks
-          </Button>
-        </div>
-      </div>
-    )
   }
 
   const taskData = task.task
