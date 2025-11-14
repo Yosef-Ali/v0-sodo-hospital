@@ -22,7 +22,7 @@ export default function DashboardLoading() {
       </div>
 
       {/* Metric Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         {[...Array(3)].map((_, i) => (
           <Card key={i} className="bg-gray-800 border-gray-700 p-6">
             <div className="flex items-center justify-between mb-4">
@@ -52,7 +52,7 @@ export default function DashboardLoading() {
       </div>
 
       {/* Document Processing Table */}
-      <Card className="bg-gray-800 border-gray-700 mb-6">
+      <Card className="bg-gray-800 border-gray-700 mb-12">
         <div className="p-6">
           <Skeleton className="h-6 w-48 mb-4" />
           <div className="space-y-3">

@@ -30,7 +30,7 @@ export default function PeopleLoading() {
       </div>
 
       {/* Search Bar */}
-      <div className="mb-6">
+      <div className="mb-12">
         <Skeleton className="h-10 w-full max-w-md" />
       </div>
 

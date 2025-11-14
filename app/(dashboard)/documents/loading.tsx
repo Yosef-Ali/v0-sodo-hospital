@@ -11,7 +11,7 @@ export default function DocumentsLoading() {
       </div>
 
       {/* Tabs and Actions */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-12">
         <div className="flex gap-2">
           <Skeleton className="h-10 w-24" />
           <Skeleton className="h-10 w-24" />

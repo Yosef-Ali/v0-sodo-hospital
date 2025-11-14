@@ -156,7 +156,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-6 flex-wrap">
+      <div className="flex gap-4 mb-12 flex-wrap">
         <Select
           value={categoryFilter}
           onValueChange={(value) => setCategoryFilter(value as any)}

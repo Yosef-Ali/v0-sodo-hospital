@@ -218,7 +218,7 @@ export function DocumentsPage() {
         description="Manage and organize all hospital documents, forms, and records in one place."
       />
 
-      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-12 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
           <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-4">
             <TabsTrigger value="all" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">

@@ -29,7 +29,7 @@ export default function PermitsLoading() {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-6 flex-wrap">
+      <div className="flex gap-4 mb-12 flex-wrap">
         <Skeleton className="h-10 w-[200px]" />
         <Skeleton className="h-10 w-[200px]" />
       </div>

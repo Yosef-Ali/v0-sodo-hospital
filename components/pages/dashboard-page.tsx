@@ -45,7 +45,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
       </div>
 
       {/* Metric Cards Row - Real Data from Database */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         <MetricCard
           icon={<FileText className="h-5 w-5 text-gray-400" />}
           title="Document Processing"
@@ -135,7 +135,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
       </div>
 
       {/* Document Processing Status Table */}
-      <div className="mb-6">
+      <div className="mb-12">
         <DocumentProcessingTable initialPermits={permits} />
       </div>
 
