@@ -1,8 +1,10 @@
 import { Clock, CheckCircle, AlertCircle, MoreHorizontal } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import Link from "next/link"
 
 interface TaskCardProps {
+  id: string
   title: string
   description: string
   status: "pending" | "in-progress" | "completed" | "urgent"
@@ -13,6 +15,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({
+  id,
   title,
   description,
   status,
@@ -48,8 +51,9 @@ export function TaskCard({
   }
 
   return (
-    <div className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-200 flex flex-col">
-      <div className="p-5 flex-1">
+    <Link href={`/tasks/${id}`} className="block">
+      <div className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700 overflow-hidden hover:border-green-500/50 transition-all duration-200 flex flex-col cursor-pointer">
+        <div className="p-5 flex-1">
         <div className="flex justify-between items-start mb-3">
           <Badge className={`${statusColors[status]} text-xs font-medium flex items-center gap-1`}>
             {statusIcons[status]}
@@ -77,19 +81,25 @@ export function TaskCard({
         </div>
       </div>
       <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center bg-gray-800/30">
-        <button className="text-xs text-green-400 hover:text-green-300 font-medium">View Details</button>
+        <span className="text-xs text-gray-400">Click to view details</span>
         <DropdownMenu>
-          <DropdownMenuTrigger className="text-xs text-gray-400 hover:text-gray-300 font-medium flex items-center">
+          <DropdownMenuTrigger
+            onClick={(e) => e.preventDefault()}
+            className="text-xs text-gray-400 hover:text-gray-300 font-medium flex items-center"
+          >
             <MoreHorizontal size={14} className="mr-1" />
             Actions
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-gray-800/90 backdrop-blur-md border-gray-700 text-gray-300">
-            <DropdownMenuItem className="hover:bg-gray-700/50 text-sm">Edit Task</DropdownMenuItem>
+            <Link href={`/tasks/${id}/edit`} onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem className="hover:bg-gray-700/50 text-sm">Edit Task</DropdownMenuItem>
+            </Link>
             <DropdownMenuItem className="hover:bg-gray-700/50 text-sm">Mark as Completed</DropdownMenuItem>
             <DropdownMenuItem className="hover:bg-gray-700/50 text-sm text-red-400">Delete Task</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </div>
+    </Link>
   )
 }
