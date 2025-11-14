@@ -7,9 +7,11 @@ interface ReportCardProps {
   frequency: string
   format: string
   department: string
+  onView?: () => void
+  onEdit?: () => void
 }
 
-export function ReportCard({ title, description, lastGenerated, frequency, format, department }: ReportCardProps) {
+export function ReportCard({ title, description, lastGenerated, frequency, format, department, onView, onEdit }: ReportCardProps) {
   return (
     <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden hover:border-gray-600 transition-all duration-200 flex flex-col">
       <div className="p-5 flex-1">
@@ -43,10 +45,17 @@ export function ReportCard({ title, description, lastGenerated, frequency, forma
         </div>
       </div>
       <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center">
-        <button className="text-xs text-green-400 hover:text-green-300 font-medium">View Report</button>
-        <button className="text-xs text-gray-400 hover:text-gray-300 font-medium flex items-center">
-          <Download size={12} className="mr-1" />
-          Download
+        <button
+          onClick={onView}
+          className="text-xs text-green-400 hover:text-green-300 font-medium"
+        >
+          View Details
+        </button>
+        <button
+          onClick={onEdit}
+          className="text-xs text-gray-400 hover:text-gray-300 font-medium"
+        >
+          Edit
         </button>
       </div>
     </div>

@@ -9,6 +9,9 @@ export const userRoleEnum = pgEnum("user_role", ["ADMIN", "HR_MANAGER", "HR", "L
 export const permitCategoryEnum = pgEnum("permit_category", ["WORK_PERMIT", "RESIDENCE_ID", "LICENSE", "PIP"])
 export const permitStatusEnum = pgEnum("permit_status", ["PENDING", "SUBMITTED", "APPROVED", "REJECTED", "EXPIRED"])
 export const eventTypeEnum = pgEnum("event_type", ["permit", "deadline", "meeting", "interview", "other"])
+export const reportStatusEnum = pgEnum("report_status", ["DRAFT", "GENERATED", "PUBLISHED", "ARCHIVED"])
+export const reportFrequencyEnum = pgEnum("report_frequency", ["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "YEARLY", "ON_DEMAND"])
+export const reportFormatEnum = pgEnum("report_format", ["PDF", "EXCEL", "CSV", "DASHBOARD"])
 
 // Users table (minimal - main auth handled by Stack Auth)
 export const users = pgTable("users", {
@@ -236,6 +239,26 @@ export const calendarEvents = pgTable("calendar_events", {
   location: varchar("location", { length: 255 }),
   relatedPersonId: uuid("related_person_id").references(() => people.id), // optional link to person
   relatedPermitId: uuid("related_permit_id").references(() => permits.id), // optional link to permit
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Reports table
+export const reports = pgTable("reports", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  status: reportStatusEnum("status").default("DRAFT").notNull(),
+  frequency: reportFrequencyEnum("frequency").default("MONTHLY").notNull(),
+  format: reportFormatEnum("format").default("PDF").notNull(),
+  department: varchar("department", { length: 255 }),
+  category: varchar("category", { length: 255 }), // "financial", "patient", "staff", "operations", etc.
+  lastGenerated: timestamp("last_generated"),
+  generatedBy: uuid("generated_by").references(() => users.id),
+  fileUrl: text("file_url"),
+  fileSize: integer("file_size"), // bytes
+  parameters: jsonb("parameters").$type<Record<string, any>>().default({}), // filter/query params
   createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
