@@ -22,23 +22,23 @@ export function TaskCard({
   priority = "medium",
 }: TaskCardProps) {
   const statusColors = {
-    pending: "bg-gray-600",
-    "in-progress": "bg-green-600",
-    completed: "bg-green-600",
-    urgent: "bg-red-600",
+    pending: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+    "in-progress": "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+    completed: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+    urgent: "bg-red-500/10 text-red-400 border border-red-500/20",
   }
 
   const statusIcons = {
-    pending: <Clock className="h-4 w-4" />,
-    "in-progress": <AlertCircle className="h-4 w-4" />,
-    completed: <CheckCircle className="h-4 w-4" />,
-    urgent: <AlertCircle className="h-4 w-4" />,
+    pending: <Clock className="h-3.5 w-3.5" />,
+    "in-progress": <AlertCircle className="h-3.5 w-3.5" />,
+    completed: <CheckCircle className="h-3.5 w-3.5" />,
+    urgent: <AlertCircle className="h-3.5 w-3.5" />,
   }
 
   const priorityColors = {
-    low: "bg-green-900 text-green-300",
-    medium: "bg-yellow-900 text-yellow-300",
-    high: "bg-red-900 text-red-300",
+    low: "bg-slate-500/10 text-slate-400 border border-slate-500/20",
+    medium: "bg-orange-500/10 text-orange-400 border border-orange-500/20",
+    high: "bg-rose-500/10 text-rose-400 border border-rose-500/20",
   }
 
   // Format the due date

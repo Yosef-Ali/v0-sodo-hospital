@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { PageHeader } from "@/components/ui/page-header"
 import { TaskCard } from "@/components/ui/task-card"
 import { Button } from "@/components/ui/button"
@@ -26,111 +26,29 @@ export interface Task {
   createdAt: string
 }
 
-// Sample tasks data
-const initialTasks: Task[] = [
-  {
-    id: "task-1",
-    title: "License Renewal Processing",
-    description: "Review and process hospital license renewal applications from various departments.",
-    status: "urgent",
-    dueDate: "2023-05-15",
-    assignee: "Dr. Samuel",
-    category: "Administrative",
-    priority: "high",
-    createdAt: "2023-05-01",
-  },
-  {
-    id: "task-2",
-    title: "Patient Record Verification",
-    description: "Verify and update patient records in the system to ensure accuracy and completeness.",
-    status: "in-progress",
-    dueDate: "2023-05-20",
-    assignee: "Nurse Johnson",
-    category: "Records",
-    priority: "medium",
-    createdAt: "2023-05-02",
-  },
-  {
-    id: "task-3",
-    title: "Medical Supply Inventory",
-    description: "Conduct inventory check of medical supplies and update the procurement list.",
-    status: "pending",
-    dueDate: "2023-05-25",
-    assignee: "Store Manager",
-    category: "Inventory",
-    priority: "low",
-    createdAt: "2023-05-03",
-  },
-  {
-    id: "task-4",
-    title: "Staff Training Documentation",
-    description: "Update training records for all staff who completed the recent infection control workshop.",
-    status: "completed",
-    dueDate: "2023-05-10",
-    assignee: "HR Director",
-    category: "Training",
-    priority: "medium",
-    createdAt: "2023-05-04",
-  },
-  {
-    id: "task-5",
-    title: "Equipment Maintenance Schedule",
-    description: "Create maintenance schedule for all critical medical equipment for the next quarter.",
-    status: "pending",
-    dueDate: "2023-05-18",
-    assignee: "Maintenance Head",
-    category: "Maintenance",
-    priority: "high",
-    createdAt: "2023-05-05",
-  },
-  {
-    id: "task-6",
-    title: "Insurance Claim Processing",
-    description: "Process pending insurance claims for patients treated in the last month.",
-    status: "in-progress",
-    dueDate: "2023-05-22",
-    assignee: "Finance Officer",
-    category: "Finance",
-    priority: "medium",
-    createdAt: "2023-05-06",
-  },
-  {
-    id: "task-7",
-    title: "Department Budget Review",
-    description: "Review and approve departmental budget proposals for the next fiscal year.",
-    status: "pending",
-    dueDate: "2023-06-15",
-    assignee: "Finance Director",
-    category: "Finance",
-    priority: "high",
-    createdAt: "2023-05-07",
-  },
-  {
-    id: "task-8",
-    title: "Medication Error Report",
-    description: "Compile and analyze medication error reports from all departments for the quality committee.",
-    status: "urgent",
-    dueDate: "2023-05-16",
-    assignee: "Quality Officer",
-    category: "Quality",
-    priority: "high",
-    createdAt: "2023-05-08",
-  },
-  {
-    id: "task-9",
-    title: "New Staff Orientation",
-    description: "Prepare orientation materials for new staff joining next week.",
-    status: "in-progress",
-    dueDate: "2023-05-19",
-    assignee: "HR Assistant",
-    category: "HR",
-    priority: "medium",
-    createdAt: "2023-05-09",
-  },
-]
+interface TasksPageProps {
+  initialData: {
+    tasks: any[]
+  }
+}
 
-export function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks)
+export function TasksPage({ initialData }: TasksPageProps) {
+  // Map database tasks to Task interface
+  const mappedTasks = useMemo(() => {
+    return initialData.tasks.map((item) => ({
+      id: item.task.id,
+      title: item.task.title,
+      description: item.task.description || "",
+      status: item.task.status,
+      dueDate: item.task.dueDate ? new Date(item.task.dueDate).toISOString().split("T")[0] : "",
+      assignee: item.assignee?.name || "Unassigned",
+      category: item.permit?.category ? item.permit.category.replace(/_/g, " ") : "General",
+      priority: item.task.priority,
+      createdAt: new Date(item.task.createdAt).toISOString().split("T")[0],
+    }))
+  }, [initialData.tasks])
+
+  const [tasks, setTasks] = useState<Task[]>(mappedTasks)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
@@ -188,31 +106,31 @@ export function TasksPage() {
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
           <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-5">
             <TabsTrigger value="all" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-              All <Badge className="ml-1 bg-gray-600 text-xs">{taskCounts.all}</Badge>
+              All <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">{taskCounts.all}</Badge>
             </TabsTrigger>
             <TabsTrigger
               value="pending"
               className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white"
             >
-              Pending <Badge className="ml-1 bg-gray-600 text-xs">{taskCounts.pending}</Badge>
+              Pending <Badge className="ml-1 bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">{taskCounts.pending}</Badge>
             </TabsTrigger>
             <TabsTrigger
               value="in-progress"
               className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white"
             >
-              In Progress <Badge className="ml-1 bg-gray-600 text-xs">{taskCounts["in-progress"]}</Badge>
+              In Progress <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">{taskCounts["in-progress"]}</Badge>
             </TabsTrigger>
             <TabsTrigger
               value="completed"
               className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white"
             >
-              Completed <Badge className="ml-1 bg-gray-600 text-xs">{taskCounts.completed}</Badge>
+              Completed <Badge className="ml-1 bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-500/30">{taskCounts.completed}</Badge>
             </TabsTrigger>
             <TabsTrigger
               value="urgent"
               className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white"
             >
-              Urgent <Badge className="ml-1 bg-red-600 text-xs">{taskCounts.urgent}</Badge>
+              Urgent <Badge className="ml-1 bg-red-500/20 text-red-300 text-xs border border-red-500/30">{taskCounts.urgent}</Badge>
             </TabsTrigger>
           </TabsList>
         </Tabs>
