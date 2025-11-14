@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/ui/page-header"
 import { FileBarChart, Download, RefreshCw, Edit, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { ReportDetailActions } from "@/components/reports/report-detail-actions"
+import { ReportSidebarActions } from "@/components/reports/report-sidebar-actions"
 
 interface ReportPageProps {
   params: Promise<{
@@ -77,22 +79,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
             </p>
           </div>
 
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Generate
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Download
-            </Button>
-            <Link href={`/reports/${id}/edit`}>
-              <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            </Link>
-          </div>
+          <ReportDetailActions report={report} reportId={id} />
         </div>
       </div>
 
@@ -195,26 +182,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
           {/* Actions */}
           <Card className="bg-gray-800 border-gray-700 p-6">
             <h2 className="text-lg font-semibold text-white mb-4">Actions</h2>
-            <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Generate Report
-              </Button>
-              {report.fileUrl && (
-                <Button variant="outline" className="w-full justify-start" asChild>
-                  <a href={report.fileUrl} download>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download File
-                  </a>
-                </Button>
-              )}
-              <Link href={`/reports/${id}/edit`} className="block">
-                <Button variant="outline" className="w-full justify-start">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Report
-                </Button>
-              </Link>
-            </div>
+            <ReportSidebarActions report={report} reportId={id} />
           </Card>
         </div>
       </div>
