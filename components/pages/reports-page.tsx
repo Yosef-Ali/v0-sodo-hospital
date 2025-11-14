@@ -10,7 +10,7 @@ export function ReportsPage() {
         description="Access and generate reports for hospital operations and performance metrics."
       />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="mt-[200px] flex items-center justify-between mb-6">
         <div className="text-sm text-gray-400">Showing all available reports</div>
         <PageActions searchPlaceholder="Search reports..." buttonText="Generate Report" />
       </div>
