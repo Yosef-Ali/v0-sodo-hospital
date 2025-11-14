@@ -104,7 +104,7 @@ export function PeoplePage() {
         description="Manage hospital staff, patients, and their dependents"
       />
 
-      <div className="mt-[200px] mb-12 flex flex-col gap-4">
+      <div className="mt-[200px] mb-6 flex flex-col gap-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <Tabs value={activeStatTab} onValueChange={(value) => setActiveStatTab(value as "all" | "dependents" | "permits")} className="w-full md:w-auto">
             <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-3">

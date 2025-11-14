@@ -163,10 +163,10 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
         description="Manage work permits, residence IDs, licenses, and import permits"
       />
 
-      <div className="mt-[200px] mb-12 flex flex-col gap-4">
+      <div className="mt-[200px] mb-6 flex flex-col gap-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as PermitStatus | "ALL")} className="w-full md:w-auto">
-          <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-6 gap-2">
+            <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-6 gap-2">
               <TabsTrigger value="ALL" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
                 All
                 <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">
