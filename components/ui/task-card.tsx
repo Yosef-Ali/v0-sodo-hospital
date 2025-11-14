@@ -12,6 +12,7 @@ interface TaskCardProps {
   assignee: string
   category: string
   priority?: "low" | "medium" | "high"
+  onEdit?: () => void
 }
 
 export function TaskCard({
@@ -23,6 +24,7 @@ export function TaskCard({
   assignee,
   category,
   priority = "medium",
+  onEdit,
 }: TaskCardProps) {
   const statusColors = {
     pending: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
@@ -89,8 +91,11 @@ export function TaskCard({
         <Link href={`/tasks/${id}`} className="text-xs text-green-400 hover:text-green-300 font-medium">
           View Task
         </Link>
-        <button className="text-xs text-gray-400 hover:text-gray-300 font-medium">
-          Details →
+        <button
+          onClick={onEdit}
+          className="text-xs text-gray-400 hover:text-gray-300 font-medium"
+        >
+          Edit
         </button>
       </div>
     </div>

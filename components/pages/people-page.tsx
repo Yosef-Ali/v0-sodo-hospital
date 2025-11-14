@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Search, Plus, User, Filter } from "lucide-react"
 import { getPeople, getPeopleStats } from "@/lib/actions/v2/people"
 import Link from "next/link"
@@ -160,9 +162,41 @@ export function PeoplePage() {
 
       {/* Loading State */}
       {loading && (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-          <p className="text-gray-400 mt-4">{t('common.loading')}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="bg-gray-800 border-gray-700 overflow-hidden flex flex-col">
+              <div className="p-5 flex-1">
+                <div className="flex justify-between items-start mb-3">
+                  <Skeleton className="h-9 w-9 rounded-md" />
+                  <Skeleton className="h-5 w-20" />
+                </div>
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-4 w-1/2 mb-4" />
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-12" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-14" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                  <div className="flex justify-between">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+              </div>
+              <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            </Card>
+          ))}
         </div>
       )}
 

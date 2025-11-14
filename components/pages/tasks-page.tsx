@@ -52,6 +52,7 @@ export function TasksPage({ initialData }: TasksPageProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const { toast } = useToast()
 
   // Filter tasks based on active tab and search query
@@ -84,18 +85,39 @@ export function TasksPage({ initialData }: TasksPageProps) {
     urgent: tasks.filter((task) => task.status === "urgent").length,
   }
 
-  // Handle adding a new task
-  const handleAddTask = (newTask: Omit<Task, "id" | "createdAt">) => {
-    const id = `task-${tasks.length + 1}`
-    const createdAt = new Date().toISOString().split("T")[0]
-
-    setTasks([...tasks, { id, createdAt, ...newTask }])
+  // Handle adding or updating a task
+  const handleAddTask = (taskData: Omit<Task, "id" | "createdAt"> & { id?: string }) => {
+    if (taskData.id) {
+      // Edit mode - update existing task
+      setTasks(tasks.map(task => task.id === taskData.id ? { ...task, ...taskData } : task))
+      toast({
+        title: "Task Updated",
+        description: `"${taskData.title}" has been updated successfully.`,
+      })
+    } else {
+      // Create mode - add new task
+      const id = `task-${tasks.length + 1}`
+      const createdAt = new Date().toISOString().split("T")[0]
+      setTasks([...tasks, { id, createdAt, ...taskData }])
+      toast({
+        title: "Task Created",
+        description: `"${taskData.title}" has been created successfully.`,
+      })
+    }
     setIsSheetOpen(false)
+    setSelectedTask(null)
+  }
 
-    toast({
-      title: "Task Created",
-      description: `"${newTask.title}" has been created successfully.`,
-    })
+  // Handle editing a task
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task)
+    setIsSheetOpen(true)
+  }
+
+  // Handle creating a new task
+  const handleCreateNew = () => {
+    setSelectedTask(null)
+    setIsSheetOpen(true)
   }
 
   return (
@@ -172,7 +194,7 @@ export function TasksPage({ initialData }: TasksPageProps) {
           <Button
             size="sm"
             className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
-            onClick={() => setIsSheetOpen(true)}
+            onClick={handleCreateNew}
           >
             <Plus className="h-4 w-4 mr-2" />
             New Task
@@ -191,7 +213,7 @@ export function TasksPage({ initialData }: TasksPageProps) {
               ? "No tasks match your search criteria. Try adjusting your search."
               : "There are no tasks in this category. Create a new task to get started."}
           </p>
-          <Button className="bg-green-600 hover:bg-green-700" onClick={() => setIsSheetOpen(true)}>
+          <Button className="bg-green-600 hover:bg-green-700" onClick={handleCreateNew}>
             <Plus className="h-4 w-4 mr-2" />
             Create New Task
           </Button>
@@ -209,12 +231,13 @@ export function TasksPage({ initialData }: TasksPageProps) {
               assignee={task.assignee}
               category={task.category}
               priority={task.priority}
+              onEdit={() => handleEditTask(task)}
             />
           ))}
         </div>
       )}
 
-      <TaskSheet open={isSheetOpen} onOpenChange={setIsSheetOpen} onSubmit={handleAddTask} />
+      <TaskSheet open={isSheetOpen} onOpenChange={setIsSheetOpen} onSubmit={handleAddTask} task={selectedTask} />
       <Toaster />
     </div>
   )
