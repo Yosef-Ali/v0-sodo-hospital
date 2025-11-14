@@ -1,5 +1,20 @@
-import { db } from "./index"
+import * as dotenv from "dotenv"
+import { drizzle } from "drizzle-orm/neon-serverless"
+import { Pool, neonConfig } from "@neondatabase/serverless"
 import { reports } from "./schema"
+import ws from "ws"
+
+// Load environment variables from .env.local
+dotenv.config({ path: ".env.local" })
+
+// Configure WebSocket for local development
+if (process.env.NODE_ENV === "development") {
+  neonConfig.webSocketConstructor = ws
+}
+
+// Create a fresh connection pool with the loaded DATABASE_URL
+const pool = new Pool({ connectionString: process.env.DATABASE_URL! })
+const db = drizzle(pool)
 
 /**
  * Seed script for reports table
@@ -293,9 +308,12 @@ async function seedReports() {
     console.log(`  - PUBLISHED: ${mockReports.filter(r => r.status === 'PUBLISHED').length}`)
     console.log(`  - ARCHIVED: ${mockReports.filter(r => r.status === 'ARCHIVED').length}`)
 
+    // Close the pool
+    await pool.end()
     process.exit(0)
   } catch (error) {
     console.error("❌ Error seeding reports:", error)
+    await pool.end()
     process.exit(1)
   }
 }
