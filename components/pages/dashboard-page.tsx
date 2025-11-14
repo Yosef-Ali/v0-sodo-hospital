@@ -6,6 +6,8 @@ import { MetricCard } from "@/components/ui/metric-card"
 import { DocumentProcessingTable } from "@/components/ui/document-processing-table"
 import { FileText, Clock, AlertCircle } from "lucide-react"
 import { ActivityTable } from "@/components/ui/activity-table"
+import { useRouter } from "next/navigation"
+import { useToast } from "@/hooks/use-toast"
 
 interface DashboardPageProps {
   initialData: {
@@ -17,6 +19,8 @@ interface DashboardPageProps {
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
   const { taskStats, permitStats, permits } = initialData
+  const router = useRouter()
+  const { toast } = useToast()
 
   return (
     <div className="p-8">
@@ -73,6 +77,13 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           footer={`${permitStats.byStatus?.PENDING || 0} permits pending review`}
           buttonText="View Details"
           buttonLink="/permits"
+          onChartClick={() => {
+            toast({
+              title: "Document Insights",
+              description: "Viewing detailed document processing metrics"
+            })
+            router.push("/permits")
+          }}
         />
 
         <MetricCard
@@ -102,6 +113,13 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           footer={`${taskStats.byStatus?.urgent || 0} urgent tasks`}
           buttonText="View Details"
           buttonLink="/tasks"
+          onChartClick={() => {
+            toast({
+              title: "Processing Status",
+              description: "Viewing permit processing timeline and status"
+            })
+            router.push("/permits?status=SUBMITTED")
+          }}
         />
 
         <MetricCard
@@ -131,6 +149,13 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           footer={`${Math.max(0, Math.floor((taskStats.byStatus?.completed || 0) / (taskStats.total || 1) * 100))}% tasks completed`}
           buttonText="View Details"
           buttonLink="/tasks"
+          onChartClick={() => {
+            toast({
+              title: "Task Priority Overview",
+              description: "Viewing urgent and high-priority tasks"
+            })
+            router.push("/tasks?status=urgent")
+          }}
         />
       </div>
 

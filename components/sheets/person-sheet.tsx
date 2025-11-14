@@ -1,283 +1,251 @@
+/**
+ * Person Sheet Component
+ * Sheet for creating and editing people in the system
+ */
+
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
-interface PersonFormData {
-  id?: string
-  firstName: string
-  lastName: string
-  nationality: string
-  passportNo: string
-  email: string
-  phone: string
-  dateOfBirth: string
-  gender: string
-  guardianId?: string
-}
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { Plus, Loader2, User } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
 
 interface PersonSheetProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSubmit: (person: PersonFormData) => void
-  person?: PersonFormData | null
+  trigger?: React.ReactNode
+  personId?: string
+  initialData?: {
+    firstName?: string
+    lastName?: string
+    nationality?: string
+    passportNo?: string
+    phone?: string
+    email?: string
+    guardianId?: string
+  }
+  onSuccess?: () => void
 }
 
-export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonSheetProps) {
-  const [formData, setFormData] = useState<PersonFormData>({
-    firstName: "",
-    lastName: "",
-    nationality: "",
-    passportNo: "",
-    email: "",
-    phone: "",
-    dateOfBirth: "",
-    gender: "",
+export function PersonSheet({
+  trigger,
+  personId,
+  initialData,
+  onSuccess,
+}: PersonSheetProps) {
+  const [open, setOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { toast } = useToast()
+
+  // Form state
+  const [formData, setFormData] = useState({
+    firstName: initialData?.firstName || "",
+    lastName: initialData?.lastName || "",
+    nationality: initialData?.nationality || "",
+    passportNo: initialData?.passportNo || "",
+    phone: initialData?.phone || "",
+    email: initialData?.email || "",
+    guardianId: initialData?.guardianId || "",
   })
 
-  // Populate form when editing
-  useEffect(() => {
-    if (person) {
-      setFormData({
-        id: person.id,
-        firstName: person.firstName || "",
-        lastName: person.lastName || "",
-        nationality: person.nationality || "",
-        passportNo: person.passportNo || "",
-        email: person.email || "",
-        phone: person.phone || "",
-        dateOfBirth: person.dateOfBirth || "",
-        gender: person.gender || "",
-      })
-    } else {
-      // Reset for create mode
-      setFormData({
-        firstName: "",
-        lastName: "",
-        nationality: "",
-        passportNo: "",
-        email: "",
-        phone: "",
-        dateOfBirth: "",
-        gender: "",
-      })
-    }
-  }, [person, open])
-
-  // Predefined options
-  const nationalities = [
-    { value: "ethiopian", label: "Ethiopian" },
-    { value: "american", label: "American" },
-    { value: "british", label: "British" },
-    { value: "canadian", label: "Canadian" },
-    { value: "indian", label: "Indian" },
-    { value: "kenyan", label: "Kenyan" },
-    { value: "nigerian", label: "Nigerian" },
-    { value: "south_african", label: "South African" },
-    { value: "other", label: "Other" },
-  ]
-
-  const genders = [
-    { value: "male", label: "Male" },
-    { value: "female", label: "Female" },
-    { value: "other", label: "Other" },
-  ]
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(formData)
-    onOpenChange(false)
-  }
+    setIsSubmitting(true)
 
-  const isEditMode = !!person
+    try {
+      // TODO: Implement actual server action
+      // await createPerson(formData) or await updatePerson(personId, formData)
+
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
+
+      toast({
+        title: personId ? "Person updated" : "Person created",
+        description: personId
+          ? "The person has been updated successfully."
+          : "A new person has been created successfully.",
+      })
+
+      setOpen(false)
+      onSuccess?.()
+
+      // Reset form if creating new
+      if (!personId) {
+        setFormData({
+          firstName: "",
+          lastName: "",
+          nationality: "",
+          passportNo: "",
+          phone: "",
+          email: "",
+          guardianId: "",
+        })
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "An error occurred",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="bg-gray-800 border-gray-700 w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle className="text-white">
-            {isEditMode ? "Edit Person" : "Add New Person"}
-          </SheetTitle>
-          <SheetDescription className="text-gray-400">
-            {isEditMode
-              ? "Update the personal details below."
-              : "Fill in the personal details below to create a new person record."}
-          </SheetDescription>
-        </SheetHeader>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        {trigger || (
+          <Button className="bg-green-600 hover:bg-green-700">
+            <Plus className="h-4 w-4 mr-2" />
+            New Person
+          </Button>
+        )}
+      </SheetTrigger>
+      <SheetContent className="sm:max-w-[540px] overflow-y-auto">
+        <form onSubmit={handleSubmit}>
+          <SheetHeader>
+            <div className="flex items-center gap-2">
+              <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                <User className="h-5 w-5 text-green-500" />
+              </div>
+              <div>
+                <SheetTitle>{personId ? "Edit Person" : "Create New Person"}</SheetTitle>
+                <SheetDescription>
+                  {personId
+                    ? "Update the person information below."
+                    : "Fill in the details to add a new person."}
+                </SheetDescription>
+              </div>
+            </div>
+          </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 mt-6">
-          {/* Name Fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="firstName" className="text-gray-300">
-                First Name *
-              </Label>
+          <div className="grid gap-4 py-6">
+            {/* Name Section */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input
+                  id="firstName"
+                  placeholder="Enter first name"
+                  value={formData.firstName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, firstName: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Enter last name"
+                  value={formData.lastName}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lastName: e.target.value })
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Nationality */}
+            <div className="grid gap-2">
+              <Label htmlFor="nationality">Nationality</Label>
               <Input
-                id="firstName"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                placeholder="Enter first name"
-                className="bg-gray-700 border-gray-600 text-white"
-                required
+                id="nationality"
+                placeholder="e.g., Ethiopian, Kenyan, etc."
+                value={formData.nationality}
+                onChange={(e) =>
+                  setFormData({ ...formData, nationality: e.target.value })
+                }
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="lastName" className="text-gray-300">
-                Last Name *
-              </Label>
+            {/* Passport Number */}
+            <div className="grid gap-2">
+              <Label htmlFor="passportNo">Passport Number</Label>
               <Input
-                id="lastName"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                placeholder="Enter last name"
-                className="bg-gray-700 border-gray-600 text-white"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Nationality */}
-          <div className="space-y-2">
-            <Label htmlFor="nationality" className="text-gray-300">
-              Nationality *
-            </Label>
-            <Select
-              value={formData.nationality}
-              onValueChange={(value) => setFormData({ ...formData, nationality: value })}
-            >
-              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                <SelectValue placeholder="Select nationality" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-700 border-gray-600">
-                {nationalities.map((nat) => (
-                  <SelectItem key={nat.value} value={nat.value} className="text-white">
-                    {nat.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Passport Number */}
-          <div className="space-y-2">
-            <Label htmlFor="passportNo" className="text-gray-300">
-              Passport Number *
-            </Label>
-            <Input
-              id="passportNo"
-              name="passportNo"
-              value={formData.passportNo}
-              onChange={handleChange}
-              placeholder="Enter passport number"
-              className="bg-gray-700 border-gray-600 text-white"
-              required
-            />
-          </div>
-
-          {/* Contact Information */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-300">
-                Email
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="email@example.com"
-                className="bg-gray-700 border-gray-600 text-white"
+                id="passportNo"
+                placeholder="Enter passport number"
+                value={formData.passportNo}
+                onChange={(e) =>
+                  setFormData({ ...formData, passportNo: e.target.value })
+                }
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="text-gray-300">
-                Phone
-              </Label>
+            {/* Contact Information */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+251 XXX XXX XXX"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="email@example.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Guardian ID (for dependents) */}
+            <div className="grid gap-2">
+              <Label htmlFor="guardianId">Guardian ID (Optional)</Label>
               <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={handleChange}
-                placeholder="+251 912 345 678"
-                className="bg-gray-700 border-gray-600 text-white"
+                id="guardianId"
+                placeholder="Enter guardian's person ID if this is a dependent"
+                value={formData.guardianId}
+                onChange={(e) =>
+                  setFormData({ ...formData, guardianId: e.target.value })
+                }
               />
+              <p className="text-xs text-gray-500">
+                Leave blank if this person is not a dependent
+              </p>
             </div>
           </div>
 
-          {/* Date of Birth and Gender */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="dateOfBirth" className="text-gray-300">
-                Date of Birth *
-              </Label>
-              <Input
-                id="dateOfBirth"
-                name="dateOfBirth"
-                type="date"
-                value={formData.dateOfBirth}
-                onChange={handleChange}
-                className="bg-gray-700 border-gray-600 text-white"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="gender" className="text-gray-300">
-                Gender *
-              </Label>
-              <Select
-                value={formData.gender}
-                onValueChange={(value) => setFormData({ ...formData, gender: value })}
-              >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  {genders.map((gender) => (
-                    <SelectItem key={gender.value} value={gender.value} className="text-white">
-                      {gender.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <SheetFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1 bg-gray-700 border-gray-600 hover:bg-gray-600"
+              onClick={() => setOpen(false)}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!formData.firstName || !formData.lastName || !formData.nationality || !formData.passportNo || !formData.dateOfBirth || !formData.gender}
+              disabled={isSubmitting || !formData.firstName || !formData.lastName}
+              className="bg-green-600 hover:bg-green-700"
             >
-              {isEditMode ? "Update Person" : "Add Person"}
+              {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {personId ? "Update" : "Create"} Person
             </Button>
-          </div>
+          </SheetFooter>
         </form>
       </SheetContent>
     </Sheet>
