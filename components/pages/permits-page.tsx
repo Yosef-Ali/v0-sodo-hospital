@@ -98,6 +98,14 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
     }
   }
 
+  const translateWithFallback = (key: string, fallback: string) => {
+    const value = t(key)
+    return !value || value === key ? fallback : value
+  }
+
+  const pageTitle = translateWithFallback("permit.permits", "Permits")
+  const createButtonText = translateWithFallback("permit.createPermit", "Create Permit")
+
   const filteredPermits = permits.filter((item) => {
     const permit = item.permit
     const person = item.person
@@ -123,7 +131,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
   return (
     <div className="p-8">
       <PageHeader
-        title={t("permit.permits") || "Permits"}
+        title={pageTitle}
         description="Manage work permits, residence IDs, licenses, and import permits"
       />
 
@@ -251,7 +259,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
             className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="h-4 w-4 mr-2" />
-            {t("permit.createPermit") || "Create Permit"}
+            {createButtonText}
           </Button>
         </div>
       )}
