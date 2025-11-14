@@ -15,24 +15,29 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { PersonSheet } from "@/components/sheets/person-sheet"
 
-export function PeoplePage() {
+interface PeoplePageProps {
+  initialData: {
+    people: any[]
+    stats: {
+      total: number
+      dependents: number
+      withPermits: number
+    }
+  }
+}
+
+export function PeoplePage({ initialData }: PeoplePageProps) {
   const { t } = useTranslation()
   const router = useRouter()
 
-  const [people, setPeople] = useState<any[]>([])
-  const [stats, setStats] = useState({ total: 0, dependents: 0, withPermits: 0 })
+  const [people, setPeople] = useState<any[]>(initialData.people)
+  const [stats, setStats] = useState(initialData.stats)
   const [searchQuery, setSearchQuery] = useState("")
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeStatTab, setActiveStatTab] = useState<"all" | "dependents" | "permits">("all")
   const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedPerson, setSelectedPerson] = useState<any>(null)
-
-  // Load data on mount and when search changes
-  useEffect(() => {
-    loadPeople()
-    loadStats()
-  }, [])
 
   const loadPeople = async (query?: string) => {
     setLoading(true)
