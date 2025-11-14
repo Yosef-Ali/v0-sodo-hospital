@@ -203,7 +203,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
               className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
             >
               <Plus className="h-4 w-4 mr-2" />
-              {t("permit.createPermit") || "Create Permit"}
+              {createButtonText}
             </Button>
           </div>
         </div>
