@@ -1,17 +1,28 @@
 import { PageHeader } from "@/components/ui/page-header"
 import { ReportCard } from "@/components/ui/report-card"
 import { PageActions } from "@/components/ui/page-actions"
+import type { ReportStats } from "@/lib/actions/v2/reports"
 
-export function ReportsPage() {
+interface ReportsPageProps {
+  stats: ReportStats | null
+}
+
+export function ReportsPage({ stats }: ReportsPageProps) {
+  const description = stats
+    ? `${stats.totalPermits} permits • ${stats.totalTasks} tasks • ${stats.totalPeople} people • ${stats.expiringSoon} expiring soon`
+    : "Access and generate reports for hospital operations and performance metrics."
+
   return (
     <div className="p-8">
       <PageHeader
         title="Reports"
-        description="Access and generate reports for hospital operations and performance metrics."
+        description={description}
       />
 
-      <div className="mt-6 mb-6 flex items-center justify-between">
-        <div className="text-sm text-gray-400">Showing all available reports</div>
+      <div className="mt-[200px] mb-6 flex items-center justify-between">
+        <div className="text-sm text-gray-400">
+          {stats ? `Last updated: ${new Date(stats.lastUpdated).toLocaleTimeString()}` : "Showing all available reports"}
+        </div>
         <PageActions searchPlaceholder="Search reports..." buttonText="Generate Report" />
       </div>
 
