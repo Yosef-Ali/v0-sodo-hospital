@@ -18,7 +18,7 @@ Key system information:
 Be professional, concise, and provide actionable guidance. Offer to help with specific tasks or navigate to relevant sections.`
 
 export interface ChatWidget {
-  type: "action-card" | "progress" | "list" | "document-card" | "metric-card" | "quick-actions" | "status-badge" | "date-picker"
+  type: "action-card" | "progress" | "list" | "document-card" | "metric-card" | "quick-actions" | "status-badge" | "date-picker" | "approval-widget"
   data: any
 }
 
@@ -33,6 +33,9 @@ export interface Message {
     action?: string
     link?: string
     suggestions?: string[]
+    intent?: string
+    confidence?: number
+    agentType?: string
   }
 }
 
