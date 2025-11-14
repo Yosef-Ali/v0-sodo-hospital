@@ -108,8 +108,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
-                    <Link href={item.url}>
-                      <item.icon />
+                    <Link href={item.url} className="flex items-center gap-3">
+                      <item.icon className={pathname === item.url ? "text-green-500" : "text-gray-400"} />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -124,8 +124,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <Link href="/login" className="w-full">
-                <LogIn />
+              <Link href="/login" className="flex items-center gap-3 w-full">
+                <LogIn className="text-gray-400" />
                 <span>Sign In</span>
               </Link>
             </SidebarMenuButton>

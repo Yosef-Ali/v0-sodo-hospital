@@ -11,7 +11,10 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative">
+        {/* Background Effects */}
+        <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-green-400/10 via-transparent to-transparent pointer-events-none"></div>
+
         <header className="flex h-16 shrink-0 items-center gap-2 border-b border-gray-700/50 px-4 bg-gray-900/40 backdrop-blur-md sticky top-0 z-10">
           <SidebarTrigger className="-ml-1 text-gray-400 hover:text-white" />
           <Separator orientation="vertical" className="mr-2 h-4 bg-gray-700/50" />
@@ -21,7 +24,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <span>Permit Management System</span>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto relative z-0">
           {children}
         </div>
       </SidebarInset>
