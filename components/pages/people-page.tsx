@@ -24,6 +24,7 @@ export function PeoplePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [selectedPerson, setSelectedPerson] = useState<any>(null)
 
   // Load data on mount and when search changes
   useEffect(() => {
@@ -58,11 +59,29 @@ export function PeoplePage() {
   }
 
   const handleCreatePerson = (personData: any) => {
-    console.log("New person data:", personData)
-    // TODO: Call createPerson API action
-    // After successful creation, reload the list
+    if (personData.id) {
+      // Edit mode
+      console.log("Update person data:", personData)
+      // TODO: Call updatePerson API action
+    } else {
+      // Create mode
+      console.log("New person data:", personData)
+      // TODO: Call createPerson API action
+    }
+    // After successful operation, reload the list
     loadPeople()
     loadStats()
+    setSelectedPerson(null)
+  }
+
+  const handleEditPerson = (person: any) => {
+    setSelectedPerson(person)
+    setSheetOpen(true)
+  }
+
+  const handleCreateNew = () => {
+    setSelectedPerson(null)
+    setSheetOpen(true)
   }
 
   return (
@@ -75,7 +94,7 @@ export function PeoplePage() {
         />
 
         <Button
-          onClick={() => setSheetOpen(true)}
+          onClick={handleCreateNew}
           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -201,7 +220,7 @@ export function PeoplePage() {
               : "Get started by adding your first person."}
           </p>
           <Button
-            onClick={() => setSheetOpen(true)}
+            onClick={handleCreateNew}
             className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -270,8 +289,11 @@ export function PeoplePage() {
                 >
                   View Profile
                 </button>
-                <button className="text-xs text-gray-400 hover:text-gray-300 font-medium">
-                  Details →
+                <button
+                  onClick={() => handleEditPerson(person)}
+                  className="text-xs text-gray-400 hover:text-gray-300 font-medium"
+                >
+                  Edit
                 </button>
               </div>
             </div>
@@ -293,6 +315,7 @@ export function PeoplePage() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onSubmit={handleCreatePerson}
+        person={selectedPerson}
       />
     </div>
   )

@@ -45,6 +45,7 @@ export function TasksV2Page() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<any>(null)
 
   useEffect(() => {
     loadTasks()
@@ -87,11 +88,29 @@ export function TasksV2Page() {
   }
 
   const handleCreateTask = (taskData: any) => {
-    console.log("New task data:", taskData)
-    // TODO: Call createTask API action
-    // After successful creation, reload the list
+    if (taskData.id) {
+      // Edit mode
+      console.log("Update task data:", taskData)
+      // TODO: Call updateTask API action
+    } else {
+      // Create mode
+      console.log("New task data:", taskData)
+      // TODO: Call createTask API action
+    }
+    // After successful operation, reload the list
     loadTasks()
     loadStats()
+    setSelectedTask(null)
+  }
+
+  const handleEditTask = (task: any) => {
+    setSelectedTask(task.task) // task object is nested in the result
+    setSheetOpen(true)
+  }
+
+  const handleCreateNew = () => {
+    setSelectedTask(null)
+    setSheetOpen(true)
   }
 
   const getStatusIcon = (status: string) => {
@@ -174,7 +193,7 @@ export function TasksV2Page() {
         />
 
         <Button
-          onClick={() => setSheetOpen(true)}
+          onClick={handleCreateNew}
           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -317,7 +336,7 @@ export function TasksV2Page() {
               : "Get started by creating your first task."}
           </p>
           <Button
-            onClick={() => setSheetOpen(true)}
+            onClick={handleCreateNew}
             className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -393,6 +412,17 @@ export function TasksV2Page() {
 
                   {/* Right: Actions */}
                   <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-gray-600 text-gray-400 hover:bg-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleEditTask(item)
+                      }}
+                    >
+                      Edit
+                    </Button>
                     {task.status !== "completed" && (
                       <Button
                         size="sm"
@@ -420,6 +450,7 @@ export function TasksV2Page() {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onSubmit={handleCreateTask}
+        task={selectedTask}
       />
     </div>
   )

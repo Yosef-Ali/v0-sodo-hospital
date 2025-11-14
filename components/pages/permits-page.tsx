@@ -37,6 +37,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
   const [categoryFilter, setCategoryFilter] = useState<PermitCategory | "ALL">("ALL")
   const [statusFilter, setStatusFilter] = useState<PermitStatus | "ALL">("ALL")
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [selectedPermit, setSelectedPermit] = useState<any>(null)
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -99,9 +100,27 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
   }
 
   const handleCreatePermit = (permitData: any) => {
-    console.log("New permit data:", permitData)
-    // TODO: Call createPermit API action
-    // After successful creation, reload the list or navigate
+    if (permitData.id) {
+      // Edit mode
+      console.log("Update permit data:", permitData)
+      // TODO: Call updatePermit API action
+    } else {
+      // Create mode
+      console.log("New permit data:", permitData)
+      // TODO: Call createPermit API action
+    }
+    // After successful operation, reload the list
+    setSelectedPermit(null)
+  }
+
+  const handleEditPermit = (permit: any) => {
+    setSelectedPermit(permit)
+    setSheetOpen(true)
+  }
+
+  const handleCreateNew = () => {
+    setSelectedPermit(null)
+    setSheetOpen(true)
   }
 
   return (
@@ -114,7 +133,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
         />
 
         <Button
-          onClick={() => setSheetOpen(true)}
+          onClick={handleCreateNew}
           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -210,7 +229,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
               : "Get started by creating your first permit."}
           </p>
           <Button
-            onClick={() => setSheetOpen(true)}
+            onClick={handleCreateNew}
             className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -283,8 +302,11 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
                   >
                     View Permit
                   </button>
-                  <button className="text-xs text-gray-400 hover:text-gray-300 font-medium">
-                    Details →
+                  <button
+                    onClick={() => handleEditPermit(permit)}
+                    className="text-xs text-gray-400 hover:text-gray-300 font-medium"
+                  >
+                    Edit
                   </button>
                 </div>
               </div>
@@ -298,6 +320,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
         open={sheetOpen}
         onOpenChange={setSheetOpen}
         onSubmit={handleCreatePermit}
+        permit={selectedPermit}
       />
     </div>
   )

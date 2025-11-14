@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,14 +11,26 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Task } from "@/components/pages/tasks-page"
 
+interface TaskFormData {
+  id?: string
+  title: string
+  description: string
+  status: string
+  priority: string
+  dueDate: string
+  assignee: string
+  category: string
+}
+
 interface TaskSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (task: Omit<Task, "id" | "createdAt">) => void
+  onSubmit: (task: TaskFormData) => void
+  task?: TaskFormData | null
 }
 
-export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
-  const [formData, setFormData] = useState<Omit<Task, "id" | "createdAt">>({
+export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps) {
+  const [formData, setFormData] = useState<TaskFormData>({
     title: "",
     description: "",
     status: "pending",
@@ -27,6 +39,33 @@ export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
     assignee: "",
     category: "",
   })
+
+  // Populate form when editing
+  useEffect(() => {
+    if (task) {
+      setFormData({
+        id: task.id,
+        title: task.title || "",
+        description: task.description || "",
+        status: task.status || "pending",
+        priority: task.priority || "medium",
+        dueDate: task.dueDate || new Date().toISOString().split("T")[0],
+        assignee: task.assignee || "",
+        category: task.category || "",
+      })
+    } else {
+      // Reset for create mode
+      setFormData({
+        title: "",
+        description: "",
+        status: "pending",
+        priority: "medium",
+        dueDate: new Date().toISOString().split("T")[0],
+        assignee: "",
+        category: "",
+      })
+    }
+  }, [task, open])
 
   // Predefined options
   const categories = [
@@ -92,26 +131,21 @@ export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
     e.preventDefault()
     onSubmit(formData)
     onOpenChange(false)
-
-    // Reset form
-    setFormData({
-      title: "",
-      description: "",
-      status: "pending",
-      priority: "medium",
-      dueDate: new Date().toISOString().split("T")[0],
-      assignee: "",
-      category: "",
-    })
   }
+
+  const isEditMode = !!task
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="bg-gray-800 border-gray-700 w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="text-white">Create New Task</SheetTitle>
+          <SheetTitle className="text-white">
+            {isEditMode ? "Edit Task" : "Create New Task"}
+          </SheetTitle>
           <SheetDescription className="text-gray-400">
-            Fill in the details below. Use dropdowns for quick selection.
+            {isEditMode
+              ? "Update the task details below."
+              : "Fill in the details below. Use dropdowns for quick selection."}
           </SheetDescription>
         </SheetHeader>
 
@@ -285,7 +319,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit }: TaskSheetProps) {
               className="flex-1 bg-green-600 hover:bg-green-700"
               disabled={!formData.category || !formData.title || !formData.description || !formData.assignee}
             >
-              Create Task
+              {isEditMode ? "Update Task" : "Create Task"}
             </Button>
           </div>
         </form>

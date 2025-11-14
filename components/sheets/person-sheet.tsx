@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface PersonFormData {
+  id?: string
   firstName: string
   lastName: string
   nationality: string
@@ -25,9 +26,10 @@ interface PersonSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (person: PersonFormData) => void
+  person?: PersonFormData | null
 }
 
-export function PersonSheet({ open, onOpenChange, onSubmit }: PersonSheetProps) {
+export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonSheetProps) {
   const [formData, setFormData] = useState<PersonFormData>({
     firstName: "",
     lastName: "",
@@ -38,6 +40,35 @@ export function PersonSheet({ open, onOpenChange, onSubmit }: PersonSheetProps) 
     dateOfBirth: "",
     gender: "",
   })
+
+  // Populate form when editing
+  useEffect(() => {
+    if (person) {
+      setFormData({
+        id: person.id,
+        firstName: person.firstName || "",
+        lastName: person.lastName || "",
+        nationality: person.nationality || "",
+        passportNo: person.passportNo || "",
+        email: person.email || "",
+        phone: person.phone || "",
+        dateOfBirth: person.dateOfBirth || "",
+        gender: person.gender || "",
+      })
+    } else {
+      // Reset for create mode
+      setFormData({
+        firstName: "",
+        lastName: "",
+        nationality: "",
+        passportNo: "",
+        email: "",
+        phone: "",
+        dateOfBirth: "",
+        gender: "",
+      })
+    }
+  }, [person, open])
 
   // Predefined options
   const nationalities = [
@@ -67,27 +98,21 @@ export function PersonSheet({ open, onOpenChange, onSubmit }: PersonSheetProps) 
     e.preventDefault()
     onSubmit(formData)
     onOpenChange(false)
-
-    // Reset form
-    setFormData({
-      firstName: "",
-      lastName: "",
-      nationality: "",
-      passportNo: "",
-      email: "",
-      phone: "",
-      dateOfBirth: "",
-      gender: "",
-    })
   }
+
+  const isEditMode = !!person
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="bg-gray-800 border-gray-700 w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="text-white">Add New Person</SheetTitle>
+          <SheetTitle className="text-white">
+            {isEditMode ? "Edit Person" : "Add New Person"}
+          </SheetTitle>
           <SheetDescription className="text-gray-400">
-            Fill in the personal details below to create a new person record.
+            {isEditMode
+              ? "Update the personal details below."
+              : "Fill in the personal details below to create a new person record."}
           </SheetDescription>
         </SheetHeader>
 
@@ -250,7 +275,7 @@ export function PersonSheet({ open, onOpenChange, onSubmit }: PersonSheetProps) 
               className="flex-1 bg-green-600 hover:bg-green-700"
               disabled={!formData.firstName || !formData.lastName || !formData.nationality || !formData.passportNo || !formData.dateOfBirth || !formData.gender}
             >
-              Add Person
+              {isEditMode ? "Update Person" : "Add Person"}
             </Button>
           </div>
         </form>

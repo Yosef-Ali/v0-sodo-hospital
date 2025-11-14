@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface PermitFormData {
+  id?: string
   title: string
   category: string
   status: string
@@ -25,9 +26,10 @@ interface PermitSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (permit: PermitFormData) => void
+  permit?: PermitFormData | null
 }
 
-export function PermitSheet({ open, onOpenChange, onSubmit }: PermitSheetProps) {
+export function PermitSheet({ open, onOpenChange, onSubmit, permit }: PermitSheetProps) {
   const [formData, setFormData] = useState<PermitFormData>({
     title: "",
     category: "",
@@ -38,6 +40,35 @@ export function PermitSheet({ open, onOpenChange, onSubmit }: PermitSheetProps) 
     permitNumber: "",
     notes: "",
   })
+
+  // Populate form when editing
+  useEffect(() => {
+    if (permit) {
+      setFormData({
+        id: permit.id,
+        title: permit.title || "",
+        category: permit.category || "",
+        status: permit.status || "pending",
+        personId: permit.personId || "",
+        issueDate: permit.issueDate || "",
+        expiryDate: permit.expiryDate || "",
+        permitNumber: permit.permitNumber || "",
+        notes: permit.notes || "",
+      })
+    } else {
+      // Reset for create mode
+      setFormData({
+        title: "",
+        category: "",
+        status: "pending",
+        personId: "",
+        issueDate: "",
+        expiryDate: "",
+        permitNumber: "",
+        notes: "",
+      })
+    }
+  }, [permit, open])
 
   // Predefined options
   const categories = [
@@ -100,27 +131,21 @@ export function PermitSheet({ open, onOpenChange, onSubmit }: PermitSheetProps) 
     e.preventDefault()
     onSubmit(formData)
     onOpenChange(false)
-
-    // Reset form
-    setFormData({
-      title: "",
-      category: "",
-      status: "pending",
-      personId: "",
-      issueDate: "",
-      expiryDate: "",
-      permitNumber: "",
-      notes: "",
-    })
   }
+
+  const isEditMode = !!permit
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="bg-gray-800 border-gray-700 w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle className="text-white">Create New Permit</SheetTitle>
+          <SheetTitle className="text-white">
+            {isEditMode ? "Edit Permit" : "Create New Permit"}
+          </SheetTitle>
           <SheetDescription className="text-gray-400">
-            Fill in the permit details below. Use dropdowns for quick selection.
+            {isEditMode
+              ? "Update the permit details below."
+              : "Fill in the permit details below. Use dropdowns for quick selection."}
           </SheetDescription>
         </SheetHeader>
 
@@ -303,7 +328,7 @@ export function PermitSheet({ open, onOpenChange, onSubmit }: PermitSheetProps) 
               className="flex-1 bg-green-600 hover:bg-green-700"
               disabled={!formData.category || !formData.title || !formData.personId}
             >
-              Create Permit
+              {isEditMode ? "Update Permit" : "Create Permit"}
             </Button>
           </div>
         </form>
