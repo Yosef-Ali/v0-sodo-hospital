@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Plus, User, Users, FileText, Shield } from "lucide-react"
 import { getPeople, getPeopleStats, type Person } from "@/lib/actions/v2/people"
 import { PersonSheet } from "@/components/sheets/person-sheet"
@@ -20,6 +21,7 @@ export function PeoplePage() {
 
   const [people, setPeople] = useState<any[]>([])
   const [stats, setStats] = useState({ total: 0, dependents: 0, withPermits: 0 })
+  const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -92,59 +94,42 @@ export function PeoplePage() {
         description="Manage hospital staff, patients, and their dependents"
       />
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 mb-6">
-        <Card className="bg-gray-800 border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-400">{t('common.total') || 'Total People'}</p>
-              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
-            </div>
-            <User className="h-8 w-8 text-green-500" />
-          </div>
-        </Card>
+      {/* Tabs, Search and Actions */}
+      <div className="mt-6 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
+          <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-3">
+            <TabsTrigger value="all" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
+              All <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">{stats.total}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="staff" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
+              Staff <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">{stats.total - stats.dependents}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="dependents" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
+              Dependents <Badge className="ml-1 bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30">{stats.dependents}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
 
-        <Card className="bg-gray-800 border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-400">{t('person.dependents')}</p>
-              <p className="text-2xl font-bold text-white mt-1">{stats.dependents}</p>
-            </div>
-            <Users className="h-8 w-8 text-blue-500" />
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
+            <Input
+              placeholder="Search persons..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10 pr-4 py-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 w-full text-gray-300"
+            />
           </div>
-        </Card>
 
-        <Card className="bg-gray-800 border-gray-700 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-400">With Permits</p>
-              <p className="text-2xl font-bold text-white mt-1">{stats.withPermits}</p>
-            </div>
-            <Shield className="h-8 w-8 text-purple-500" />
-          </div>
-        </Card>
-      </div>
-
-      {/* Search and Actions */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div className="relative flex-1 md:max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
-          <Input
-            placeholder={t('actions.search') + " people..."}
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            className="pl-10 bg-gray-800/60 backdrop-blur-sm border-gray-700 text-gray-300 w-full"
-          />
+          <Button
+            size="sm"
+            className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
+            onClick={handleCreateNew}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Person
+          </Button>
         </div>
-
-        <Button
-          onClick={handleCreateNew}
-          size="sm"
-          className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          {t('person.createPerson')}
-        </Button>
       </div>
 
       {/* Loading State */}

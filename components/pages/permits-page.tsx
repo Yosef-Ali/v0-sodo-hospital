@@ -173,41 +173,39 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
       </div>
 
       {/* Filters and Actions */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div className="flex gap-2 flex-wrap">
-          <Select
-            value={categoryFilter}
-            onValueChange={(value) => setCategoryFilter(value as any)}
-          >
-            <SelectTrigger className="w-[200px] bg-gray-800/60 backdrop-blur-sm border-gray-700 text-gray-300">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="ALL" className="text-gray-300">All Categories</SelectItem>
-              <SelectItem value="WORK_PERMIT" className="text-gray-300">Work Permit</SelectItem>
-              <SelectItem value="RESIDENCE_ID" className="text-gray-300">Residence ID</SelectItem>
-              <SelectItem value="LICENSE" className="text-gray-300">License</SelectItem>
-              <SelectItem value="PIP" className="text-gray-300">PIP</SelectItem>
-            </SelectContent>
-          </Select>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-2 mb-6">
+        <Select
+          value={categoryFilter}
+          onValueChange={(value) => setCategoryFilter(value as any)}
+        >
+          <SelectTrigger className="w-[180px] bg-gray-800/60 backdrop-blur-sm border-gray-700 text-gray-300">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent className="bg-gray-800 border-gray-700">
+            <SelectItem value="ALL" className="text-gray-300">All Categories</SelectItem>
+            <SelectItem value="WORK_PERMIT" className="text-gray-300">Work Permit</SelectItem>
+            <SelectItem value="RESIDENCE_ID" className="text-gray-300">Residence ID</SelectItem>
+            <SelectItem value="LICENSE" className="text-gray-300">License</SelectItem>
+            <SelectItem value="PIP" className="text-gray-300">PIP</SelectItem>
+          </SelectContent>
+        </Select>
 
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => setStatusFilter(value as any)}
-          >
-            <SelectTrigger className="w-[200px] bg-gray-800/60 backdrop-blur-sm border-gray-700 text-gray-300">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="ALL" className="text-gray-300">All Statuses</SelectItem>
-              <SelectItem value="PENDING" className="text-gray-300">Pending</SelectItem>
-              <SelectItem value="SUBMITTED" className="text-gray-300">Submitted</SelectItem>
-              <SelectItem value="APPROVED" className="text-gray-300">Approved</SelectItem>
-              <SelectItem value="REJECTED" className="text-gray-300">Rejected</SelectItem>
-              <SelectItem value="EXPIRED" className="text-gray-300">Expired</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Select
+          value={statusFilter}
+          onValueChange={(value) => setStatusFilter(value as any)}
+        >
+          <SelectTrigger className="w-[180px] bg-gray-800/60 backdrop-blur-sm border-gray-700 text-gray-300">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent className="bg-gray-800 border-gray-700">
+            <SelectItem value="ALL" className="text-gray-300">All Statuses</SelectItem>
+            <SelectItem value="PENDING" className="text-gray-300">Pending</SelectItem>
+            <SelectItem value="SUBMITTED" className="text-gray-300">Submitted</SelectItem>
+            <SelectItem value="APPROVED" className="text-gray-300">Approved</SelectItem>
+            <SelectItem value="REJECTED" className="text-gray-300">Rejected</SelectItem>
+            <SelectItem value="EXPIRED" className="text-gray-300">Expired</SelectItem>
+          </SelectContent>
+        </Select>
 
         <Button
           onClick={handleCreateNew}
@@ -215,7 +213,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
           className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
         >
           <Plus className="h-4 w-4 mr-2" />
-          {t("permit.createPermit") || "Create Permit"}
+          Create Permit
         </Button>
       </div>
 
