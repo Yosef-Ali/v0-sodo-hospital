@@ -427,7 +427,7 @@ export function PermitDetailPage({ initialData }: PermitDetailPageProps) {
           {checklist && (
             <ChecklistPanel
               checklist={checklist}
-              permitId={permitId}
+              permitId={permit.permit.id}
               userRole="USER"
               canEdit={true}
               onItemUpdate={async (itemId, updates) => {
@@ -584,7 +584,7 @@ export function PermitDetailPage({ initialData }: PermitDetailPageProps) {
               <Button
                 variant="outline"
                 className="w-full border-gray-700"
-                onClick={() => router.push(`/permits/${permitId}/edit`)}
+                onClick={() => router.push(`/permits/${permit.permit.id}/edit`)}
               >
                 Edit Permit
               </Button>
