@@ -42,27 +42,23 @@ import Link from "next/link"
 import { ChecklistPanel } from "@/components/permit/checklist-panel"
 
 interface PermitDetailPageProps {
-  permitId: string
+  initialData: any
 }
 
-export function PermitDetailPage({ permitId }: PermitDetailPageProps) {
+export function PermitDetailPage({ initialData }: PermitDetailPageProps) {
   const { t, i18n } = useTranslation()
   const router = useRouter()
 
-  const [permit, setPermit] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [permit, setPermit] = useState<any>(initialData)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
-
-  useEffect(() => {
-    loadPermit()
-  }, [permitId])
 
   const loadPermit = async () => {
     setLoading(true)
     setError(null)
 
-    const result = await getPermitById(permitId)
+    const result = await getPermitById(permit.permit.id)
     if (result.success) {
       setPermit(result.data)
     } else {
@@ -81,7 +77,7 @@ export function PermitDetailPage({ permitId }: PermitDetailPageProps) {
     // TODO: Get current user ID from auth context
     const userId = "mock-user-id"
 
-    const result = await transitionPermitStatus(permitId, toStatus, userId, notes)
+    const result = await transitionPermitStatus(permit.permit.id, toStatus, userId, notes)
 
     if (result.success) {
       await loadPermit()
