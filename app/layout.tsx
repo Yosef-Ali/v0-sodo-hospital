@@ -1,7 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import "@/app/globals.css"
-// import StackAuthProvider from "./stack-provider"
+import { AuthSessionProvider } from "@/components/providers/session-provider"
 
 export const metadata: Metadata = {
   title: "Sodo Hospital - Administrative Dashboard",
@@ -19,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        {children}
+        <AuthSessionProvider>
+          {children}
+        </AuthSessionProvider>
       </body>
     </html>
   )

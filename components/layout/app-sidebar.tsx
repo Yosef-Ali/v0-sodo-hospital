@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 import {
   LayoutDashboard,
   CheckSquare,
@@ -29,6 +30,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { UserButton } from "@/components/auth/user-button"
 
 const menuItems = [
   {
@@ -80,6 +82,7 @@ const menuItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  const { data: session, status } = useSession()
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -133,16 +136,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link href="/login" className="w-full">
-                <LogIn />
-                <span>Sign In</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {status === "loading" ? (
+          <div className="p-2 flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-gray-700 animate-pulse" />
+            <div className="flex-1 space-y-1 group-data-[collapsible=icon]:hidden">
+              <div className="h-3 bg-gray-700 rounded animate-pulse" />
+              <div className="h-2 bg-gray-700 rounded animate-pulse w-3/4" />
+            </div>
+          </div>
+        ) : session?.user ? (
+          <UserButton user={session.user} />
+        ) : (
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/login" className="w-full">
+                  <LogIn />
+                  <span>Sign In</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        )}
       </SidebarFooter>
 
       <SidebarRail />

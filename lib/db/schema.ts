@@ -474,3 +474,13 @@ export type DocumentV2 = typeof documentsV2.$inferSelect
 export type NewDocumentV2 = typeof documentsV2.$inferInsert
 export type CalendarEvent = typeof calendarEvents.$inferSelect
 export type NewCalendarEvent = typeof calendarEvents.$inferInsert
+
+// ============ NEXTAUTH TABLES ============
+// Re-export auth schema tables for migrations
+export {
+  authUsers,
+  authAccounts,
+  authSessions,
+  authVerificationTokens,
+  authAuthenticators,
+} from "./auth-schema"
