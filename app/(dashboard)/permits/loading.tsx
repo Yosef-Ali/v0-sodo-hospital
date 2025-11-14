@@ -10,28 +10,34 @@ export default function PermitsLoading() {
           <Skeleton className="h-8 w-48 mb-2" />
           <Skeleton className="h-4 w-96" />
         </div>
-        <Skeleton className="h-10 w-40" />
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        {[...Array(5)].map((_, i) => (
-          <Card key={i} className="bg-gray-800 border-gray-700 p-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-8 w-12" />
-              </div>
-              {i === 0 && <Skeleton className="h-8 w-8 rounded" />}
-            </div>
-          </Card>
-        ))}
-      </div>
+      {/* Tabs and Search Bar */}
+      <div className="mt-[200px] mb-6 flex flex-col gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          {/* Tabs */}
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+          </div>
 
-      {/* Filters */}
-      <div className="flex gap-4 mb-12 flex-wrap">
-        <Skeleton className="h-10 w-[200px]" />
-        <Skeleton className="h-10 w-[200px]" />
+          {/* Search and Actions */}
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Skeleton className="h-10 flex-1 md:w-64" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap gap-4">
+          <Skeleton className="h-10 w-[200px]" />
+          <Skeleton className="h-10 w-[200px]" />
+        </div>
       </div>
 
       {/* Permits Grid */}
