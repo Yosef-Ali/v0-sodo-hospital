@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   Select,
   SelectContent,
@@ -26,6 +27,7 @@ import {
 } from "lucide-react"
 import { getTasks, getTaskStats, completeTask } from "@/lib/actions/v2/tasks"
 import { formatEC, gregorianToEC } from "@/lib/dates/ethiopian"
+import { TaskSheet } from "@/components/sheets/task-sheet"
 import { useRouter } from "next/navigation"
 
 type TaskStatus = "pending" | "in-progress" | "completed" | "urgent"
@@ -42,6 +44,8 @@ export function TasksV2Page() {
   const [includeCompleted, setIncludeCompleted] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<any>(null)
 
   useEffect(() => {
     loadTasks()
@@ -81,6 +85,32 @@ export function TasksV2Page() {
     } else {
       setError(result.error || "Failed to complete task")
     }
+  }
+
+  const handleCreateTask = (taskData: any) => {
+    if (taskData.id) {
+      // Edit mode
+      console.log("Update task data:", taskData)
+      // TODO: Call updateTask API action
+    } else {
+      // Create mode
+      console.log("New task data:", taskData)
+      // TODO: Call createTask API action
+    }
+    // After successful operation, reload the list
+    loadTasks()
+    loadStats()
+    setSelectedTask(null)
+  }
+
+  const handleEditTask = (task: any) => {
+    setSelectedTask(task.task) // task object is nested in the result
+    setSheetOpen(true)
+  }
+
+  const handleCreateNew = () => {
+    setSelectedTask(null)
+    setSheetOpen(true)
   }
 
   const getStatusIcon = (status: string) => {
@@ -163,7 +193,7 @@ export function TasksV2Page() {
         />
 
         <Button
-          onClick={() => router.push("/tasks/new")}
+          onClick={handleCreateNew}
           className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -256,9 +286,27 @@ export function TasksV2Page() {
 
       {/* Loading State */}
       {loading && (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-          <p className="text-gray-400 mt-4">{t("common.loading")}</p>
+        <div className="space-y-3">
+          {[...Array(5)].map((_, i) => (
+            <Card key={i} className="bg-gray-800 border-gray-700 p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-5 w-20" />
+                    <Skeleton className="h-5 w-16" />
+                  </div>
+                  <Skeleton className="h-4 w-full max-w-2xl mb-3" />
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-40" />
+                  </div>
+                </div>
+                <Skeleton className="h-9 w-24" />
+              </div>
+            </Card>
+          ))}
         </div>
       )}
 
@@ -288,7 +336,7 @@ export function TasksV2Page() {
               : "Get started by creating your first task."}
           </p>
           <Button
-            onClick={() => router.push("/tasks/new")}
+            onClick={handleCreateNew}
             className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -364,6 +412,17 @@ export function TasksV2Page() {
 
                   {/* Right: Actions */}
                   <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-gray-600 text-gray-400 hover:bg-gray-700"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleEditTask(item)
+                      }}
+                    >
+                      Edit
+                    </Button>
                     {task.status !== "completed" && (
                       <Button
                         size="sm"
@@ -385,6 +444,14 @@ export function TasksV2Page() {
           })}
         </div>
       )}
+
+      {/* Task Sheet */}
+      <TaskSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onSubmit={handleCreateTask}
+        task={selectedTask}
+      />
     </div>
   )
 }
