@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { PageHeader } from "@/components/ui/page-header"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -321,7 +322,7 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
               <Button
                 variant="outline"
                 className="w-full border-gray-700"
-                onClick={() => router.push(`/tasks/${taskId}/edit`)}
+                onClick={() => router.push(`/tasks/${taskData.id}/edit`)}
               >
                 <Edit2 className="h-4 w-4 mr-2" />
                 Edit Task
