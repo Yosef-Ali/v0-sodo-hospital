@@ -10,28 +10,25 @@ export default function PeopleLoading() {
           <Skeleton className="h-8 w-32 mb-2" />
           <Skeleton className="h-4 w-96" />
         </div>
-        <Skeleton className="h-10 w-40" />
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i} className="bg-gray-800 border-gray-700 p-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-8 w-16" />
-                <Skeleton className="h-3 w-20" />
-              </div>
-              <Skeleton className="h-10 w-10 rounded" />
-            </div>
-          </Card>
-        ))}
-      </div>
+      {/* Tabs and Search Bar */}
+      <div className="mt-[200px] mb-6 flex flex-col gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          {/* Tabs */}
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+          </div>
 
-      {/* Search Bar */}
-      <div className="mb-12">
-        <Skeleton className="h-10 w-full max-w-md" />
+          {/* Search and Actions */}
+          <div className="flex items-center gap-2 w-full md:w-auto">
+            <Skeleton className="h-10 flex-1 md:w-64" />
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-36" />
+          </div>
+        </div>
       </div>
 
       {/* People Grid */}
