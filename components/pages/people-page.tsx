@@ -11,6 +11,7 @@ import { Search, Plus, User, Filter } from "lucide-react"
 import { getPeople, getPeopleStats, type Person } from "@/lib/actions/v2/people"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { PersonSheet } from "@/components/sheets/person-sheet"
 
 export function PeoplePage() {
   const { t } = useTranslation()
@@ -115,13 +116,20 @@ export function PeoplePage() {
               Filter
             </Button>
 
-            <Button
-              onClick={() => router.push("/people/new")}
-              className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {createPersonText}
-            </Button>
+            <PersonSheet
+              trigger={
+                <Button
+                  className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {createPersonText}
+                </Button>
+              }
+              onSuccess={() => {
+                loadPeople(searchQuery)
+                loadStats()
+              }}
+            />
           </div>
         </div>
       </div>
@@ -159,13 +167,18 @@ export function PeoplePage() {
               ? "No people match your search criteria."
               : "Get started by adding your first person."}
           </p>
-          <Button
-            onClick={() => router.push("/people/new")}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            {createPersonText}
-          </Button>
+          <PersonSheet
+            trigger={
+              <Button className="bg-green-600 hover:bg-green-700">
+                <Plus className="h-4 w-4 mr-2" />
+                {createPersonText}
+              </Button>
+            }
+            onSuccess={() => {
+              loadPeople(searchQuery)
+              loadStats()
+            }}
+          />
         </div>
       )}
 

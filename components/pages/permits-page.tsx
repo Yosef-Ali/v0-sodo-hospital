@@ -17,6 +17,7 @@ import {
 import { Search, Filter, Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, Shield } from "lucide-react"
 import { formatEC, gregorianToEC } from "@/lib/dates/ethiopian"
 import { useRouter } from "next/navigation"
+import { PermitSheet } from "@/components/sheets/permit-sheet"
 
 type PermitCategory = "WORK_PERMIT" | "RESIDENCE_ID" | "LICENSE" | "PIP"
 type PermitStatus = "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED" | "EXPIRED"
@@ -198,13 +199,20 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
               Filter
             </Button>
 
-            <Button
-              onClick={() => router.push("/permits/new")}
-              className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {createButtonText}
-            </Button>
+            <PermitSheet
+              trigger={
+                <Button
+                  className="text-sm font-normal bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {createButtonText}
+                </Button>
+              }
+              onSuccess={() => {
+                // Refresh the page to show new permit
+                router.refresh()
+              }}
+            />
           </div>
         </div>
 
