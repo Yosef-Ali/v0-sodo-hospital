@@ -13,7 +13,7 @@ export const OPENAI_CONFIG: OpenAIServiceConfig = {
     documentSupport: process.env.OPENAI_ASSISTANT_ID_DOCUMENT_SUPPORT || "",
     technicalSupport: process.env.OPENAI_ASSISTANT_ID_TECHNICAL_SUPPORT || "",
   },
-  model: process.env.OPENAI_MODEL || "gpt-4-turbo-preview",
+  model: process.env.OPENAI_MODEL || "gpt-5-mini-2025-08-07",
   temperature: parseFloat(process.env.OPENAI_TEMPERATURE || "0.7"),
   maxTokens: parseInt(process.env.OPENAI_MAX_TOKENS || "1000"),
   enableHumanInLoop: process.env.ENABLE_HUMAN_IN_LOOP === "true",

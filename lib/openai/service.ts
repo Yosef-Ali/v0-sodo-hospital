@@ -80,7 +80,7 @@ export class OpenAIService {
   ): Promise<ClassificationResult> {
     try {
       const completion = await this.client.chat.completions.create({
-        model: this.config.model || "gpt-4-turbo-preview",
+        model: this.config.model || "gpt-5-mini-2025-08-07",
         messages: [
           {
             role: "system",
