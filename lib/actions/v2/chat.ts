@@ -20,6 +20,13 @@ export async function initializeChatSession(
   currentPage: string = "/"
 ): Promise<{ sessionId: string; threadId: string }> {
   try {
+    // Check if OpenAI API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      console.warn("OpenAI API key not configured. Running in demo mode.")
+      const sessionId = generateSessionId()
+      return { sessionId, threadId: "demo-thread" }
+    }
+
     const sessionManager = getSessionManager()
     const openAIService = getOpenAIService()
 
@@ -63,6 +70,30 @@ export async function sendChatMessage(
   currentPage?: string
 ): Promise<ChatResponse> {
   try {
+    // Demo mode response if OpenAI is not configured
+    if (!process.env.OPENAI_API_KEY) {
+      const demoResponses = [
+        "Thank you for your message! This is a demo mode response since OpenAI is not configured. To enable full AI capabilities, please add your OPENAI_API_KEY to the .env.local file.",
+        "I'm currently running in demo mode. The full AI-powered chat requires an OpenAI API key to be configured.",
+        "Demo mode is active. For intelligent responses, please configure the OpenAI integration by following the setup guide in OPENAI_CHATKIT_SETUP.md.",
+      ]
+
+      const response: ChatResponse = {
+        message: {
+          id: `demo_${Date.now()}`,
+          role: "assistant",
+          content: demoResponses[Math.floor(Math.random() * demoResponses.length)],
+          timestamp: new Date(),
+          intent: "general_inquiry",
+          confidence: 1,
+          agentType: "generalSupport",
+        },
+        status: "success",
+      }
+
+      return response
+    }
+
     const sessionManager = getSessionManager()
     const openAIService = getOpenAIService()
 
