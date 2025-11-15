@@ -5,7 +5,7 @@ import type React from "react"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { ChatWidget } from "@/components/ui/chat-widget"
+import { OpenAIChatWidget } from "@/components/ui/openai-chat-widget"
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -30,7 +30,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       </SidebarInset>
 
       {/* Customer Support Chat Widget */}
-      <ChatWidget />
+      <OpenAIChatWidget enableCopilot={true} position="dashboard" />
     </SidebarProvider>
   )
 }
