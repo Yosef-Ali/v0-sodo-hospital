@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { Activity, Sparkles, Users, Briefcase, FileText, Clock, Star, TrendingDown, CheckCircle, Award } from "lucide-react"
+import { OpenAIChatWidget } from "@/components/ui/openai-chat-widget"
 
 export function LandingPage() {
   return (
@@ -185,6 +186,9 @@ export function LandingPage() {
           <p className="text-slate-400 text-sm">© 2024 SODO Hospital. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* Customer Support Chat Widget */}
+      <OpenAIChatWidget enableCopilot={true} position="landing" />
 
       <style jsx>{`
         .fade-in { opacity: 0; transform: translateY(20px); animation: fadeInUp 0.8s ease-out forwards; }
