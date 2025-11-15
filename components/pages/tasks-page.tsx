@@ -124,37 +124,57 @@ export function TasksPage({ initialData }: TasksPageProps) {
     <div className="p-8">
       <PageHeader title="Tasks" description="Manage and track all your hospital administrative tasks in one place." />
 
-      <div className="mt-[200px] mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mt-8 md:mt-10 lg:mt-12 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
-          <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-5">
-            <TabsTrigger value="all" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-              All <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">{taskCounts.all}</Badge>
-            </TabsTrigger>
-            <TabsTrigger
-              value="pending"
-              className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white"
-            >
-              Pending <Badge className="ml-1 bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">{taskCounts.pending}</Badge>
-            </TabsTrigger>
-            <TabsTrigger
-              value="in-progress"
-              className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white"
-            >
-              In Progress <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">{taskCounts["in-progress"]}</Badge>
-            </TabsTrigger>
-            <TabsTrigger
-              value="completed"
-              className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white"
-            >
-              Completed <Badge className="ml-1 bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-500/30">{taskCounts.completed}</Badge>
-            </TabsTrigger>
-            <TabsTrigger
-              value="urgent"
-              className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white"
-            >
-              Urgent <Badge className="ml-1 bg-red-500/20 text-red-300 text-xs border border-red-500/30">{taskCounts.urgent}</Badge>
-            </TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto">
+            <TabsList className="bg-gray-800 border border-gray-700 inline-flex min-w-max gap-2 rounded-md">
+              <TabsTrigger
+                value="all"
+                className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+              >
+                All{" "}
+                <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">
+                  {taskCounts.all}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger
+                value="pending"
+                className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+              >
+                Pending{" "}
+                <Badge className="ml-1 bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">
+                  {taskCounts.pending}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger
+                value="in-progress"
+                className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+              >
+                In Progress{" "}
+                <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">
+                  {taskCounts["in-progress"]}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger
+                value="completed"
+                className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+              >
+                Completed{" "}
+                <Badge className="ml-1 bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-500/30">
+                  {taskCounts.completed}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger
+                value="urgent"
+                className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+              >
+                Urgent{" "}
+                <Badge className="ml-1 bg-red-500/20 text-red-300 text-xs border border-red-500/30">
+                  {taskCounts.urgent}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </Tabs>
 
         <div className="flex items-center gap-2 w-full md:w-auto">

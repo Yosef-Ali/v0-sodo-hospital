@@ -106,58 +106,38 @@ export function OpenAIChatWidget({
       {isOpen && (
         <div
           className={cn(
-            "fixed z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl transition-all duration-300",
+            "fixed z-50 bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl transition-all duration-300 flex flex-col overflow-hidden",
             isExpanded
-              ? "inset-4 lg:inset-8"
+              ? "inset-2 sm:inset-4 lg:inset-8"
               : isMinimized
-                ? "bottom-6 right-6 w-96 h-16"
-                : "bottom-6 right-6 w-96 h-[650px]",
-            "flex flex-col"
+                ? "bottom-4 right-4 sm:bottom-6 sm:right-6 w-[260px] sm:w-[340px] h-14 sm:h-16"
+                : "bottom-2 left-2 right-2 h-[70vh] max-h-[640px] sm:bottom-6 sm:right-6 sm:left-auto sm:w-[420px] sm:h-[560px]"
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gradient-to-r from-gray-900 to-gray-800">
+          <div className="flex items-center justify-between p-4 border-b border-gray-700/50 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center relative">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center relative shadow-lg shadow-green-500/30">
                 <Bot className="w-6 h-6 text-white" />
-                <Sparkles className="w-3 h-3 absolute -top-0.5 -right-0.5 text-yellow-300" />
+                <Sparkles className="w-3 h-3 absolute -top-0.5 -right-0.5 text-yellow-300 animate-pulse" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-white">AI Assistant</h3>
-                  <Badge className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-blue-300 border-blue-500/30 text-[10px] px-1 py-0">
-                    ChatKit
-                  </Badge>
-                </div>
+                <h3 className="font-semibold text-white">SODO Hospital Support</h3>
                 <p className="text-xs text-gray-400 flex items-center gap-1">
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  Context-aware
-                  {enableCopilot && " • Co-pilot enabled"}
+                  Online • Ready to help
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-1">
-              {/* Debug toggle (development only) */}
-              {process.env.NODE_ENV === "development" && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowDebug(!showDebug)}
-                  className="text-gray-400 hover:text-white hover:bg-gray-800"
-                  title="Toggle debug info"
-                >
-                  <Settings className="w-4 h-4" />
-                </Button>
-              )}
-
               {/* Clear messages */}
               {messages.length > 1 && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={clearMessages}
-                  className="text-gray-400 hover:text-white hover:bg-gray-800"
+                  className="text-gray-400 hover:text-green-400 hover:bg-gray-800/50"
                   title="Clear chat"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -175,7 +155,7 @@ export function OpenAIChatWidget({
                     setIsExpanded(!isExpanded)
                   }
                 }}
-                className="text-gray-400 hover:text-white hover:bg-gray-800"
+                className="text-gray-400 hover:text-green-400 hover:bg-gray-800/50"
                 title={isExpanded ? "Restore" : "Maximize"}
               >
                 {isExpanded ? (
@@ -191,7 +171,7 @@ export function OpenAIChatWidget({
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsMinimized(!isMinimized)}
-                  className="text-gray-400 hover:text-white hover:bg-gray-800"
+                  className="text-gray-400 hover:text-green-400 hover:bg-gray-800/50"
                   title="Minimize"
                 >
                   <Minimize2 className="w-4 h-4" />
@@ -203,7 +183,7 @@ export function OpenAIChatWidget({
                 variant="ghost"
                 size="icon"
                 onClick={closeChat}
-                className="text-gray-400 hover:text-white hover:bg-red-900/20 hover:text-red-400"
+                className="text-gray-400 hover:text-red-400 hover:bg-red-900/20"
                 title="Close"
               >
                 <X className="w-4 h-4" />
@@ -247,6 +227,7 @@ export function OpenAIChatWidget({
                       <ChatMessage
                         message={message}
                         onSuggestionClick={handleSuggestionClick}
+                        onSendMessage={sendMessage}
                       />
 
                       {/* Render approval widget if present */}
@@ -265,17 +246,6 @@ export function OpenAIChatWidget({
                         </div>
                       )}
 
-                      {/* Show context indicator */}
-                      {message.role === "assistant" &&
-                        message.metadata?.agentType &&
-                        enableCopilot &&
-                        index > 0 && (
-                          <div className="ml-12">
-                            <ContextIndicator
-                              pageContext={message.metadata.agentType}
-                            />
-                          </div>
-                        )}
                     </div>
                   ))}
 

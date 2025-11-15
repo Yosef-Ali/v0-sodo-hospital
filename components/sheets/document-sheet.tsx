@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, X, Plus } from "lucide-react"
+import { Upload, X, Plus, CheckCircle } from "lucide-react"
 import type { Document } from "@/components/pages/documents-page"
 import { Badge } from "@/components/ui/badge"
+import { UploadDropzone } from "@/lib/uploadthing-utils"
 
 interface DocumentSheetProps {
   open: boolean
@@ -30,7 +31,10 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
     owner: "",
     tags: [],
   })
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [uploadedFile, setUploadedFile] = useState<{url: string, name: string, size: number} | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [tagInput, setTagInput] = useState("")
 
   // Predefined options
@@ -99,30 +103,35 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setSelectedFile(file)
+  const handleUploadComplete = (files: any[]) => {
+    if (files.length === 0) return
 
-      // Extract file type from file name
-      const fileExtension = file.name.split(".").pop()?.toUpperCase() || "UNKNOWN"
+    const file = files[0]
+    setUploadedFile({
+      url: file.url,
+      name: file.name,
+      size: file.size
+    })
+    setIsUploading(false)
 
-      // Format file size
-      let fileSize = ""
-      if (file.size < 1024) {
-        fileSize = `${file.size} B`
-      } else if (file.size < 1024 * 1024) {
-        fileSize = `${(file.size / 1024).toFixed(1)} KB`
-      } else {
-        fileSize = `${(file.size / (1024 * 1024)).toFixed(1)} MB`
-      }
+    // Extract file type from file name
+    const fileExtension = file.name.split(".").pop()?.toUpperCase() || "UNKNOWN"
 
-      setFormData((prev) => ({
-        ...prev,
-        fileType: fileExtension,
-        fileSize: fileSize,
-      }))
+    // Format file size
+    let fileSize = ""
+    if (file.size < 1024) {
+      fileSize = `${file.size} B`
+    } else if (file.size < 1024 * 1024) {
+      fileSize = `${(file.size / 1024).toFixed(1)} KB`
+    } else {
+      fileSize = `${(file.size / (1024 * 1024)).toFixed(1)} MB`
     }
+
+    setFormData((prev) => ({
+      ...prev,
+      fileType: fileExtension,
+      fileSize: fileSize,
+    }))
   }
 
   const handleAddTag = () => {
@@ -158,7 +167,9 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
       owner: "",
       tags: [],
     })
-    setSelectedFile(null)
+    setUploadedFile(null)
+    setUploadError(null)
+    setUploadProgress(0)
   }
 
   return (
@@ -175,60 +186,92 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
           {/* File Upload */}
           <div className="space-y-2">
             <Label className="text-gray-300">File Upload *</Label>
-            <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center bg-gray-900/30">
-              {selectedFile ? (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-center">
-                    <div className="bg-green-600/20 p-2 rounded-lg">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="text-green-400"
-                      >
-                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                        <polyline points="14 2 14 8 20 8" />
-                      </svg>
+
+            {/* Error Message */}
+            {uploadError && (
+              <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+                <p className="text-sm text-red-300">{uploadError}</p>
+              </div>
+            )}
+
+            {/* Loading Indicator */}
+            {isUploading && (
+              <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3">
+                <div className="flex items-center gap-3">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                  <div className="flex-1">
+                    <p className="text-xs text-blue-300 mb-1">Uploading...</p>
+                    <div className="w-full bg-gray-700 rounded-full h-1.5">
+                      <div
+                        className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      ></div>
                     </div>
                   </div>
-                  <div className="text-sm font-medium text-white">{selectedFile.name}</div>
-                  <div className="text-xs text-gray-400">
-                    {formData.fileSize} • {formData.fileType}
+                </div>
+              </div>
+            )}
+
+            {/* Success Preview */}
+            {uploadedFile && (
+              <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-green-600/20 p-2 rounded-lg">
+                      <CheckCircle className="h-5 w-5 text-green-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-white">{uploadedFile.name}</div>
+                      <div className="text-xs text-gray-400">
+                        {formData.fileSize} • {formData.fileType}
+                      </div>
+                    </div>
                   </div>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="mt-2 bg-gray-700 border-gray-600 hover:bg-gray-600"
-                    onClick={() => setSelectedFile(null)}
+                    className="bg-gray-700 border-gray-600 hover:bg-gray-600"
+                    onClick={() => {
+                      setUploadedFile(null)
+                      setFormData((prev) => ({ ...prev, fileType: "PDF", fileSize: "0 KB" }))
+                    }}
                   >
                     <X className="h-4 w-4 mr-2" />
-                    Remove File
+                    Remove
                   </Button>
                 </div>
-              ) : (
-                <>
-                  <Upload className="h-10 w-10 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-white text-sm font-medium mb-1">Choose a file to upload</h3>
-                  <p className="text-gray-400 text-xs mb-4">PDF, DOCX, XLSX, PPTX, JPG, PNG</p>
-                  <Input id="file-upload" type="file" className="hidden" onChange={handleFileChange} />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="bg-gray-700 border-gray-600 hover:bg-gray-600"
-                    onClick={() => document.getElementById("file-upload")?.click()}
-                  >
-                    Browse Files
-                  </Button>
-                </>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Upload Dropzone */}
+            {!uploadedFile && !isUploading && (
+              <UploadDropzone
+                endpoint="permitDocumentUploader"
+                onClientUploadComplete={handleUploadComplete}
+                onUploadBegin={() => {
+                  setIsUploading(true)
+                  setUploadError(null)
+                  setUploadProgress(0)
+                }}
+                onUploadError={(error: Error) => {
+                  console.error("Upload error:", error)
+                  setIsUploading(false)
+                  setUploadError(`Upload failed: ${error.message}`)
+                }}
+                onUploadProgress={(progress) => {
+                  setUploadProgress(progress)
+                }}
+                appearance={{
+                  container: "border-gray-600 bg-gray-900/50",
+                  uploadIcon: "text-green-500",
+                  label: "text-gray-300",
+                  allowedContent: "text-gray-500",
+                  button:
+                    "bg-green-600 hover:bg-green-700 text-white ut-ready:bg-green-600 ut-uploading:bg-green-700 ut-uploading:cursor-wait",
+                }}
+              />
+            )}
           </div>
 
           {/* Category */}
@@ -404,7 +447,7 @@ export function DocumentSheet({ open, onOpenChange, onSubmit }: DocumentSheetPro
             <Button
               type="submit"
               className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!selectedFile || !formData.category || !formData.title || !formData.description || !formData.owner}
+              disabled={!uploadedFile || !formData.category || !formData.title || !formData.description || !formData.owner}
             >
               Upload Document
             </Button>

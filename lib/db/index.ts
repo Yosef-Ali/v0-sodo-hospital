@@ -1,7 +1,11 @@
+import { config } from "dotenv"
 import { drizzle } from "drizzle-orm/neon-serverless"
 import { Pool, neonConfig } from "@neondatabase/serverless"
 import * as schema from "./schema"
 import ws from "ws"
+
+// Load environment variables from .env.local
+config({ path: ".env.local" })
 
 // Configure WebSocket for local development
 if (process.env.NODE_ENV === "development") {

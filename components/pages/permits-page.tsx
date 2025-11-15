@@ -14,6 +14,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Search, Filter, Plus, FileText, Clock, CheckCircle, XCircle, AlertCircle, Shield } from "lucide-react"
 import { formatEC, gregorianToEC } from "@/lib/dates/ethiopian"
 import { useRouter } from "next/navigation"
@@ -26,6 +34,7 @@ interface PermitsPageProps {
   initialData: {
     permits: any[]
     stats: any
+    people: any[]
   }
 }
 
@@ -106,18 +115,32 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
     return !value || value === key ? fallback : value
   }
 
-  const handleCreatePermit = (permitData: any) => {
+  const handleCreatePermit = async (permitData: any) => {
     if (permitData.id) {
       // Edit mode
       console.log("Update permit data:", permitData)
       // TODO: Call updatePermit API action
     } else {
       // Create mode
-      console.log("New permit data:", permitData)
-      // TODO: Call createPermit API action
+      const { createPermit } = await import("@/lib/actions/v2/permits")
+
+      const result = await createPermit({
+        category: permitData.category,
+        personId: permitData.personId,
+        dueDate: permitData.dueDate ? new Date(permitData.dueDate) : undefined,
+        checklistId: permitData.checklistId || undefined,
+        notes: permitData.notes || undefined,
+      })
+
+      if (result.success && result.data) {
+        // Navigate to the new permit detail page
+        router.push(`/permits/${result.data.ticketNumber}`)
+      } else {
+        console.error("Failed to create permit:", result.error)
+        alert(`Failed to create permit: ${result.error}`)
+      }
     }
-    // After successful operation, refresh the page
-    router.refresh()
+    setSheetOpen(false)
     setSelectedPermit(null)
   }
 
@@ -163,47 +186,67 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
         description="Manage work permits, residence IDs, licenses, and import permits"
       />
 
-      <div className="mt-[200px] mb-6 flex flex-col gap-4">
+      <div className="mt-8 md:mt-10 lg:mt-12 mb-6 flex flex-col gap-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as PermitStatus | "ALL")} className="w-full md:w-auto">
-            <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-6 gap-2">
-              <TabsTrigger value="ALL" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                All
-                <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">
-                  {stats.total}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="PENDING" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                Pending
-                <Badge className="ml-1 bg-yellow-500/20 text-yellow-300 text-xs border border-yellow-500/30">
-                  {stats.byStatus?.PENDING || 0}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="SUBMITTED" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                Submitted
-                <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">
-                  {stats.byStatus?.SUBMITTED || 0}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="APPROVED" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                Approved
-                <Badge className="ml-1 bg-green-500/20 text-green-300 text-xs border border-green-500/30">
-                  {stats.byStatus?.APPROVED || 0}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="REJECTED" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                Rejected
-                <Badge className="ml-1 bg-red-500/20 text-red-300 text-xs border border-red-500/30">
-                  {stats.byStatus?.REJECTED || 0}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="EXPIRED" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                Expired
-                <Badge className="ml-1 bg-gray-500/20 text-gray-300 text-xs border border-gray-500/30">
-                  {stats.byStatus?.EXPIRED || 0}
-                </Badge>
-              </TabsTrigger>
-            </TabsList>
+            <div className="w-full overflow-x-auto">
+              <TabsList className="bg-gray-800 border border-gray-700 inline-flex min-w-max gap-2 rounded-md">
+                <TabsTrigger
+                  value="ALL"
+                  className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+                >
+                  All
+                  <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">
+                    {stats.total}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="PENDING"
+                  className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+                >
+                  Pending
+                  <Badge className="ml-1 bg-yellow-500/20 text-yellow-300 text-xs border border-yellow-500/30">
+                    {stats.byStatus?.PENDING || 0}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="SUBMITTED"
+                  className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+                >
+                  Submitted
+                  <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">
+                    {stats.byStatus?.SUBMITTED || 0}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="APPROVED"
+                  className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+                >
+                  Approved
+                  <Badge className="ml-1 bg-green-500/20 text-green-300 text-xs border border-green-500/30">
+                    {stats.byStatus?.APPROVED || 0}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="REJECTED"
+                  className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+                >
+                  Rejected
+                  <Badge className="ml-1 bg-red-500/20 text-red-300 text-xs border border-red-500/30">
+                    {stats.byStatus?.REJECTED || 0}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="EXPIRED"
+                  className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+                >
+                  Expired
+                  <Badge className="ml-1 bg-gray-500/20 text-gray-300 text-xs border border-gray-500/30">
+                    {stats.byStatus?.EXPIRED || 0}
+                  </Badge>
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </Tabs>
 
           <div className="flex items-center gap-2 w-full md:w-auto">
@@ -217,14 +260,43 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
               />
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-sm font-normal border-gray-700 bg-gray-800/60 backdrop-blur-sm hover:bg-gray-700 text-gray-300"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              Filter
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm font-normal border-gray-700 bg-gray-800/60 backdrop-blur-sm hover:bg-gray-700 text-gray-300"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filter
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-gray-800/90 backdrop-blur-md border-gray-700 text-gray-300">
+                <DropdownMenuLabel className="text-xs text-gray-400">
+                  Category
+                </DropdownMenuLabel>
+                <DropdownMenuRadioGroup
+                  value={categoryFilter}
+                  onValueChange={(value) => setCategoryFilter(value as PermitCategory | "ALL")}
+                >
+                  <DropdownMenuRadioItem value="ALL">
+                    All categories
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="WORK_PERMIT">
+                    Work permits
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="RESIDENCE_ID">
+                    Residence IDs
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="LICENSE">
+                    Licenses
+                  </DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="PIP">
+                    PIP documents
+                  </DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Button
               onClick={handleCreateNew}
@@ -236,40 +308,6 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4">
-          <Select
-            value={categoryFilter}
-            onValueChange={(value) => setCategoryFilter(value as any)}
-          >
-            <SelectTrigger className="w-[200px] bg-gray-800/60 backdrop-blur-sm border-gray-700 text-gray-300">
-              <SelectValue placeholder="Filter by category" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="ALL" className="text-gray-300">All Categories</SelectItem>
-              <SelectItem value="WORK_PERMIT" className="text-gray-300">Work Permit</SelectItem>
-              <SelectItem value="RESIDENCE_ID" className="text-gray-300">Residence ID</SelectItem>
-              <SelectItem value="LICENSE" className="text-gray-300">License</SelectItem>
-              <SelectItem value="PIP" className="text-gray-300">PIP</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => setStatusFilter(value as any)}
-          >
-            <SelectTrigger className="w-[200px] bg-gray-800/60 backdrop-blur-sm border-gray-700 text-gray-300">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent className="bg-gray-800 border-gray-700">
-              <SelectItem value="ALL" className="text-gray-300">All Statuses</SelectItem>
-              <SelectItem value="PENDING" className="text-gray-300">Pending</SelectItem>
-              <SelectItem value="SUBMITTED" className="text-gray-300">Submitted</SelectItem>
-              <SelectItem value="APPROVED" className="text-gray-300">Approved</SelectItem>
-              <SelectItem value="REJECTED" className="text-gray-300">Rejected</SelectItem>
-              <SelectItem value="EXPIRED" className="text-gray-300">Expired</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       {/* Empty State */}
@@ -375,6 +413,7 @@ export function PermitsPage({ initialData }: PermitsPageProps) {
         onOpenChange={setSheetOpen}
         onSubmit={handleCreatePermit}
         permit={selectedPermit}
+        people={initialData.people}
       />
     </div>
   )

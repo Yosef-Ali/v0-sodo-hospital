@@ -23,38 +23,42 @@ const db = drizzle(pool)
 
 const mockReports = [
   {
-    title: "Monthly Patient Statistics",
-    description: "Comprehensive analysis of patient admissions, discharges, demographics, and treatment outcomes for the month.",
+    title: "Monthly Permit Status Report",
+    description: "Comprehensive monthly report showing the status of all permits including work permits, residence IDs, MOH licenses, and EFDA PIPs. Includes approval rates, processing times, and pending applications.",
     status: "PUBLISHED" as const,
     frequency: "MONTHLY" as const,
     format: "PDF" as const,
-    department: "Administration",
-    category: "Patient",
-    lastGenerated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-    fileUrl: "/reports/patient-stats-2024-11.pdf",
-    fileSize: 2457600, // 2.4 MB
+    department: "HR & Compliance",
+    category: "permit_compliance",
+    lastGenerated: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+    fileUrl: "https://utfs.io/f/example-monthly-permit-status.pdf",
+    fileSize: 524288, // 512 KB
     parameters: {
-      startDate: "2024-11-01",
-      endDate: "2024-11-30",
-      includeCharts: true,
-      departments: ["Emergency", "Surgery", "Pediatrics"]
+      dateRange: {
+        start: "2025-01-01",
+        end: "2025-01-31"
+      },
+      includeStatistics: true,
+      groupBy: "category"
     }
   },
   {
-    title: "Financial Performance Report",
-    description: "Detailed financial metrics including revenue, expenses, budget variance, and cost analysis by department.",
+    title: "Weekly Work Permit Processing Dashboard",
+    description: "Interactive dashboard showing work permit application pipeline, processing stages, bottlenecks, and team performance metrics.",
     status: "GENERATED" as const,
-    frequency: "MONTHLY" as const,
-    format: "EXCEL" as const,
-    department: "Finance",
-    category: "Financial",
-    lastGenerated: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-    fileUrl: "/reports/financial-performance-2024-11.xlsx",
-    fileSize: 1843200, // 1.8 MB
+    frequency: "WEEKLY" as const,
+    format: "DASHBOARD" as const,
+    department: "HR & Compliance",
+    category: "work_permits",
+    lastGenerated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+    fileUrl: null, // Dashboard doesn't have file URL
+    fileSize: null,
     parameters: {
-      fiscalYear: 2024,
-      quarter: "Q4",
-      compareWithPrevious: true
+      dateRange: {
+        start: "2025-01-20",
+        end: "2025-01-26"
+      },
+      metrics: ["processing_time", "approval_rate", "pending_count"]
     }
   },
   {

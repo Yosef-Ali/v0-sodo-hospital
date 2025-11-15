@@ -10,6 +10,286 @@ import { getSessionManager, generateSessionId, extractPageContext } from "@/lib/
 import { SessionContext, ChatResponse, AIMessage } from "@/lib/openai/types"
 
 /**
+ * Smart demo response function that returns widgets based on user queries
+ */
+function getDemoResponse(message: string): ChatResponse {
+  const lowerMessage = message.toLowerCase()
+
+  // Simulate verified ticket first (when user enters a ticket-like pattern)
+  const ticketPattern = /[A-Z]{3}-\d{4}-\d{4}/
+  const ticketMatch = message.toUpperCase().match(ticketPattern)
+
+  if (ticketMatch) {
+    const ticketNumber = ticketMatch[0]  // Extract just the ticket number (e.g., "WRK-2025-0001")
+
+    const showUploadGuide =
+      lowerMessage.includes("upload") ||
+      lowerMessage.includes("document") ||
+      lowerMessage.includes("missing")
+
+    const showTimeline =
+      lowerMessage.includes("timeline") ||
+      lowerMessage.includes("how long") ||
+      lowerMessage.includes("process")
+
+    const widgets: any[] = [
+      {
+        type: "permit-status",
+        data: {
+          ticketNumber: ticketNumber,
+          personName: "John Smith",
+          status: "processing",
+          type: "Work Permit Application",
+          submittedDate: "Jan 15, 2025",
+          lastUpdated: "Jan 18, 2025",
+          currentStage: "Document Review - Medical Clearance",
+          nextAction: "Please upload your health insurance certificate",
+          estimatedCompletion: "Jan 25, 2025",
+          notes: "Your passport and employment contract have been verified. Awaiting medical documents.",
+          documentLinks: [
+            {
+              name: "Application Receipt.pdf",
+              url: "#"
+            },
+            {
+              name: "Requirements Checklist.pdf",
+              url: "#"
+            }
+          ]
+        }
+      },
+    ]
+
+    if (showTimeline) {
+      widgets.push({
+        type: "process-timeline",
+        data: {
+          estimatedTotal: "10-14 days",
+          stages: [
+            {
+              name: "Application Submission",
+              status: "completed",
+              date: "Jan 15, 2025",
+              description: "Application received and validated",
+              duration: "1 day"
+            },
+            {
+              name: "Document Verification",
+              status: "completed",
+              date: "Jan 17, 2025",
+              description: "Passport and employment contract verified",
+              duration: "2 days"
+            },
+            {
+              name: "Medical Review",
+              status: "current",
+              description: "Health certificate under review",
+              duration: "2-3 days"
+            },
+            {
+              name: "Background Check",
+              status: "pending",
+              description: "Security and criminal record verification",
+              duration: "3-5 days"
+            },
+            {
+              name: "Final Approval",
+              status: "pending",
+              description: "Management approval and permit issuance",
+              duration: "2 days"
+            },
+            {
+              name: "Permit Ready",
+              status: "pending",
+              description: "Permit available for collection or delivery",
+              duration: "1 day"
+            }
+          ]
+        }
+      })
+    }
+
+    if (showUploadGuide) {
+      widgets.push({
+        type: "upload-guide",
+        data: {
+          documentType: "Health Insurance Certificate",
+          ticketNumber: ticketNumber,
+          currentStep: 1,
+          requirements: [
+            "Valid health insurance certificate (PDF or JPG)",
+            "Certificate must be in English or Amharic",
+            "File size under 5MB",
+            "Must be dated within last 3 months"
+          ],
+          steps: [
+            {
+              title: "Prepare your document",
+              description: "Scan or photograph your health certificate clearly",
+              completed: true
+            },
+            {
+              title: "Choose file to upload",
+              description: "Click the button below to select your file",
+              action: {
+                label: "Select File"
+              }
+            },
+            {
+              title: "Verify upload",
+              description: "Review the document preview before submitting",
+              completed: false
+            },
+            {
+              title: "Submit",
+              description: "Confirm and submit your document for review",
+              completed: false
+            }
+          ],
+          tips: [
+            "Ensure all text in the document is clearly readable",
+            "Remove any passwords from PDF files before uploading",
+            "You can upload multiple files if needed",
+            "Processing typically takes 1-2 business days"
+          ]
+        }
+      })
+    }
+
+    return {
+      message: {
+        id: `demo_${Date.now()}`,
+        role: "assistant",
+        content: showUploadGuide
+          ? "Great! I found your Work Permit application. Here's the complete status, timeline, and upload guide:"
+          : showTimeline
+            ? "Great! I found your Work Permit application. Here is the latest status and timeline."
+            : "Great! I found your Work Permit application. Here is the latest status.",
+        timestamp: new Date(),
+        intent: "document_query",
+        confidence: 1,
+        agentType: "documentSupport",
+        widgets,
+      },
+      status: "success",
+    }
+  }
+
+  // Check my permit status / track application
+  if (
+    lowerMessage.includes("status") ||
+    lowerMessage.includes("check") ||
+    lowerMessage.includes("track") ||
+    lowerMessage.includes("where is my")
+  ) {
+    return {
+      message: {
+        id: `demo_${Date.now()}`,
+        role: "assistant",
+        content: "I'll help you check your permit status. For your security, I need to verify your identity first.",
+        timestamp: new Date(),
+        intent: "document_query",
+        confidence: 0.95,
+        agentType: "documentSupport",
+        widgets: [
+          {
+            type: "ticket-verification",
+            data: {
+              placeholder: "e.g., PER-2024-1234 or WRK-2024-5678"
+            }
+          }
+        ]
+      },
+      status: "success",
+    }
+  }
+
+  // Upload documents / how to upload - Ask for ticket first
+  if (
+    lowerMessage.includes("upload") ||
+    lowerMessage.includes("submit") ||
+    lowerMessage.includes("documents") ||
+    lowerMessage.includes("how do i")
+  ) {
+    return {
+      message: {
+        id: `demo_${Date.now()}`,
+        role: "assistant",
+        content: "I'll guide you through uploading your documents. For your security, I need to verify your identity first.",
+        timestamp: new Date(),
+        intent: "document_query",
+        confidence: 0.92,
+        agentType: "documentSupport",
+        widgets: [
+          {
+            type: "ticket-verification",
+            data: {
+              placeholder: "e.g., PER-2024-1234 or WRK-2024-5678"
+            }
+          }
+        ]
+      },
+      status: "success",
+    }
+  }
+
+  // Timeline / how long / process - Ask for ticket first
+  if (
+    lowerMessage.includes("timeline") ||
+    lowerMessage.includes("how long") ||
+    lowerMessage.includes("process") ||
+    lowerMessage.includes("take") ||
+    lowerMessage.includes("stages")
+  ) {
+    return {
+      message: {
+        id: `demo_${Date.now()}`,
+        role: "assistant",
+        content: "I'll show you the complete timeline for your application. For your security, I need to verify your identity first.",
+        timestamp: new Date(),
+        intent: "workflow_help",
+        confidence: 0.94,
+        agentType: "documentSupport",
+        widgets: [
+          {
+            type: "ticket-verification",
+            data: {
+              placeholder: "e.g., PER-2024-1234 or WRK-2024-5678"
+            }
+          }
+        ]
+      },
+      status: "success",
+    }
+  }
+
+  // Default helpful response
+  return {
+    message: {
+      id: `demo_${Date.now()}`,
+      role: "assistant",
+      content: `I'm here to help you with your permit applications! I can assist with:
+
+✅ Checking permit status
+✅ Uploading documents
+✅ Understanding the process timeline
+✅ Answering questions about requirements
+
+Try asking me:
+• "Check my permit status"
+• "How do I upload documents?"
+• "What's the timeline?"
+• Or enter your ticket number (e.g., WRK-2024-5678)`,
+      timestamp: new Date(),
+      intent: "general_inquiry",
+      confidence: 1,
+      agentType: "generalSupport",
+    },
+    status: "success",
+  }
+}
+
+/**
  * Initialize a chat session
  */
 export async function initializeChatSession(
@@ -20,9 +300,16 @@ export async function initializeChatSession(
   currentPage: string = "/"
 ): Promise<{ sessionId: string; threadId: string }> {
   try {
-    // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === "") {
-      console.warn("OpenAI API key not configured. Running in demo mode.")
+    // Check if OpenAI is fully configured (API key AND assistant IDs)
+    const hasApiKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim() !== ""
+    const hasAssistantIds =
+      process.env.OPENAI_ASSISTANT_ID_CLASSIFICATION &&
+      process.env.OPENAI_ASSISTANT_ID_GENERAL_SUPPORT &&
+      process.env.OPENAI_ASSISTANT_ID_DOCUMENT_SUPPORT &&
+      process.env.OPENAI_ASSISTANT_ID_TECHNICAL_SUPPORT
+
+    if (!hasApiKey || !hasAssistantIds) {
+      console.warn("OpenAI not fully configured. Running in demo mode with beautiful widgets!")
       const sessionId = generateSessionId()
       return { sessionId, threadId: "demo-thread" }
     }
@@ -70,28 +357,17 @@ export async function sendChatMessage(
   currentPage?: string
 ): Promise<ChatResponse> {
   try {
-    // Demo mode response if OpenAI is not configured
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === "") {
-      const demoResponses = [
-        "Thank you for your message! This is a demo mode response since OpenAI is not configured. To enable full AI capabilities, please add your OPENAI_API_KEY to the .env.local file.",
-        "I'm currently running in demo mode. The full AI-powered chat requires an OpenAI API key to be configured.",
-        "Demo mode is active. For intelligent responses, please configure the OpenAI integration by following the setup guide in OPENAI_CHATKIT_SETUP.md.",
-      ]
+    // Demo mode response if OpenAI is not fully configured
+    // Check for API key AND assistant IDs
+    const hasApiKey = process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim() !== ""
+    const hasAssistantIds =
+      process.env.OPENAI_ASSISTANT_ID_CLASSIFICATION &&
+      process.env.OPENAI_ASSISTANT_ID_GENERAL_SUPPORT &&
+      process.env.OPENAI_ASSISTANT_ID_DOCUMENT_SUPPORT &&
+      process.env.OPENAI_ASSISTANT_ID_TECHNICAL_SUPPORT
 
-      const response: ChatResponse = {
-        message: {
-          id: `demo_${Date.now()}`,
-          role: "assistant",
-          content: demoResponses[Math.floor(Math.random() * demoResponses.length)],
-          timestamp: new Date(),
-          intent: "general_inquiry",
-          confidence: 1,
-          agentType: "generalSupport",
-        },
-        status: "success",
-      }
-
-      return response
+    if (!hasApiKey || !hasAssistantIds) {
+      return getDemoResponse(message)
     }
 
     const sessionManager = getSessionManager()
@@ -150,6 +426,7 @@ export async function sendChatMessage(
       },
       status: "error",
       error: error instanceof Error ? error.message : "Unknown error",
+      errorCode: "unknown",
     }
   }
 }

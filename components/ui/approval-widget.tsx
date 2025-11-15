@@ -21,6 +21,15 @@ interface ApprovalWidgetProps {
 export function ApprovalWidget({ approval, onApprove, onReject }: ApprovalWidgetProps) {
   const [isProcessing, setIsProcessing] = useState(false)
 
+  const formatToolName = (name: string) => {
+    return name
+      .replace(/_/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ")
+  }
+
   const handleApprove = async () => {
     setIsProcessing(true)
     await onApprove(approval.id)
@@ -60,6 +69,10 @@ export function ApprovalWidget({ approval, onApprove, onReject }: ApprovalWidget
               {approval.riskLevel.toUpperCase()} RISK
             </Badge>
           </div>
+          <p className="text-xs text-gray-400">
+            Action: <span className="text-gray-200">{formatToolName(approval.toolName)}</span>
+            <span className="text-[11px] text-gray-500 ml-1">({approval.toolName})</span>
+          </p>
           <p className="text-sm text-gray-400">{approval.toolDescription}</p>
         </div>
       </div>
@@ -115,6 +128,16 @@ export function ApprovalWidget({ approval, onApprove, onReject }: ApprovalWidget
       {isProcessing && (
         <div className="pl-8">
           <p className="text-xs text-gray-500 animate-pulse">Processing your decision...</p>
+        </div>
+      )}
+      {!isProcessing && (
+        <div className="pl-8 pt-1 space-y-0.5">
+          <p className="text-[11px] text-gray-500">
+            Approve: executes this change in the system.
+          </p>
+          <p className="text-[11px] text-gray-500">
+            Reject: keeps everything as it is right now.
+          </p>
         </div>
       )}
     </Card>

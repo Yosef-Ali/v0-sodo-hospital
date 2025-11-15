@@ -141,41 +141,43 @@ export function ReportsPage({ initialData }: ReportsPageProps) {
         description="Create, manage, and generate analytical reports for hospital operations"
       />
 
-      <div className="mt-[200px] mb-6 flex flex-col gap-4">
+      <div className="mt-8 md:mt-10 lg:mt-12 mb-6 flex flex-col gap-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <Tabs value={activeStatusTab} onValueChange={(value) => handleStatusChange(value as any)} className="w-full md:w-auto">
-            <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-5">
-              <TabsTrigger value="all" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                All
-                <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">
-                  {stats.total}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="draft" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                Draft
-                <Badge className="ml-1 bg-gray-500/20 text-gray-300 text-xs border border-gray-500/30">
-                  {stats.draft}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="generated" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                Generated
-                <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">
-                  {stats.generated}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="published" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                Published
-                <Badge className="ml-1 bg-green-500/20 text-green-300 text-xs border border-green-500/30">
-                  {stats.published}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="archived" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                Archived
-                <Badge className="ml-1 bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">
-                  {stats.archived}
-                </Badge>
-              </TabsTrigger>
-            </TabsList>
+            <div className="w-full overflow-x-auto">
+              <TabsList className="bg-gray-800 border border-gray-700 inline-flex min-w-max gap-2 rounded-md">
+                <TabsTrigger value="all" className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white">
+                  All
+                  <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">
+                    {stats.total}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="draft" className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white">
+                  Draft
+                  <Badge className="ml-1 bg-gray-500/20 text-gray-300 text-xs border border-gray-500/30">
+                    {stats.draft}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="generated" className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white">
+                  Generated
+                  <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">
+                    {stats.generated}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="published" className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white">
+                  Published
+                  <Badge className="ml-1 bg-green-500/20 text-green-300 text-xs border border-green-500/30">
+                    {stats.published}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="archived" className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white">
+                  Archived
+                  <Badge className="ml-1 bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">
+                    {stats.archived}
+                  </Badge>
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </Tabs>
 
           <div className="flex items-center gap-2 w-full md:w-auto">

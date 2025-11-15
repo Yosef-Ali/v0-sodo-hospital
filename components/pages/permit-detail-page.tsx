@@ -34,12 +34,15 @@ import {
   ThumbsUp,
   ThumbsDown,
   History,
+  Download,
+  Eye,
 } from "lucide-react"
 import { getPermitById, transitionPermitStatus } from "@/lib/actions/v2/permits"
 import { formatEC, gregorianToEC } from "@/lib/dates/ethiopian"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ChecklistPanel } from "@/components/permit/checklist-panel"
+import { DocumentUploader } from "@/components/ui/document-uploader"
 
 interface PermitDetailPageProps {
   initialData: any
@@ -300,7 +303,14 @@ export function PermitDetailPage({ initialData }: PermitDetailPageProps) {
   const checklist = permit.checklist
   const history = permit.history || []
   const tasks = permit.tasks || []
+  const documents = permit.documents || []
   const dueDate = formatDueDate(permitData.dueDate, permitData.dueDateEC)
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  }
 
   return (
     <div className="p-8">
@@ -436,6 +446,79 @@ export function PermitDetailPage({ initialData }: PermitDetailPageProps) {
                 await loadPermit()
               }}
             />
+          )}
+
+          {/* Document Uploader */}
+          <DocumentUploader
+            ticketNumber={permitData.ticketNumber}
+            personId={permitData.personId || person?.id}
+            permitId={permitData.id}
+            onUploadComplete={loadPermit}
+          />
+
+          {/* Documents */}
+          {documents.length > 0 && (
+            <Card className="bg-gray-800 border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <FileText className="h-5 w-5 mr-2 text-green-500" />
+                Uploaded Documents ({documents.length})
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {documents.map((doc: any) => (
+                  <div
+                    key={doc.id}
+                    className="flex items-start space-x-3 p-4 rounded-lg bg-gray-900/50 border border-gray-700 hover:border-green-500/50 transition-colors"
+                  >
+                    <FileText className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">
+                        {doc.title || doc.type}
+                      </p>
+                      {doc.issuedBy && (
+                        <p className="text-xs text-gray-500 truncate">
+                          Issued by: {doc.issuedBy}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+                        <span className="px-2 py-0.5 bg-gray-700 rounded">
+                          {doc.type}
+                        </span>
+                        {doc.fileSize && (
+                          <span>{formatFileSize(doc.fileSize)}</span>
+                        )}
+                        {doc.mimeType && (
+                          <span className="text-gray-600">•</span>
+                        )}
+                        {doc.mimeType && (
+                          <span className="truncate">{doc.mimeType}</span>
+                        )}
+                      </div>
+                      {doc.fileUrl && (
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-green-400 hover:text-green-300"
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            View
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-xs text-green-400 hover:text-green-300"
+                          >
+                            <Download className="h-3 w-3 mr-1" />
+                            Download
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
           )}
 
           {/* History */}

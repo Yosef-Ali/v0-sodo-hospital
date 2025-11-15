@@ -1,6 +1,6 @@
 "use server"
 
-import { db, documentsV2, people, type DocumentV2, type NewDocumentV2 } from "@/lib/db"
+import { db, documentsV2, people, permits, type DocumentV2, type NewDocumentV2 } from "@/lib/db"
 import { eq, desc, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -93,6 +93,14 @@ export async function createDocument(data: {
       revalidatePath(`/people/${data.personId}`)
     }
     revalidatePath("/documents")
+
+    // Revalidate permit page if number is a ticket number
+    if (data.number) {
+      const ticketPattern = /^[A-Z]{3}-\d{4}-\d{4}$/
+      if (ticketPattern.test(data.number)) {
+        revalidatePath(`/permits/${data.number}`)
+      }
+    }
 
     return { success: true, data: result[0] }
   } catch (error) {
@@ -215,6 +223,24 @@ export async function uploadDocument(formData: FormData) {
       return { success: false, error: "File and type are required" }
     }
 
+    // Resolve personId from ticket number if not provided
+    let resolvedPersonId: string | undefined = personId || undefined
+    if (!resolvedPersonId && number) {
+      const ticket = number.toUpperCase()
+      const ticketPattern = /^[A-Z]{3}-\d{4}-\d{4}$/
+      if (ticketPattern.test(ticket)) {
+        const permitMatch = await db
+          .select({ personId: permits.personId })
+          .from(permits)
+          .where(eq(permits.ticketNumber, ticket))
+          .limit(1)
+
+        if (permitMatch.length > 0) {
+          resolvedPersonId = permitMatch[0].personId || undefined
+        }
+      }
+    }
+
     // TODO: Implement actual file upload to S3 or local storage
     // For now, we'll create a placeholder file URL
     const fileUrl = `/uploads/${Date.now()}-${file.name}`
@@ -230,7 +256,7 @@ export async function uploadDocument(formData: FormData) {
       fileUrl,
       fileSize,
       mimeType,
-      personId: personId || undefined,
+      personId: resolvedPersonId,
     })
   } catch (error) {
     console.error("Error uploading document:", error)

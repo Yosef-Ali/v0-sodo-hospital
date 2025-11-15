@@ -1,5 +1,9 @@
-import { db, users, checklists, people, permits } from "./index"
+import { config } from "dotenv"
+import { db, users, checklists, people, permits, knowledgeBase, complaints } from "./index"
 import bcrypt from "bcryptjs"
+
+// Load environment variables from .env.local
+config({ path: ".env.local" })
 
 async function seedMVP() {
   try {
@@ -259,6 +263,7 @@ async function seedMVP() {
       await db
         .insert(permits)
         .values({
+          ticketNumber: "WRK-2025-0001",
           category: "WORK_PERMIT",
           status: "PENDING",
           personId: person1.id,
@@ -274,6 +279,7 @@ async function seedMVP() {
       await db
         .insert(permits)
         .values({
+          ticketNumber: "RES-2025-0001",
           category: "RESIDENCE_ID",
           status: "SUBMITTED",
           personId: person1.id,
@@ -289,6 +295,7 @@ async function seedMVP() {
       await db
         .insert(permits)
         .values({
+          ticketNumber: "LIC-2025-0001",
           category: "LICENSE",
           status: "APPROVED",
           personId: person2.id,
@@ -304,6 +311,7 @@ async function seedMVP() {
       await db
         .insert(permits)
         .values({
+          ticketNumber: "PIP-2025-0001",
           category: "PIP",
           status: "PENDING",
           personId: person3.id,
@@ -316,6 +324,63 @@ async function seedMVP() {
     }
 
     console.log("✓ Created 4 sample permits")
+
+    // Seed knowledge base articles for chat support
+    console.log("Creating knowledge base articles...")
+
+    await db
+      .insert(knowledgeBase)
+      .values([
+        {
+          question: "How do I check my work permit status?",
+          answer:
+            "You can check your work permit status by opening the Permits page, entering your ticket number (e.g., WRK-2024-5678), and reviewing the status card. The status card shows your current stage, next required action, and estimated completion date.",
+          category: "permits",
+          keywords: ["status", "work permit", "ticket", "WRK"],
+          relatedPermitCategory: "WORK_PERMIT",
+        },
+        {
+          question: "What documents do I need to upload for a work permit?",
+          answer:
+            "For a work permit, you typically need: passport copy, signed employment contract, educational certificates, professional license (if applicable), health certificate, passport-size photos, approval letter from the Ministry of Health, and the hospital’s business license and tax clearance.",
+          category: "documents",
+          keywords: ["work permit", "documents", "requirements", "upload"],
+          relatedPermitCategory: "WORK_PERMIT",
+        },
+        {
+          question: "How long does a work permit application usually take?",
+          answer:
+            "Most work permit applications are processed within 10–14 days once all required documents are submitted. Delays usually happen when required documents are missing, expired, or unclear. You can speed up processing by ensuring all checklist items are completed and documents are readable.",
+          category: "timeline",
+          keywords: ["timeline", "processing time", "delay", "speed up"],
+          relatedPermitCategory: "WORK_PERMIT",
+        },
+      ])
+      .onConflictDoNothing()
+
+    console.log("✓ Seeded knowledge base articles")
+
+    // Seed a sample complaint linked to a permit (for chat lookup)
+    console.log("Creating sample complaint...")
+
+    // Find any permit to link as related (optional)
+    const samplePermit = await db.query.permits.findFirst()
+
+    await db
+      .insert(complaints)
+      .values({
+        ticketNumber: "COM-2025-0001",
+        category: "SERVICE",
+        status: "OPEN",
+        subject: "Delay in processing work permit",
+        description:
+          "My work permit application seems delayed beyond the usual processing time. I would like to know the current status and if any documents are missing.",
+        relatedPermitId: samplePermit ? samplePermit.id : null,
+        priority: "medium",
+      })
+      .onConflictDoNothing()
+
+    console.log("✓ Created sample complaint COM-2025-0001")
 
     console.log("✅ MVP database seeded successfully!")
     console.log("\n📋 Summary:")

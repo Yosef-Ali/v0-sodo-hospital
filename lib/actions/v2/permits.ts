@@ -1,9 +1,52 @@
 "use server"
 
-import { db, permits, people, checklists, permitHistory, tasksV2, users, type Permit, type NewPermit, type PermitHistory } from "@/lib/db"
-import { eq, desc, and, gte, lte, sql, or } from "drizzle-orm"
+import { db, permits, people, checklists, permitHistory, tasksV2, users, documentsV2, type Permit, type NewPermit, type PermitHistory } from "@/lib/db"
+import { eq, desc, and, gte, lte, sql, or, like } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { gregorianToEC, formatEC } from "@/lib/dates/ethiopian"
+
+/**
+ * Generate a unique ticket number for a permit
+ * Format: {PREFIX}-{YEAR}-{SEQUENCE}
+ * Example: WRK-2025-0001, RES-2025-0002, LIC-2025-0003, PIP-2025-0001
+ */
+async function generateTicketNumber(category: "WORK_PERMIT" | "RESIDENCE_ID" | "LICENSE" | "PIP"): Promise<string> {
+  // Get prefix based on category
+  const prefixMap = {
+    WORK_PERMIT: "WRK",
+    RESIDENCE_ID: "RES",
+    LICENSE: "LIC",
+    PIP: "PIP",
+  }
+  const prefix = prefixMap[category]
+
+  // Get current year
+  const year = new Date().getFullYear()
+
+  // Find the latest ticket number for this category and year
+  const pattern = `${prefix}-${year}-%`
+  const latestTickets = await db
+    .select({ ticketNumber: permits.ticketNumber })
+    .from(permits)
+    .where(like(permits.ticketNumber, pattern))
+    .orderBy(desc(permits.ticketNumber))
+    .limit(1)
+
+  let sequence = 1
+  if (latestTickets.length > 0 && latestTickets[0].ticketNumber) {
+    // Extract sequence number from the latest ticket
+    const parts = latestTickets[0].ticketNumber.split('-')
+    if (parts.length === 3) {
+      const lastSequence = parseInt(parts[2], 10)
+      if (!isNaN(lastSequence)) {
+        sequence = lastSequence + 1
+      }
+    }
+  }
+
+  // Format: PREFIX-YEAR-SEQUENCE (padded to 4 digits)
+  return `${prefix}-${year}-${sequence.toString().padStart(4, '0')}`
+}
 
 /**
  * Get all permits with optional filters and pagination
@@ -61,26 +104,49 @@ export async function getPermits(params?: {
 }
 
 /**
- * Get a single permit by ID with all related data
+ * Get a single permit by ID or ticket number with all related data
  */
-export async function getPermitById(permitId: string) {
+export async function getPermitById(permitIdOrTicket: string) {
   try {
+    // Determine if input is UUID or ticket number
+    const isUUID = permitIdOrTicket.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+    const isTicket = permitIdOrTicket.match(/^[A-Z]{3}-\d{4}-\d{4}$/i)
+
     // Get permit with person and checklist
-    const permitResult = await db
-      .select({
-        permit: permits,
-        person: people,
-        checklist: checklists,
-      })
-      .from(permits)
-      .leftJoin(people, eq(permits.personId, people.id))
-      .leftJoin(checklists, eq(permits.checklistId, checklists.id))
-      .where(eq(permits.id, permitId))
-      .limit(1)
+    let permitResult
+    if (isUUID) {
+      permitResult = await db
+        .select({
+          permit: permits,
+          person: people,
+          checklist: checklists,
+        })
+        .from(permits)
+        .leftJoin(people, eq(permits.personId, people.id))
+        .leftJoin(checklists, eq(permits.checklistId, checklists.id))
+        .where(eq(permits.id, permitIdOrTicket))
+        .limit(1)
+    } else if (isTicket) {
+      permitResult = await db
+        .select({
+          permit: permits,
+          person: people,
+          checklist: checklists,
+        })
+        .from(permits)
+        .leftJoin(people, eq(permits.personId, people.id))
+        .leftJoin(checklists, eq(permits.checklistId, checklists.id))
+        .where(eq(permits.ticketNumber, permitIdOrTicket.toUpperCase()))
+        .limit(1)
+    } else {
+      return { success: false, error: "Invalid permit ID or ticket number format" }
+    }
 
     if (permitResult.length === 0) {
       return { success: false, error: "Permit not found" }
     }
+
+    const permitId = permitResult[0].permit.id
 
     // Get permit history
     const history = await db
@@ -111,12 +177,23 @@ export async function getPermitById(permitId: string) {
       .where(eq(tasksV2.permitId, permitId))
       .orderBy(desc(tasksV2.createdAt))
 
+    // Get related documents (by ticket number)
+    const ticketNumber = permitResult[0].permit.ticketNumber
+    const documents = ticketNumber
+      ? await db
+          .select()
+          .from(documentsV2)
+          .where(eq(documentsV2.number, ticketNumber))
+          .orderBy(desc(documentsV2.createdAt))
+      : []
+
     return {
       success: true,
       data: {
         ...permitResult[0],
         history,
         tasks,
+        documents,
       },
     }
   } catch (error) {
@@ -168,10 +245,14 @@ export async function createPermit(data: {
       dueDateEC = formatEC(ec, 'en', 'iso')
     }
 
+    // Auto-generate ticket number
+    const ticketNumber = await generateTicketNumber(data.category)
+
     const result = await db
       .insert(permits)
       .values({
         ...data,
+        ticketNumber,
         dueDateEC,
         status: "PENDING",
       })
@@ -188,9 +269,14 @@ export async function createPermit(data: {
       })
     }
 
-    revalidatePath("/permits")
-    revalidatePath(`/people/${data.personId}`)
-    revalidatePath("/dashboard")
+    // Revalidate cache (only works in Next.js request context)
+    try {
+      revalidatePath("/permits")
+      revalidatePath(`/people/${data.personId}`)
+      revalidatePath("/dashboard")
+    } catch (error) {
+      // Ignore revalidation errors in non-request contexts (e.g., scripts)
+    }
 
     return { success: true, data: result[0] }
   } catch (error) {

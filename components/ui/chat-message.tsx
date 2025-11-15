@@ -13,15 +13,21 @@ import {
   MetricCardWidget,
   QuickActionButtonsWidget,
   StatusBadgeWidget,
-  DatePickerWidget
+  DatePickerWidget,
+  // Customer Support Widgets
+  TicketVerificationWidget,
+  PermitStatusWidget,
+  UploadGuideWidget,
+  ProcessTimelineWidget
 } from "@/components/ui/chat-widgets"
 
 interface ChatMessageProps {
   message: Message
   onSuggestionClick?: (suggestion: string) => void
+  onSendMessage?: (message: string) => void
 }
 
-export function ChatMessage({ message, onSuggestionClick }: ChatMessageProps) {
+export function ChatMessage({ message, onSuggestionClick, onSendMessage }: ChatMessageProps) {
   const isUser = message.role === "user"
   const isAssistant = message.role === "assistant"
 
@@ -95,6 +101,15 @@ export function ChatMessage({ message, onSuggestionClick }: ChatMessageProps) {
                   return <StatusBadgeWidget key={idx} {...widget.data} />
                 case "date-picker":
                   return <DatePickerWidget key={idx} {...widget.data} />
+                // Customer Support Widgets
+                case "ticket-verification":
+                  return <TicketVerificationWidget key={idx} {...widget.data} onSubmit={onSendMessage || (() => {})} />
+                case "permit-status":
+                  return <PermitStatusWidget key={idx} {...widget.data} />
+                case "upload-guide":
+                  return <UploadGuideWidget key={idx} {...widget.data} />
+                case "process-timeline":
+                  return <ProcessTimelineWidget key={idx} {...widget.data} />
                 default:
                   return null
               }

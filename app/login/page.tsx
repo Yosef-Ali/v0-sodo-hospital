@@ -1,7 +1,7 @@
-import { StackLoginForm } from "@/components/auth/stack-login-form"
+import { LoginForm } from "@/components/login-form"
 
 export const dynamic = 'force-dynamic'
 
 export default function LoginPage() {
-  return <StackLoginForm />
+  return <LoginForm />
 }

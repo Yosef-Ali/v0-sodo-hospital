@@ -12,9 +12,13 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx lib/db/seed.ts",
-    "db:seed-mvp": "tsx lib/db/seed-mvp.ts"
+    "db:seed-mvp": "tsx lib/db/seed-mvp.ts",
+    "db:seed-docs": "tsx lib/db/seed-documents.ts",
+    "db:seed-tasks": "tsx lib/db/seed-tasks.ts",
+    "db:seed-reports": "tsx lib/db/seed-reports.ts"
   },
   "dependencies": {
+    "@auth/drizzle-adapter": "^1.11.1",
     "@dnd-kit/core": "latest",
     "@dnd-kit/sortable": "latest",
     "@dnd-kit/utilities": "latest",
@@ -51,6 +55,7 @@
     "@stackframe/stack": "^2.8.51",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.81.1",
+    "@uploadthing/react": "^7.3.3",
     "ai": "^5.0.93",
     "autoprefixer": "^10.4.20",
     "bcryptjs": "^3.0.3",
@@ -70,6 +75,7 @@
     "jspdf": "^3.0.3",
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
+    "next-auth": "^5.0.0-beta.30",
     "next-themes": "^0.4.4",
     "openai": "^6.9.0",
     "prisma": "^6.19.0",
@@ -84,6 +90,7 @@
     "sonner": "^1.7.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "uploadthing": "^7.7.4",
     "utf-8-validate": "^6.0.5",
     "vaul": "^0.9.6",
     "ws": "^8.18.3",

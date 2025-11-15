@@ -109,29 +109,44 @@ export function PeoplePage({ initialData }: PeoplePageProps) {
         description="Manage hospital staff, patients, and their dependents"
       />
 
-      <div className="mt-[200px] mb-6 flex flex-col gap-4">
+      <div className="mt-8 md:mt-10 lg:mt-12 mb-6 flex flex-col gap-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <Tabs value={activeStatTab} onValueChange={(value) => setActiveStatTab(value as "all" | "dependents" | "permits")} className="w-full md:w-auto">
-            <TabsList className="bg-gray-800 border border-gray-700 w-full md:w-auto grid grid-cols-3">
-              <TabsTrigger value="all" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                All
-                <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">
-                  {stats.total}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="dependents" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                Dependents
-                <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">
-                  {stats.dependents}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger value="permits" className="text-sm data-[state=active]:bg-gray-700 data-[state=active]:text-white">
-                With Permits
-                <Badge className="ml-1 bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-500/30">
-                  {stats.withPermits}
-                </Badge>
-              </TabsTrigger>
-            </TabsList>
+          <Tabs
+            value={activeStatTab}
+            onValueChange={(value) => setActiveStatTab(value as "all" | "dependents" | "permits")}
+            className="w-full md:w-auto"
+          >
+            <div className="w-full overflow-x-auto">
+              <TabsList className="bg-gray-800 border border-gray-700 inline-flex min-w-max gap-2 rounded-md">
+                <TabsTrigger
+                  value="all"
+                  className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+                >
+                  All
+                  <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">
+                    {stats.total}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="dependents"
+                  className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+                >
+                  Dependents
+                  <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">
+                    {stats.dependents}
+                  </Badge>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="permits"
+                  className="text-sm whitespace-nowrap flex-shrink-0 data-[state=active]:bg-gray-700 data-[state=active]:text-white"
+                >
+                  With Permits
+                  <Badge className="ml-1 bg-emerald-500/20 text-emerald-300 text-xs border border-emerald-500/30">
+                    {stats.withPermits}
+                  </Badge>
+                </TabsTrigger>
+              </TabsList>
+            </div>
           </Tabs>
 
           <div className="flex items-center gap-2 w-full md:w-auto">

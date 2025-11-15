@@ -12,13 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface PermitFormData {
   id?: string
-  title: string
   category: string
-  status: string
   personId: string
-  issueDate: string
-  expiryDate: string
-  permitNumber: string
+  dueDate: string
+  checklistId?: string
   notes: string
 }
 
@@ -27,17 +24,15 @@ interface PermitSheetProps {
   onOpenChange: (open: boolean) => void
   onSubmit: (permit: PermitFormData) => void
   permit?: PermitFormData | null
+  people?: Array<{ id: string; firstName: string; lastName: string; email: string }>
 }
 
-export function PermitSheet({ open, onOpenChange, onSubmit, permit }: PermitSheetProps) {
+export function PermitSheet({ open, onOpenChange, onSubmit, permit, people = [] }: PermitSheetProps) {
   const [formData, setFormData] = useState<PermitFormData>({
-    title: "",
     category: "",
-    status: "pending",
     personId: "",
-    issueDate: "",
-    expiryDate: "",
-    permitNumber: "",
+    dueDate: "",
+    checklistId: "",
     notes: "",
   })
 
@@ -46,25 +41,22 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit }: PermitShee
     if (permit) {
       setFormData({
         id: permit.id,
-        title: permit.title || "",
         category: permit.category || "",
-        status: permit.status || "pending",
         personId: permit.personId || "",
-        issueDate: permit.issueDate || "",
-        expiryDate: permit.expiryDate || "",
-        permitNumber: permit.permitNumber || "",
+        dueDate: permit.dueDate || "",
+        checklistId: permit.checklistId || "",
         notes: permit.notes || "",
       })
     } else {
-      // Reset for create mode
+      // Reset for create mode - set default due date to 30 days from now
+      const defaultDueDate = new Date()
+      defaultDueDate.setDate(defaultDueDate.getDate() + 30)
+
       setFormData({
-        title: "",
         category: "",
-        status: "pending",
         personId: "",
-        issueDate: "",
-        expiryDate: "",
-        permitNumber: "",
+        dueDate: defaultDueDate.toISOString().split('T')[0],
+        checklistId: "",
         notes: "",
       })
     }
@@ -74,52 +66,8 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit }: PermitShee
   const categories = [
     { value: "WORK_PERMIT", label: "Work Permit" },
     { value: "RESIDENCE_ID", label: "Residence ID" },
-    { value: "LICENSE", label: "Professional License" },
-    { value: "PIP", label: "PIP (Practice ID)" },
-  ]
-
-  const quickTitles: Record<string, string[]> = {
-    WORK_PERMIT: [
-      "Work Permit - New Application",
-      "Work Permit - Renewal",
-      "Work Permit - Extension",
-      "Temporary Work Authorization",
-    ],
-    RESIDENCE_ID: [
-      "Residence ID - New Application",
-      "Residence ID - Renewal",
-      "Permanent Residence Application",
-      "Temporary Residence Permit",
-    ],
-    LICENSE: [
-      "Medical License - New",
-      "Medical License - Renewal",
-      "Nursing License - New",
-      "Nursing License - Renewal",
-      "Specialist License",
-    ],
-    PIP: [
-      "PIP - New Application",
-      "PIP - Renewal",
-      "PIP - Update",
-    ],
-  }
-
-  const statuses = [
-    { value: "pending", label: "Pending" },
-    { value: "processing", label: "Processing" },
-    { value: "approved", label: "Approved" },
-    { value: "active", label: "Active" },
-    { value: "expired", label: "Expired" },
-    { value: "rejected", label: "Rejected" },
-  ]
-
-  // Sample people - you can fetch from database
-  const people = [
-    { value: "person1", label: "Dr. Sarah Johnson" },
-    { value: "person2", label: "Nurse Maria Garcia" },
-    { value: "person3", label: "Dr. Ahmed Hassan" },
-    { value: "person4", label: "Admin John Doe" },
+    { value: "LICENSE", label: "MOH License" },
+    { value: "PIP", label: "Product Import Permit (PIP)" },
   ]
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -157,7 +105,7 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit }: PermitShee
             </Label>
             <Select
               value={formData.category}
-              onValueChange={(value) => setFormData({ ...formData, category: value, title: "" })}
+              onValueChange={(value) => setFormData({ ...formData, category: value })}
             >
               <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                 <SelectValue placeholder="Select category" />
@@ -172,42 +120,6 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit }: PermitShee
             </Select>
           </div>
 
-          {/* Quick Title Selection (based on category) */}
-          {formData.category && (
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-gray-300">
-                Permit Title *
-              </Label>
-              <Select
-                value={formData.title}
-                onValueChange={(value) => setFormData({ ...formData, title: value })}
-              >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Select or type custom title" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  {quickTitles[formData.category]?.map((title) => (
-                    <SelectItem key={title} value={title} className="text-white">
-                      {title}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="custom" className="text-white">
-                    + Custom Title
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Custom title input */}
-              {formData.title === "custom" && (
-                <Input
-                  placeholder="Enter custom title"
-                  className="bg-gray-700 border-gray-600 text-white mt-2"
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                />
-              )}
-            </div>
-          )}
-
           {/* Person */}
           <div className="space-y-2">
             <Label htmlFor="personId" className="text-gray-300">
@@ -221,81 +133,37 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit }: PermitShee
                 <SelectValue placeholder="Select person" />
               </SelectTrigger>
               <SelectContent className="bg-gray-700 border-gray-600">
-                {people.map((person) => (
-                  <SelectItem key={person.value} value={person.value} className="text-white">
-                    {person.label}
+                {people.length > 0 ? (
+                  people.map((person) => (
+                    <SelectItem key={person.id} value={person.id} className="text-white">
+                      {person.firstName} {person.lastName} ({person.email})
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="" disabled className="text-gray-500">
+                    No people available
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Permit Number */}
+          {/* Due Date */}
           <div className="space-y-2">
-            <Label htmlFor="permitNumber" className="text-gray-300">
-              Permit Number
+            <Label htmlFor="dueDate" className="text-gray-300">
+              Due Date *
             </Label>
             <Input
-              id="permitNumber"
-              name="permitNumber"
-              value={formData.permitNumber}
+              id="dueDate"
+              name="dueDate"
+              type="date"
+              value={formData.dueDate}
               onChange={handleChange}
-              placeholder="Enter permit number (if known)"
               className="bg-gray-700 border-gray-600 text-white"
             />
-          </div>
-
-          {/* Status */}
-          <div className="space-y-2">
-            <Label htmlFor="status" className="text-gray-300">
-              Status *
-            </Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData({ ...formData, status: value })}
-            >
-              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent className="bg-gray-700 border-gray-600">
-                {statuses.map((status) => (
-                  <SelectItem key={status.value} value={status.value} className="text-white">
-                    {status.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="issueDate" className="text-gray-300">
-                Issue Date
-              </Label>
-              <Input
-                id="issueDate"
-                name="issueDate"
-                type="date"
-                value={formData.issueDate}
-                onChange={handleChange}
-                className="bg-gray-700 border-gray-600 text-white"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="expiryDate" className="text-gray-300">
-                Expiry Date
-              </Label>
-              <Input
-                id="expiryDate"
-                name="expiryDate"
-                type="date"
-                value={formData.expiryDate}
-                onChange={handleChange}
-                className="bg-gray-700 border-gray-600 text-white"
-              />
-            </div>
+            <p className="text-xs text-gray-500">
+              Target completion date for this permit (default: 30 days from today)
+            </p>
           </div>
 
           {/* Notes */}
@@ -308,9 +176,19 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit }: PermitShee
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              placeholder="Add any additional notes or requirements"
+              placeholder="Add any additional notes or requirements for this permit"
               className="bg-gray-700 border-gray-600 text-white min-h-[100px]"
             />
+          </div>
+
+          {/* Ticket Number Info */}
+          <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+            <p className="text-sm text-green-300">
+              ✓ A unique ticket number will be automatically generated upon creation
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Format: {formData.category ? formData.category.substring(0, 3).toUpperCase() : "XXX"}-2025-####
+            </p>
           </div>
 
           {/* Actions */}
@@ -326,7 +204,7 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit }: PermitShee
             <Button
               type="submit"
               className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!formData.category || !formData.title || !formData.personId}
+              disabled={!formData.category || !formData.personId || !formData.dueDate}
             >
               {isEditMode ? "Update Permit" : "Create Permit"}
             </Button>

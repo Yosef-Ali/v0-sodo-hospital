@@ -239,6 +239,7 @@ export const checklists = pgTable("checklists", {
 
 export const permits = pgTable("permits", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
+	ticketNumber: varchar("ticket_number", { length: 100 }),
 	category: permitCategory().notNull(),
 	status: permitStatus().default('PENDING').notNull(),
 	personId: uuid("person_id").notNull(),

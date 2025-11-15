@@ -3,15 +3,17 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 import {
   LayoutDashboard,
   CheckSquare,
   BarChart,
   Settings,
-  LogIn,
   UserCircle,
   ClipboardCheck,
   Calendar,
+  Sparkles,
+  BookOpen,
 } from "lucide-react"
 
 import {
@@ -26,7 +28,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar"
+import { UserButton } from "@/components/auth/user-button"
 
 const menuItems = [
   {
@@ -60,6 +64,16 @@ const menuItems = [
     icon: BarChart,
   },
   {
+    title: "Admin Guide",
+    url: "/admin-guide",
+    icon: BookOpen,
+  },
+  {
+    title: "Widgets Demo",
+    url: "/widgets-demo",
+    icon: Sparkles,
+  },
+  {
     title: "Settings",
     url: "/settings",
     icon: Settings,
@@ -68,6 +82,14 @@ const menuItems = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  const { isMobile, setOpenMobile } = useSidebar()
+  const { data: session } = useSession()
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpenMobile(false)
+    }
+  }
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -75,7 +97,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/dashboard">
+              <Link href="/dashboard" onClick={handleNavClick}>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-emerald-600 text-white">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -108,7 +130,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
-                    <Link href={item.url} className="flex items-center">
+                    <Link href={item.url} className="flex items-center" onClick={handleNavClick}>
                       <item.icon className={pathname === item.url ? "text-green-500" : "text-gray-400"} />
                       <span>{item.title}</span>
                     </Link>
@@ -121,16 +143,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link href="/login" className="flex items-center w-full">
-                <LogIn className="text-gray-400" />
-                <span>Sign In</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {session?.user && <UserButton user={session.user} />}
       </SidebarFooter>
 
       <SidebarRail />

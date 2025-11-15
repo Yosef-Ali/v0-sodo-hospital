@@ -1,10 +1,14 @@
 "use client"
 
 import Link from "next/link"
-import { Activity, Sparkles, Users, Briefcase, FileText, Clock, Star, TrendingDown, CheckCircle, Award } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { Activity, Sparkles, Users, Briefcase, FileText, Clock, Star, TrendingDown, CheckCircle } from "lucide-react"
 import { OpenAIChatWidget } from "@/components/ui/openai-chat-widget"
+import { Button } from "@/components/ui/button"
+import { UserButton } from "@/components/auth/user-button"
 
 export function LandingPage() {
+  const { data: session } = useSession()
   return (
     <div className="min-h-screen antialiased overflow-x-hidden text-slate-100 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Background Effects */}
@@ -20,21 +24,29 @@ export function LandingPage() {
             </div>
             <span className="text-xl font-semibold tracking-tight">SODO Hospital</span>
           </div>
-          <div className="hidden md:flex items-center space-x-8 text-sm">
-            <Link href="/documents" className="text-slate-400 hover:text-white transition-colors">Documents</Link>
-            <Link href="/teams" className="text-slate-400 hover:text-white transition-colors">Teams</Link>
-            <Link href="/reports" className="text-slate-400 hover:text-white transition-colors">Reports</Link>
-            <Link href="/dashboard">
-              <button className="bg-white text-slate-900 px-4 py-2 rounded-lg font-medium hover:bg-slate-100 transition-all duration-200 hover:scale-105">
-                Access Dashboard
-              </button>
+          <div className="hidden md:flex items-center space-x-4 text-sm">
+            <Link href="/admin-guide" className="text-slate-400 hover:text-white transition-colors">
+              Admin guide
             </Link>
+            {session?.user ? (
+              <UserButton user={session.user} />
+            ) : (
+              <Button
+                asChild
+                variant="ghost"
+                className="text-slate-300 hover:text-white hover:bg-slate-800/50 transition-all duration-200"
+              >
+                <Link href="/login">
+                  Login
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       </nav>
 
       <div className="max-w-7xl mr-auto ml-auto pt-16 pr-6 pb-8 pl-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 auto-rows-[180px] gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
 
           {/* Hero Section */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-3 row-span-2 flex flex-col fade-in pt-8 pr-8 pb-12 pl-8 justify-center">
@@ -44,24 +56,31 @@ export function LandingPage() {
                 <span>SODO Hospital Management System</span>
               </div>
               <h1 className="sm:text-5xl lg:text-6xl leading-tight text-4xl font-bold tracking-tight mb-4">
-                Streamline Your <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">Hospital</span>
-                {' '}Document Workflow
+                Streamline <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">permits</span>
+                {" "}and hospital documents
               </h1>
               <p className="leading-relaxed max-w-lg text-lg text-slate-400">
-                Efficiently manage license renewals, support letters, and authentication documents with our comprehensive administrative platform.
+                Manage work permits, residence IDs, hospital licenses, and support letters in one administrative workspace.
               </p>
             </div>
             <div className="flex items-center space-x-4 mb-8">
-              <Link href="/dashboard">
-                <button className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 hover:scale-105 shadow-lg">
-                  Access Dashboard
-                </button>
-              </Link>
-              <Link href="/documents">
-                <button className="border border-slate-600 text-slate-300 px-6 py-3 rounded-lg font-medium hover:border-slate-500 hover:text-white transition-all duration-200">
-                  View Documents
-                </button>
-              </Link>
+              <Button
+                asChild
+                className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 hover:scale-105 shadow-lg"
+              >
+                <Link href="/dashboard">
+                  Access dashboard
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                className="border border-slate-600 text-slate-300 px-6 py-3 rounded-lg font-medium hover:border-slate-500 hover:text-white transition-all duration-200"
+              >
+                <Link href="/admin-guide">
+                  See admin guide
+                </Link>
+              </Button>
             </div>
           </div>
 
@@ -72,7 +91,9 @@ export function LandingPage() {
                 <Users className="w-5 h-5 text-green-400" />
                 <h3 className="text-lg font-semibold">Our Teams</h3>
               </div>
-              <p className="text-sm text-slate-400 mb-4">9 departments working together seamlessly</p>
+              <p className="text-sm text-slate-400 mb-4">
+                HR, Logistics, Finance, and Administration collaborating in one workspace.
+              </p>
             </div>
             <div className="flex -space-x-3">
               <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 object-cover border-slate-700 border-2 rounded-full" alt="Department Lead" />
@@ -86,16 +107,20 @@ export function LandingPage() {
 
           {/* Documents Processed */}
           <div className="gradient-border fade-in fade-in-delay-2 hover:scale-105 transition-transform duration-300">
-            <div className="gradient-border-inner flex flex-col h-full glow-card pt-6 pr-6 pb-6 pl-6 justify-between">
-              <div className="flex space-x-3 items-start">
-                <div>
-                  <h3 className="text-lg font-semibold mb-1">Documents Processed</h3>
-                  <p className="text-sm text-slate-400">Licenses, letters, and authentication docs</p>
-                </div>
+            <div className="gradient-border-inner flex flex-col h-full glow-card pt-5 pr-5 pb-5 pl-5 justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
+                  Permits processed
+                </p>
+                <p className="text-xs text-slate-500 leading-snug">
+                  Work permits, residence IDs, and licenses
+                </p>
               </div>
-              <div className="text-right">
-                <span className="text-2xl font-bold text-green-400">1,247</span>
-                <p className="text-xs text-slate-500">completed this year</p>
+              <div className="text-right mt-4">
+                <span className="text-xl font-semibold text-green-400">1,247</span>
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  completed this year (demo)
+                </p>
               </div>
             </div>
           </div>
@@ -109,32 +134,39 @@ export function LandingPage() {
             </div>
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">Staff Portal</h3>
-              <p className="text-sm text-slate-400 mb-4">Access your dashboard and track document progress</p>
-              <Link href="/dashboard">
-                <button className="w-full bg-slate-800 border border-slate-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors">
-                  Sign In
-                </button>
-              </Link>
+              <p className="text-sm text-slate-400 mb-4">
+                Open your dashboard to manage permits, tasks, and documents.
+              </p>
+              <Button
+                asChild
+                className="w-full bg-slate-800 border border-slate-700 text-white text-sm font-medium hover:bg-slate-700 transition-colors"
+              >
+                <Link href="/dashboard">
+                  Access dashboard
+                </Link>
+              </Button>
             </div>
           </div>
 
           {/* Document Types */}
-          <div className="glass-card flex flex-col fade-in fade-in-delay-4 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
-            <div className="flex items-center space-x-2 mb-3">
-              <FileText className="w-5 h-5 text-orange-400" />
-              <h3 className="text-lg font-semibold tracking-tight">Document Types</h3>
+          <div className="glass-card flex flex-col fade-in fade-in-delay-4 hover:scale-105 transition-transform duration-300 rounded-2xl pt-5 pr-5 pb-5 pl-5 justify-between">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-orange-400" />
+                <h3 className="text-sm font-semibold tracking-tight">Document types</h3>
+              </div>
+              <span className="text-2xl font-semibold text-orange-400">4</span>
             </div>
-            <div>
-              <span className="text-3xl font-semibold text-orange-400">3</span>
-              <p className="text-sm text-slate-400">Main document categories</p>
-            </div>
+            <p className="text-xs text-slate-400 leading-snug">
+              Work permits, residence IDs, licenses &amp; PIP docs.
+            </p>
           </div>
 
           {/* Pending Approvals */}
           <div className="glass-card flex flex-col fade-in fade-in-delay-4 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
             <div>
               <span className="text-3xl font-semibold text-amber-400">32</span>
-              <p className="text-sm text-slate-400">Awaiting review</p>
+              <p className="text-sm text-slate-400">Permits awaiting review (demo)</p>
             </div>
             <div className="flex mb-3 space-x-2 items-center">
               <h3 className="text-lg font-semibold">Approvals</h3>

@@ -78,14 +78,18 @@ export function MetricCard({
             </div>
             <div className="flex items-center gap-2">
               <div className="text-sm font-medium text-white">{item.value}</div>
-              {item.action && (
+              {item.action ? (
                 <Link
                   href={item.action.link}
-                  className="text-xs text-green-400 hover:text-green-300 font-medium opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+                  className="text-green-400 hover:text-green-300 transition-colors flex items-center"
+                  aria-label={item.action.text}
                 >
-                  {item.action.text}
                   <ExternalLink className="h-3 w-3" />
                 </Link>
+              ) : (
+                <span className="text-gray-600 flex items-center">
+                  <ExternalLink className="h-3 w-3 opacity-40" aria-hidden="true" />
+                </span>
               )}
             </div>
           </div>

@@ -9,7 +9,7 @@
 import { useState, useCallback, useRef, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import type { Message } from "@/lib/chat-context"
-import type { AIMessage, ToolApproval } from "@/lib/openai/types"
+import type { AIMessage, ToolApproval, ChatErrorCode } from "@/lib/openai/types"
 import {
   initializeChatSession,
   sendChatMessage,
@@ -34,6 +34,26 @@ interface UseOpenAIChatOptions {
   userEmail?: string
   userRole?: string
   enableCopilot?: boolean
+}
+
+function getFriendlyErrorMessage(
+  errorCode?: ChatErrorCode,
+  fallback?: string
+): string {
+  switch (errorCode) {
+    case "guardrail_blocked":
+      return "I can’t process that request because it may violate safety policies. Please rephrase without sensitive or personal information."
+    case "thread_creation_failed":
+      return "I couldn’t start a new support session. Please wait a moment and try again."
+    case "add_message_failed":
+      return "I had trouble sending your message to the assistant. Please try again."
+    case "assistant_run_failed":
+      return "The AI assistant couldn’t complete your request. You can retry or contact support if the problem continues."
+    case "openai_unavailable":
+      return "Our AI service is temporarily unavailable. Please try again shortly or contact support."
+    default:
+      return fallback || "I encountered an unexpected error. Please try again."
+  }
 }
 
 export function useOpenAIChat(options: UseOpenAIChatOptions = {}) {
@@ -86,7 +106,7 @@ I can help you with:
 ✅ Check permit/document status
 ✅ Upload document guidance
 ✅ Track application progress
-✅ Answer questions about processes
+✅ View process timeline
 
 For personal inquiries, I'll need your permit/ticket number to ensure security.
 
@@ -96,8 +116,8 @@ How can I assist you today?`,
           suggestions: [
             "Check my permit status",
             "How do I upload documents?",
-            "What's the process timeline?",
-            "Need help with my application",
+            "What's the timeline?",
+            "WRK-2024-5678",
           ],
         },
       }
@@ -164,7 +184,10 @@ How can I assist you today?`,
           const errorMessage: Message = {
             id: `msg-${Date.now()}-error`,
             role: "assistant",
-            content: response.message.content,
+            content: getFriendlyErrorMessage(
+              response.errorCode as ChatErrorCode,
+              response.message?.content
+            ),
             timestamp: new Date(),
           }
           setState(prev => ({

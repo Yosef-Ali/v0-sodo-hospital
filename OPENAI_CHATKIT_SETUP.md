@@ -56,7 +56,10 @@ OPENAI_ASSISTANT_ID_DOCUMENT_SUPPORT=asst_...
 OPENAI_ASSISTANT_ID_TECHNICAL_SUPPORT=asst_...
 
 # Optional: Model Configuration
-OPENAI_MODEL=gpt-4-turbo-preview
+# If not set, defaults to gpt-5.1-mini for efficiency
+OPENAI_MODEL=gpt-5.1-mini
+# Optional: dedicated classification model (defaults to gpt-5.1-mini)
+OPENAI_CLASSIFICATION_MODEL=gpt-5.1-mini
 OPENAI_TEMPERATURE=0.7
 OPENAI_MAX_TOKENS=1000
 
@@ -359,6 +362,25 @@ Enable debug info in chat widget (development only):
 - Use `gpt-3.5-turbo` instead of `gpt-4` for faster responses
 - Reduce `OPENAI_MAX_TOKENS` value
 - Implement response caching for common queries
+
+### Error Codes & User Messages
+
+The chat backend returns structured `errorCode` values in `ChatResponse` to drive user-friendly error messages in the widget:
+
+- `guardrail_blocked` – Guardrails or moderation blocked the request.  
+  - UI message: explains that the request may violate safety policies and asks the user to rephrase.
+- `thread_creation_failed` – Error creating an OpenAI thread.  
+  - UI message: “I couldn’t start a new support session. Please wait a moment and try again.”
+- `add_message_failed` – Error attaching the user message to the thread.  
+  - UI message: asks the user to resend the message.
+- `assistant_run_failed` – Error running the assistant on the thread.  
+  - UI message: suggests retrying or contacting support if it continues.
+- `openai_unavailable` – Reserved for when the OpenAI API is temporarily unavailable.  
+  - UI message: explains the AI service is down and to try again later.
+- `unknown` – Any other unexpected error.  
+  - UI message: generic “unexpected error, please try again.”
+
+These codes are defined in `lib/openai/types.ts` as `ChatErrorCode` and are interpreted on the client in `hooks/use-openai-chat.ts` to show consistent, friendly error messages.
 
 ## 📚 File Structure
 

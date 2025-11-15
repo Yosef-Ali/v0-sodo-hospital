@@ -12,6 +12,9 @@ export const eventTypeEnum = pgEnum("event_type", ["permit", "deadline", "meetin
 export const reportStatusEnum = pgEnum("report_status", ["DRAFT", "GENERATED", "PUBLISHED", "ARCHIVED"])
 export const reportFrequencyEnum = pgEnum("report_frequency", ["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "YEARLY", "ON_DEMAND"])
 export const reportFormatEnum = pgEnum("report_format", ["PDF", "EXCEL", "CSV", "DASHBOARD"])
+export const complaintStatusEnum = pgEnum("complaint_status", ["OPEN", "IN_REVIEW", "RESOLVED", "CLOSED"])
+export const complaintCategoryEnum = pgEnum("complaint_category", ["SERVICE", "PROCESSING_DELAY", "DOCUMENT_ISSUE", "STAFF_BEHAVIOR", "OTHER"])
+export const testimonialStatusEnum = pgEnum("testimonial_status", ["PENDING", "APPROVED", "PUBLISHED", "ARCHIVED"])
 
 // Users table (minimal - main auth handled by Stack Auth)
 export const users = pgTable("users", {
@@ -142,6 +145,7 @@ export const people = pgTable("people", {
 // Permits table (work permits, residence, licenses, etc)
 export const permits = pgTable("permits", {
   id: uuid("id").primaryKey().defaultRandom(),
+  ticketNumber: varchar("ticket_number", { length: 100 }).unique(), // e.g. WRK-2025-0001
   category: permitCategoryEnum("category").notNull(),
   status: permitStatusEnum("status").default("PENDING").notNull(),
   personId: uuid("person_id").references(() => people.id).notNull(),
@@ -460,6 +464,71 @@ export const calendarEventsRelations = relations(calendarEvents, ({ one }) => ({
   }),
 }))
 
+// ============ CHATBOT SUPPORT SYSTEM ============
+
+// Knowledge Base table (FAQ and support articles)
+export const knowledgeBase = pgTable("knowledge_base", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  category: varchar("category", { length: 255 }), // "permits", "documents", "timeline", "general"
+  keywords: jsonb("keywords").$type<string[]>().default([]), // for search matching
+  relatedPermitCategory: permitCategoryEnum("related_permit_category"), // optional: link to permit type
+  views: integer("views").default(0),
+  helpful: integer("helpful").default(0), // positive feedback count
+  notHelpful: integer("not_helpful").default(0), // negative feedback count
+  published: boolean("published").default(true).notNull(),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Complaints table
+export const complaints = pgTable("complaints", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ticketNumber: varchar("ticket_number", { length: 100 }).notNull().unique(), // AUTO: COM-YYYY-XXXX
+  category: complaintCategoryEnum("category").notNull(),
+  status: complaintStatusEnum("status").default("OPEN").notNull(),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  description: text("description").notNull(),
+  personId: uuid("person_id").references(() => people.id), // optional: link to person
+  relatedPermitId: uuid("related_permit_id").references(() => permits.id), // optional: link to permit
+  contactEmail: varchar("contact_email", { length: 255 }),
+  contactPhone: varchar("contact_phone", { length: 50 }),
+  priority: taskPriorityEnum("priority").default("medium").notNull(),
+  assignedTo: uuid("assigned_to").references(() => users.id), // staff member handling complaint
+  resolution: text("resolution"), // final response/solution
+  resolvedAt: timestamp("resolved_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Testimonials table
+export const testimonials = pgTable("testimonials", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  rating: integer("rating").notNull(), // 1-5 stars
+  title: varchar("title", { length: 255 }),
+  message: text("message").notNull(),
+  status: testimonialStatusEnum("status").default("PENDING").notNull(),
+  relatedPermitId: uuid("related_permit_id").references(() => permits.id), // optional: what service they're testimonial about
+  publishedAt: timestamp("published_at"),
+  approvedBy: uuid("approved_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Complaint Updates/Comments (conversation thread)
+export const complaintUpdates = pgTable("complaint_updates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  complaintId: uuid("complaint_id").references(() => complaints.id).notNull(),
+  message: text("message").notNull(),
+  isStaffResponse: boolean("is_staff_response").default(false).notNull(),
+  authorId: uuid("author_id").references(() => users.id), // staff member if isStaffResponse=true
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+})
+
 // Type exports
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -497,3 +566,13 @@ export type DocumentV2 = typeof documentsV2.$inferSelect
 export type NewDocumentV2 = typeof documentsV2.$inferInsert
 export type CalendarEvent = typeof calendarEvents.$inferSelect
 export type NewCalendarEvent = typeof calendarEvents.$inferInsert
+
+// Chatbot Support System Type exports
+export type KnowledgeBase = typeof knowledgeBase.$inferSelect
+export type NewKnowledgeBase = typeof knowledgeBase.$inferInsert
+export type Complaint = typeof complaints.$inferSelect
+export type NewComplaint = typeof complaints.$inferInsert
+export type Testimonial = typeof testimonials.$inferSelect
+export type NewTestimonial = typeof testimonials.$inferInsert
+export type ComplaintUpdate = typeof complaintUpdates.$inferSelect
+export type NewComplaintUpdate = typeof complaintUpdates.$inferInsert

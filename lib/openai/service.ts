@@ -15,6 +15,12 @@ import {
   ToolApproval,
 } from "./types"
 import { OPENAI_CONFIG, SYSTEM_PROMPTS, GUARDRAIL_PATTERNS, SENSITIVE_TOOLS } from "./config"
+import {
+  getPermitByTicketNumber,
+  searchKnowledgeBase,
+  getComplaintByTicket,
+  getDocumentsByTicketNumber,
+} from "@/lib/actions/chatbot-support"
 
 export class OpenAIService {
   private client: OpenAI
@@ -80,7 +86,10 @@ export class OpenAIService {
   ): Promise<ClassificationResult> {
     try {
       const completion = await this.client.chat.completions.create({
-        model: this.config.model || "gpt-5-mini-2025-08-07",
+        model:
+          this.config.classificationModel ||
+          this.config.model ||
+          "gpt-5.1-mini",
         messages: [
           {
             role: "system",
@@ -105,7 +114,7 @@ Classify this query and respond in JSON format:
 }`,
           },
         ],
-        temperature: 0.3,
+        // GPT-5 mini only supports default temperature (1)
         max_tokens: 200,
         response_format: { type: "json_object" },
       })
@@ -300,6 +309,7 @@ Classify this query and respond in JSON format:
     approved: boolean
   ): Promise<void> {
     try {
+      // Provide a clear, structured signal back to the assistant
       const output = approved
         ? JSON.stringify({ status: "approved", message: "User approved this action" })
         : JSON.stringify({ status: "rejected", message: "User rejected this action" })
@@ -340,12 +350,23 @@ Classify this query and respond in JSON format:
    * Build context instructions for the assistant
    */
   private buildContextInstructions(context: SessionContext): string {
+    const safePageContext = context.pageContext
+      ? {
+          section: (context.pageContext as any).section,
+          feature: (context.pageContext as any).feature,
+          copilotSummary: {
+            hasRecentDocuments: !!(context.pageContext as any)?.copilotState?.recentDocuments?.length,
+            hasRecentTasks: !!(context.pageContext as any)?.copilotState?.recentTasks?.length,
+            hasRecentSearches: !!(context.pageContext as any)?.copilotState?.recentSearches?.length,
+          },
+        }
+      : undefined
+
     return `
 Current Context:
-- User: ${context.userName || "Guest"} (${context.userRole || "visitor"})
+- User role: ${context.userRole || "visitor"}
 - Page: ${context.currentPage}
-- Session ID: ${context.sessionId}
-${context.pageContext ? `- Page Data: ${JSON.stringify(context.pageContext, null, 2)}` : ""}
+${safePageContext ? `- Page Context: ${JSON.stringify(safePageContext, null, 2)}` : ""}
 
 Use this context to provide relevant, personalized assistance.
 Reference specific documents, tasks, or features the user is viewing if applicable.
@@ -374,25 +395,269 @@ Reference specific documents, tasks, or features the user is viewing if applicab
           },
           status: "error",
           error: guardrailCheck.reason,
+          errorCode: "guardrail_blocked",
         }
       }
 
       // Step 2: Classify intent
       const classification = await this.classifyIntent(userMessage, context)
 
+      // Step 2.5: Fast-path permit status lookup by ticket number (no extra AI tokens)
+      const ticketMatch = userMessage.toUpperCase().match(/[A-Z]{3}-\d{4}-\d{4}/)
+      if (ticketMatch) {
+        try {
+          const ticketNumber = ticketMatch[0]
+          const permitResult = await getPermitByTicketNumber(ticketNumber)
+
+          if (permitResult.success && permitResult.data) {
+            const permit = permitResult.data
+
+            // Fetch any documents uploaded for this ticket
+            let documentsWidget: any | null = null
+            try {
+              const docsResult = await getDocumentsByTicketNumber(ticketNumber)
+              if (docsResult.success && docsResult.data && docsResult.data.length > 0) {
+                documentsWidget = {
+                  type: "list",
+                  data: {
+                    title: "Uploaded documents for this ticket",
+                    items: docsResult.data.map((doc: any) => ({
+                      title: doc.title || doc.type || "Document",
+                      subtitle: doc.fileUrl ? doc.fileUrl.split("/").slice(-1)[0] : "",
+                      value: doc.mimeType || "",
+                    })),
+                  },
+                }
+              }
+            } catch (error) {
+              console.error("Error fetching documents for ticket:", error)
+            }
+
+            return {
+              message: {
+                id: `permit_${Date.now()}`,
+                role: "assistant",
+                content: `I found your ${permit.type} with ticket ${permit.ticketNumber}. Here is the latest status and timeline.`,
+                timestamp: new Date(),
+                widgets: [
+                  {
+                    type: "permit-status",
+                    data: {
+                      ticketNumber: permit.ticketNumber,
+                      status: permit.status,
+                      type: permit.type,
+                      submittedDate: permit.submittedDate,
+                      lastUpdated: permit.lastUpdated,
+                      currentStage: permit.currentStage,
+                      nextAction: permit.nextAction,
+                      estimatedCompletion: permit.estimatedCompletion,
+                      notes: permit.notes,
+                      documentLinks: permit.documentLinks || [],
+                      personName: permit.person?.name,
+                    },
+                  },
+                  ...(documentsWidget ? [documentsWidget] : []),
+                ],
+                intent: classification.intent,
+                confidence: classification.confidence,
+                agentType: "document_support",
+              },
+              status: "success",
+            }
+          }
+        } catch (error) {
+          console.error("Error during permit lookup shortcut:", error)
+          // Fall through to normal assistant processing on failure
+        }
+      }
+
+      // Step 2.55: Fast-path complaint lookup by ticket number (COM-YYYY-XXXX)
+      const complaintMatch = userMessage.toUpperCase().match(/COM-\d{4}-\d{4}/)
+      if (complaintMatch) {
+        try {
+          const complaintTicket = complaintMatch[0]
+          const complaintResult = await getComplaintByTicket(complaintTicket)
+
+          if (complaintResult.success && complaintResult.data) {
+            const complaint = complaintResult.data as any
+            const lastUpdate = complaint.updates?.[0]
+
+            const createdAt = complaint.createdAt
+              ? new Date(complaint.createdAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : undefined
+
+            const updatedAt = complaint.updatedAt
+              ? new Date(complaint.updatedAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : undefined
+
+            return {
+              message: {
+                id: `complaint_${Date.now()}`,
+                role: "assistant",
+                content: `Here are the latest details for complaint ${complaint.ticketNumber}.`,
+                timestamp: new Date(),
+                widgets: [
+                  {
+                    type: "list",
+                    data: {
+                      title: "Complaint Details",
+                      items: [
+                        {
+                          title: complaint.subject,
+                          subtitle: complaint.description,
+                          value: complaint.status,
+                        },
+                        ...(createdAt
+                          ? [
+                              {
+                                title: "Created",
+                                subtitle: createdAt,
+                              },
+                            ]
+                          : []),
+                        ...(updatedAt
+                          ? [
+                              {
+                                title: "Last Updated",
+                                subtitle: updatedAt,
+                              },
+                            ]
+                          : []),
+                        ...(lastUpdate
+                          ? [
+                              {
+                                title: lastUpdate.isStaffResponse
+                                  ? "Latest staff response"
+                                  : "Latest update",
+                                subtitle: lastUpdate.message,
+                              },
+                            ]
+                          : []),
+                      ],
+                    },
+                  },
+                ],
+                intent: classification.intent,
+                confidence: classification.confidence,
+                agentType: "general_support",
+              },
+              status: "success",
+            }
+          }
+        } catch (error) {
+          console.error("Error during complaint lookup shortcut:", error)
+          // Fall through to normal assistant processing on failure
+        }
+      }
+
+      // Step 2.6: Fast-path knowledge base lookup for help-style queries
+      try {
+        const kbResult = await searchKnowledgeBase(userMessage)
+        if (kbResult.success && kbResult.data && kbResult.data.length > 0) {
+          const items = kbResult.data.map((kb: any) => ({
+            title: kb.question,
+            subtitle:
+              kb.answer.length > 180
+                ? `${kb.answer.slice(0, 180)}…`
+                : kb.answer,
+            value: kb.category,
+          }))
+
+          return {
+            message: {
+              id: `kb_${Date.now()}`,
+              role: "assistant",
+              content: "Here are some answers from our help center that match your question:",
+              timestamp: new Date(),
+              widgets: [
+                {
+                  type: "list",
+                  data: {
+                    title: "Help Center Answers",
+                    items,
+                  },
+                },
+              ],
+              intent: classification.intent,
+              confidence: classification.confidence,
+              agentType: classification.suggestedAgent,
+            },
+            status: "success",
+          }
+        }
+      } catch (error) {
+        console.error("Error during knowledge base lookup:", error)
+        // Fall through to normal assistant processing on failure
+      }
+
       // Step 3: Create or use existing thread
-      const activeThreadId = threadId || (await this.createThread(context))
+      let activeThreadId: string
+      try {
+        activeThreadId = threadId || (await this.createThread(context))
+      } catch (error) {
+        console.error("Error creating assistant thread:", error)
+        return {
+          message: {
+            id: `error_${Date.now()}`,
+            role: "assistant",
+            content: "I couldn’t start a new support session. Please wait a moment and try again.",
+            timestamp: new Date(),
+          },
+          status: "error",
+          error: error instanceof Error ? error.message : "Thread creation failed",
+          errorCode: "thread_creation_failed",
+        }
+      }
 
       // Step 4: Add user message to thread
-      await this.addMessageToThread(activeThreadId, userMessage)
+      try {
+        await this.addMessageToThread(activeThreadId, userMessage)
+      } catch (error) {
+        console.error("Error adding message to thread:", error)
+        return {
+          message: {
+            id: `error_${Date.now()}`,
+            role: "assistant",
+            content: "I had trouble sending your message to the assistant. Please try again.",
+            timestamp: new Date(),
+          },
+          status: "error",
+          error: error instanceof Error ? error.message : "Failed to add message to thread",
+          errorCode: "add_message_failed",
+        }
+      }
 
       // Step 5: Run appropriate agent
-      const message = await this.runAssistant(
-        activeThreadId,
-        classification.suggestedAgent,
-        context,
-        onStream
-      )
+      let message
+      try {
+        message = await this.runAssistant(
+          activeThreadId,
+          classification.suggestedAgent,
+          context,
+          onStream
+        )
+      } catch (error) {
+        console.error("Error running assistant:", error)
+        return {
+          message: {
+            id: `error_${Date.now()}`,
+            role: "assistant",
+            content: "The AI assistant couldn’t complete your request. Please try again in a moment.",
+            timestamp: new Date(),
+          },
+          status: "error",
+          error: error instanceof Error ? error.message : "Assistant run failed",
+          errorCode: "assistant_run_failed",
+        }
+      }
 
       // Step 6: Return response
       return {
@@ -417,6 +682,7 @@ Reference specific documents, tasks, or features the user is viewing if applicab
         },
         status: "error",
         error: error instanceof Error ? error.message : "Unknown error",
+        errorCode: "unknown",
       }
     }
   }

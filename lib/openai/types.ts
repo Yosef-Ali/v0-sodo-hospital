@@ -81,6 +81,14 @@ export interface ClassificationResult {
   requiresHumanReview: boolean
 }
 
+export type ChatErrorCode =
+  | "guardrail_blocked"
+  | "thread_creation_failed"
+  | "add_message_failed"
+  | "assistant_run_failed"
+  | "openai_unavailable"
+  | "unknown"
+
 export interface OpenAIServiceConfig {
   apiKey: string
   assistantIds: {
@@ -90,6 +98,7 @@ export interface OpenAIServiceConfig {
     technicalSupport: string
   }
   model?: string
+  classificationModel?: string
   temperature?: number
   maxTokens?: number
   enableHumanInLoop?: boolean
@@ -114,4 +123,5 @@ export interface ChatResponse {
   suggestions?: string[]
   status: "success" | "error" | "pending_approval"
   error?: string
+  errorCode?: ChatErrorCode
 }
