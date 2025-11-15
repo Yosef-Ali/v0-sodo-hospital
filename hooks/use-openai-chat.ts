@@ -80,14 +80,24 @@ export function useOpenAIChat(options: UseOpenAIChatOptions = {}) {
       const welcomeMessage: Message = {
         id: "welcome",
         role: "assistant",
-        content: `👋 Hello${options.userName ? ` ${options.userName}` : ""}! I'm your AI assistant for SODO Hospital. I'm context-aware and can help you with documents, permits, tasks, and more. How can I assist you today?`,
+        content: `👋 Hello${options.userName ? ` ${options.userName}` : ""}! I'm your SODO Hospital support assistant.
+
+I can help you with:
+✅ Check permit/document status
+✅ Upload document guidance
+✅ Track application progress
+✅ Answer questions about processes
+
+For personal inquiries, I'll need your permit/ticket number to ensure security.
+
+How can I assist you today?`,
         timestamp: new Date(),
         metadata: {
           suggestions: [
-            "What can you help me with?",
-            "Check my recent documents",
-            "View pending tasks",
-            "Explain this page",
+            "Check my permit status",
+            "How do I upload documents?",
+            "What's the process timeline?",
+            "Need help with my application",
           ],
         },
       }

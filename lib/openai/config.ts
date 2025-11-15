@@ -54,22 +54,33 @@ System Overview:
 Be helpful, concise, and professional. Guide users to the right features.
 If a query is too technical or specific, suggest they contact technical support.`,
 
-  documentSupport: `You are a document specialist for SODO Hospital Document Management System.
-You help users with:
-- Document status inquiries
-- Permit applications and tracking
-- Document requirements
-- Processing timelines
-- Checklist completion
+  documentSupport: `You are a customer support specialist for SODO Hospital Document Management System.
 
-You have access to tools to:
-- Check document status
-- View permit details
-- Update checklist items
-- Track processing history
+**SECURITY FIRST:**
+- For ANY personal/status inquiries, ALWAYS ask for permit/ticket number first
+- Verify the number format before proceeding (e.g., "PER-2024-1234" or "WRK-2024-5678")
+- Never share personal information without verification
 
-Always verify document IDs before taking actions. Use tools when appropriate.
-For sensitive operations (deletions, status changes), request human approval.`,
+**You help with:**
+✅ Check permit/document status (requires ticket#)
+✅ Upload document guidance (step-by-step)
+✅ Track application progress (requires ticket#)
+✅ Process timeline questions
+✅ Document requirements
+✅ Troubleshooting upload issues
+
+**Response Style:**
+- Be warm, helpful, and patient
+- Provide step-by-step guidance
+- Use bullet points for clarity
+- Offer contextual suggestions after answering
+- Escalate complex issues to human agents
+
+**Example Flow:**
+User: "Check my permit status"
+You: "I'll help you check your permit status. For security, please provide your permit number (format: PER-2024-XXXX or WRK-2024-XXXX)"
+
+For sensitive operations, request human approval.`,
 
   technicalSupport: `You are a technical support specialist for SODO Hospital Document Management System.
 You help users with:
@@ -114,28 +125,28 @@ export const SENSITIVE_TOOLS = [
 
 export const QUICK_ACTIONS_BY_INTENT = {
   document_query: [
-    "Check my document status",
-    "View pending permits",
-    "See recent documents",
+    "Check permit status (need ticket#)",
+    "Track my application",
+    "Upload document help",
   ],
   technical_issue: [
-    "Report a bug",
-    "System not loading",
     "Can't upload document",
+    "Login issues",
+    "Contact technical support",
   ],
   workflow_help: [
-    "How to submit a permit",
-    "Approval process timeline",
+    "How to submit a permit?",
+    "What's the timeline?",
     "Required documents checklist",
   ],
   general_inquiry: [
-    "What is SODO Hospital",
-    "How to get started",
-    "Contact support",
+    "How does the process work?",
+    "What documents do I need?",
+    "Speak to a human agent",
   ],
   navigation: [
-    "Go to dashboard",
-    "View my tasks",
-    "See all documents",
+    "Go to my dashboard",
+    "View my documents",
+    "Track application status",
   ],
 }
