@@ -21,7 +21,7 @@ export async function initializeChatSession(
 ): Promise<{ sessionId: string; threadId: string }> {
   try {
     // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === "") {
       console.warn("OpenAI API key not configured. Running in demo mode.")
       const sessionId = generateSessionId()
       return { sessionId, threadId: "demo-thread" }
@@ -71,7 +71,7 @@ export async function sendChatMessage(
 ): Promise<ChatResponse> {
   try {
     // Demo mode response if OpenAI is not configured
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.trim() === "") {
       const demoResponses = [
         "Thank you for your message! This is a demo mode response since OpenAI is not configured. To enable full AI capabilities, please add your OPENAI_API_KEY to the .env.local file.",
         "I'm currently running in demo mode. The full AI-powered chat requires an OpenAI API key to be configured.",
