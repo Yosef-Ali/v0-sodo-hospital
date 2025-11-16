@@ -3,7 +3,7 @@
 
 import { db, users } from "@/lib/db"
 import { eq } from "drizzle-orm"
-import { stackServerApp } from "@/lib/stack"
+import { auth } from "@/auth"
 
 // Role hierarchy and permissions
 export const UserRole = {
@@ -71,17 +71,16 @@ export async function getCurrentUser() {
   "use server"
 
   try {
-    const user = await stackServerApp.getUser()
-    if (!user) return null
+    const session = await auth()
+    if (!session?.user?.email) return null
 
-    // Fetch user from database to get role
     const [dbUser] = await db
       .select()
       .from(users)
-      .where(eq(users.stackAuthId, user.id))
+      .where(eq(users.email, session.user.email))
       .limit(1)
 
-    return dbUser
+    return dbUser || null
   } catch (error) {
     console.error("Error getting current user:", error)
     return null

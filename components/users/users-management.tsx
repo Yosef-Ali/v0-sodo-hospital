@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useUser } from "@stackframe/stack"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,7 +23,7 @@ interface UserProfile {
 }
 
 export function UsersManagement() {
-  const currentUser = useUser()
+  const { data: session } = useSession()
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -39,20 +39,22 @@ export function UsersManagement() {
 
   const fetchUsers = async () => {
     try {
-      // This would typically fetch from a users table via API
-      // For now, we'll show the current user
-      if (currentUser) {
+      // This would typically fetch from a users table via API.
+      // For now, we'll just show the current NextAuth user if available.
+      if (session?.user) {
         const mockUsers: UserProfile[] = [
           {
-            id: currentUser.id,
-            email: currentUser.primaryEmail || "",
-            full_name: currentUser.displayName || "Current User",
+            id: session.user.id || "current-user",
+            email: session.user.email || "",
+            full_name: session.user.name || "Current User",
             role: "admin",
-            created_at: currentUser.createdAt?.toISOString() || new Date().toISOString(),
+            created_at: new Date().toISOString(),
             last_sign_in: new Date().toISOString(),
           },
         ]
         setUsers(mockUsers)
+      } else {
+        setUsers([])
       }
     } catch (err: any) {
       setError(err.message)
