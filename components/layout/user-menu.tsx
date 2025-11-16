@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useStackApp, useUser } from "@stackframe/stack"
+import { useSession, signIn, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -15,15 +15,26 @@ import {
 import { LayoutDashboard, LogOut, Settings } from "lucide-react"
 
 export function UserMenu() {
-  const user = useUser()
-  const app = useStackApp()
+  const { data: session, status } = useSession()
   const router = useRouter()
 
+  const user = session?.user
+
   if (!user) {
-    return null
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className="text-xs sm:text-sm border-gray-700 bg-gray-900/60 text-gray-200 hover:bg-gray-800 hover:text-white"
+        onClick={() => signIn("google")}
+        disabled={status === "loading"}
+      >
+        Sign in
+      </Button>
+    )
   }
 
-  const name = user.displayName || user.primaryEmail || "User"
+  const name = user.name || user.email || "User"
   const initials = name
     .split(" ")
     .filter(Boolean)
@@ -33,8 +44,7 @@ export function UserMenu() {
     .toUpperCase()
 
   const handleSignOut = async () => {
-    await app.signOut()
-    router.push("/login")
+    await signOut({ callbackUrl: "/" })
   }
 
   return (
@@ -88,4 +98,3 @@ export function UserMenu() {
     </DropdownMenu>
   )
 }
-
