@@ -4,7 +4,6 @@ import "@/app/globals.css"
 import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin"
 import { extractRouterConfig } from "uploadthing/server"
 import { ourFileRouter } from "@/lib/uploadthing"
-import StackAuthProvider from "./stack-provider"
 import { SessionProvider } from "@/components/providers/session-provider"
 
 export const metadata: Metadata = {
@@ -25,7 +24,7 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
         <SessionProvider>
-          <StackAuthProvider>{children}</StackAuthProvider>
+          {children}
         </SessionProvider>
       </body>
     </html>
