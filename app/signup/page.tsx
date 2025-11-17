@@ -1,8 +1,5 @@
-import { redirect } from 'next/navigation'
-
-export const dynamic = 'force-dynamic'
+import { SignupForm } from "@/components/signup-form"
 
 export default function SignupPage() {
-  // Redirect to login since we use Google OAuth (no separate signup)
-  redirect('/login')
+  return <SignupForm />
 }
