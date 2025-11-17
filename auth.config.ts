@@ -1,24 +1,11 @@
 import type { NextAuthConfig } from "next-auth"
-import Google from "next-auth/providers/google"
 
 /**
  * Auth configuration for edge-compatible runtime
- * This file doesn't import the database adapter to work with middleware
+ * Note: Providers with database logic are added in auth.ts (not edge-compatible)
  */
 export default {
-  providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
-        },
-      },
-    }),
-  ],
+  providers: [],
   pages: {
     signIn: "/login",
     signOut: "/",

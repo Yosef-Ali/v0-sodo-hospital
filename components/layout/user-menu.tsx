@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useSession, signIn, signOut } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -26,7 +26,7 @@ export function UserMenu() {
         variant="outline"
         size="sm"
         className="text-xs sm:text-sm border-gray-700 bg-gray-900/60 text-gray-200 hover:bg-gray-800 hover:text-white"
-        onClick={() => signIn("google")}
+        onClick={() => router.push("/login")}
         disabled={status === "loading"}
       >
         Sign in
