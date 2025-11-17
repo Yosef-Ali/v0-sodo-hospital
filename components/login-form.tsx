@@ -139,12 +139,6 @@ export function LoginForm({
                   "Login"
                 )}
               </Button>
-              <div className="text-center text-sm text-gray-400">
-                Need help signing in?{" "}
-                <Link href="mailto:support@sodohospital.com" className="text-green-400 hover:text-green-300 underline underline-offset-4">
-                  Contact Support
-                </Link>
-              </div>
             </div>
           </form>
           <div className="relative hidden bg-gradient-to-br from-green-600/20 to-emerald-600/20 md:flex items-center justify-center p-8">
