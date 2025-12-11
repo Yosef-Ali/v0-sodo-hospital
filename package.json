@@ -15,7 +15,8 @@
     "db:seed-mvp": "tsx lib/db/seed-mvp.ts",
     "db:seed-docs": "tsx lib/db/seed-documents.ts",
     "db:seed-tasks": "tsx lib/db/seed-tasks.ts",
-    "db:seed-reports": "tsx lib/db/seed-reports.ts"
+    "db:seed-reports": "tsx lib/db/seed-reports.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
@@ -96,6 +97,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -54,25 +54,28 @@ export function ChatWidget() {
       {isOpen && (
         <div
           className={cn(
-            "fixed z-50 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl transition-all duration-300",
+            "fixed z-50 glass-premium rounded-2xl shadow-soft transition-all duration-500 ease-spring",
             isExpanded
-              ? "inset-4 lg:inset-8"
+              ? "inset-4 lg:inset-12 bottom-12"
               : isMinimized
                 ? "bottom-6 right-6 w-80 h-16"
-                : "bottom-6 right-6 w-96 h-[600px]",
-            "flex flex-col"
+                : "bottom-6 right-6 w-96 h-[650px]",
+            "flex flex-col overflow-hidden border border-white/10"
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gradient-to-r from-gray-900 to-gray-800">
+          <div className="flex items-center justify-between p-4 border-b border-white/5 bg-black/20 backdrop-blur-md">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
-                <Bot className="w-6 h-6 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/20 shadow-inner">
+                <Bot className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">Support Assistant</h3>
-                <p className="text-xs text-gray-400 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <h3 className="font-display font-semibold text-foreground tracking-tight">Support Assistant</h3>
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                  </span>
                   Online
                 </p>
               </div>

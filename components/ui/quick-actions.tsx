@@ -17,22 +17,32 @@ const iconMap = {
 
 export function QuickActions({ onActionClick }: QuickActionsProps) {
   return (
-    <div className="p-4 border-b border-gray-700">
-      <h3 className="text-sm font-medium text-gray-400 mb-3">Quick Actions</h3>
-      <div className="grid grid-cols-2 gap-2">
+    <div className="p-4">
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-1">
+        Suggested Actions
+      </h3>
+      <div className="grid grid-cols-1 gap-3">
         {QUICK_ACTIONS.map(action => {
           const Icon = iconMap[action.icon as keyof typeof iconMap]
           return (
-            <Button
+            <button
               key={action.id}
-              variant="outline"
-              size="sm"
               onClick={() => onActionClick(action.prompt)}
-              className="justify-start gap-2 bg-gray-800 border-gray-700 hover:bg-gray-700 hover:border-green-500 text-gray-300 hover:text-white transition-all h-auto py-3"
+              className="group flex items-center gap-4 p-3 rounded-xl glass-card hover:bg-white/5 transition-all duration-300 border border-white/5 hover:border-primary/50 text-left relative overflow-hidden"
             >
-              <Icon className="w-4 h-4" />
-              <span className="text-xs">{action.label}</span>
-            </Button>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300 relative z-10">
+                <Icon className="w-5 h-5" />
+              </div>
+              <div className="flex-1 relative z-10">
+                <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                  {action.label}
+                </p>
+                <p className="text-xs text-muted-foreground line-clamp-1">
+                  Click to start this workflow
+                </p>
+              </div>
+            </button>
           )
         })}
       </div>

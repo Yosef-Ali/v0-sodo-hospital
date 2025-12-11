@@ -9,6 +9,7 @@
 import { useOpenAIChat } from "@/hooks/use-openai-chat"
 import { ChatMessage } from "@/components/ui/chat-message"
 import { ChatInput } from "@/components/ui/chat-input"
+import { QuickActions } from "@/components/ui/quick-actions"
 import { ApprovalWidget } from "@/components/ui/approval-widget"
 import { IntentBadge, AIProcessing, ContextIndicator } from "@/components/ui/ai-widgets"
 import { Button } from "@/components/ui/button"

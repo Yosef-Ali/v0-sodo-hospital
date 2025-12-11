@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -26,11 +26,18 @@ import { toast } from "sonner"
 
 interface NewEventSheetProps {
   selectedDate?: Date
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function NewEventSheet({ selectedDate }: NewEventSheetProps) {
-  const [open, setOpen] = useState(false)
+export function NewEventSheet({ selectedDate, open: controlledOpen, onOpenChange }: NewEventSheetProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+  const setOpen = onOpenChange || setInternalOpen
+  
   const [formData, setFormData] = useState({
     title: "",
     type: "",
@@ -40,6 +47,16 @@ export function NewEventSheet({ selectedDate }: NewEventSheetProps) {
     relatedItem: "",
     notes: "",
   })
+
+  // Update form data when selectedDate changes
+  useEffect(() => {
+    if (selectedDate) {
+      setFormData(prev => ({
+        ...prev,
+        date: selectedDate.toISOString().split("T")[0]
+      }))
+    }
+  }, [selectedDate])
 
   const eventTypes = [
     { value: "permit", label: "Permit Review" },

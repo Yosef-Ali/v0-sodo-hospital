@@ -4,36 +4,36 @@
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
+    /* Premium Deep Slate & Teal Theme */
+    --background: 220 40% 10%; /* Deep Slate */
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 222 41% 13%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 222 41% 13%;
     --popover-foreground: 210 40% 98%;
 
-    /* Green primary theme to match landing page */
-    --primary: 142 76% 36%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 170 70% 50%; /* Elegant Teal */
+    --primary-foreground: 220 40% 10%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 217 30% 22%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217 30% 22%;
+    --muted-foreground: 215 20% 70%;
 
-    --accent: 142 76% 36%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 170 70% 50%;
+    --accent-foreground: 220 40% 10%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 142 76% 36%;
+    --border: 217 30% 22%;
+    --input: 217 30% 22%;
+    --ring: 170 70% 50%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
   }
 }
 
@@ -42,152 +42,75 @@
     @apply border-border;
   }
   body {
-    @apply text-foreground antialiased;
+    @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
-    background: linear-gradient(to bottom right, rgb(15, 23, 42), rgb(30, 41, 59), rgb(15, 23, 42));
+    /* Subtle premium gradient background */
+    background-image:
+      radial-gradient(circle at 15% 50%, rgba(20, 184, 166, 0.08), transparent 40%),
+      radial-gradient(circle at 85% 30%, rgba(20, 184, 166, 0.08), transparent 40%);
     min-height: 100vh;
-    position: relative;
-    overflow-x: hidden;
   }
-
-  body::before,
-  body::after {
-    content: '';
-    position: fixed;
-    pointer-events: none;
-    z-index: 0;
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
   }
-
-  body::before {
-    top: 0;
-    right: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(ellipse at top right, rgba(74, 222, 128, 0.1), transparent);
-  }
-
-  body::after {
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(ellipse at bottom left, rgba(74, 222, 128, 0.05), transparent);
-  }
-
-  /* Custom font styles for more elegant typography */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-medium tracking-tight;
-  }
-
-  /* Improve button styling */
+  
+  /* Smooth button transitions */
   button {
-    @apply transition-colors duration-200;
+    @apply transition-all duration-300;
   }
-}
-
-/* Custom scrollbar for a more elegant look */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-gray-800;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-600 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500;
-}
-
-/* Additional utility classes */
-.bg-gray-750 {
-  background-color: #1f2937;
-}
-
-.bg-gray-850 {
-  background-color: #111827;
 }
 
 @layer utilities {
-  .glow-text {
-    text-shadow: 0 0 5px theme("colors.green.500"), 0 0 10px theme("colors.emerald.500");
+  /* Refined Glassmorphism */
+  .glass-premium {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-xl;
   }
-
-  /* Glass card effect from landing page */
+  
   .glass-card {
-    backdrop-filter: blur(8px);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    @apply bg-card/60 backdrop-blur-md border border-white/5;
+  }
+  
+  /* Soft, multi-layer shadows */
+  .shadow-soft {
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+      0 2px 4px -1px rgba(0, 0, 0, 0.06),
+      0 20px 25px -5px rgba(0, 0, 0, 0.1);
   }
 
-  /* Gradient border effect from landing page */
-  .gradient-border {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2));
-    padding: 1px;
-    border-radius: 16px;
+  .text-gradient-teal {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-emerald-500;
   }
 
-  .gradient-border-inner {
-    background: rgb(15, 23, 42);
-    border-radius: 15px;
-    height: 100%;
-    width: 100%;
-  }
-
-  .glow-card {
-    box-shadow: 0 0 40px rgba(34, 197, 94, 0.15);
-  }
-
-  /* Fade-in animations from landing page */
+  /* Fade-in animations */
   .fade-in {
     opacity: 0;
-    transform: translateY(20px);
-    animation: fadeInUp 0.8s ease-out forwards;
+    transform: translateY(10px);
+    animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
   }
-
+  
+  /* Delays */
   .fade-in-delay-1 { animation-delay: 0.1s; }
   .fade-in-delay-2 { animation-delay: 0.2s; }
   .fade-in-delay-3 { animation-delay: 0.3s; }
-  .fade-in-delay-4 { animation-delay: 0.4s; }
-  .fade-in-delay-5 { animation-delay: 0.5s; }
-  .fade-in-delay-6 { animation-delay: 0.6s; }
-  .fade-in-delay-7 { animation-delay: 0.7s; }
-  .fade-in-delay-8 { animation-delay: 0.8s; }
-
+  
   @keyframes fadeInUp {
     to {
       opacity: 1;
       transform: translateY(0);
     }
   }
-
-  @keyframes gradient-x {
-    0% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-    100% {
-      background-position: 0% 50%;
-    }
+  
+  /* Scrollbar refinement */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
-
-  .animate-gradient-x {
-    background-size: 200% 200%;
-    animation: gradient-x 15s ease infinite;
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
   }
-
-  .animation-delay-1000 {
-    animation-delay: 1s;
+  ::-webkit-scrollbar-thumb {
+    @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
   }
 }

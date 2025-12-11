@@ -195,16 +195,16 @@ export default function AdminGuidePage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-gray-400 mb-3">Ethiopian & Gregorian calendar events</p>
+                    <p className="text-sm text-gray-400 mb-3">Event scheduling with year & month views</p>
                     <ul className="space-y-1 text-xs text-gray-500">
-                      <li>• Create events (both calendars)</li>
-                      <li>• View month/week/day</li>
-                      <li>• Edit event details</li>
-                      <li>• Delete events</li>
-                      <li>• Liturgical feast days</li>
+                      <li>• Toggle between month/year views</li>
+                      <li>• Click any day to create/edit events</li>
+                      <li>• Quick month/year selectors</li>
+                      <li>• Event count badges on mobile</li>
+                      <li>• Single-click interaction</li>
                     </ul>
                     <Badge className="mt-3 bg-cyan-500/20 text-cyan-400 border-cyan-500/50">
-                      Full CRUD + Dual Calendar
+                      Full CRUD + Multi-view
                     </Badge>
                   </CardContent>
                 </Card>
@@ -538,7 +538,7 @@ export default function AdminGuidePage() {
                     { step: 1, module: "People", action: "Create new person record", icon: Plus, color: "blue" },
                     { step: 2, module: "Permits", action: "Create work permit for employee", icon: ClipboardCheck, color: "purple" },
                     { step: 3, module: "Tasks", action: "Create onboarding checklist tasks", icon: CheckSquare, color: "amber" },
-                    { step: 4, module: "Calendar", action: "Schedule orientation meeting", icon: Calendar, color: "cyan" },
+                    { step: 4, module: "Calendar", action: "Click any day to schedule orientation meeting", icon: Calendar, color: "cyan" },
                     { step: 5, module: "Dashboard", action: "Monitor onboarding progress", icon: BarChart, color: "green" },
                   ].map((item) => (
                     <div key={item.step} className="flex items-start gap-3 bg-gray-900 border border-gray-700 rounded-lg p-4">
@@ -644,21 +644,21 @@ export default function AdminGuidePage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Ethiopian Calendar */}
+                {/* Calendar UX */}
                 <Card className="bg-gradient-to-br from-cyan-900/20 to-blue-900/20 border-cyan-500/30">
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <Calendar className="w-5 h-5 text-cyan-400" />
-                      <CardTitle className="text-base text-white">Ethiopian Calendar Integration</CardTitle>
+                      <CardTitle className="text-base text-white">Smart Calendar Interface</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm text-gray-300">
-                    <p>✓ Dual calendar support (Gregorian & Ethiopian)</p>
-                    <p>✓ Liturgical feast days (Ethiopian Orthodox)</p>
-                    <p>✓ Accurate date conversion</p>
-                    <p>✓ Fasting period indicators</p>
+                    <p>✓ Year view - see all 12 months at once</p>
+                    <p>✓ Single-click to create or edit events</p>
+                    <p>✓ Month/year dropdown selectors</p>
+                    <p>✓ Mobile-optimized with event count badges</p>
                     <div className="mt-3 p-2 bg-cyan-500/10 border border-cyan-500/30 rounded text-xs text-cyan-400">
-                      Example: Today is displayed in both calendars simultaneously
+                      Quick navigation: Click any month in year view to zoom in
                     </div>
                   </CardContent>
                 </Card>
