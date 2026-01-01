@@ -6,7 +6,9 @@ export const taskStatusEnum = pgEnum("task_status", ["pending", "in-progress", "
 export const taskPriorityEnum = pgEnum("task_priority", ["low", "medium", "high"])
 export const documentStatusEnum = pgEnum("document_status", ["pending", "approved", "review"])
 export const userRoleEnum = pgEnum("user_role", ["ADMIN", "HR_MANAGER", "HR", "LOGISTICS", "FINANCE", "USER"])
-export const permitCategoryEnum = pgEnum("permit_category", ["WORK_PERMIT", "RESIDENCE_ID", "LICENSE", "PIP"])
+export const permitCategoryEnum = pgEnum("permit_category", ["WORK_PERMIT", "RESIDENCE_ID", "MEDICAL_LICENSE", "PIP", "CUSTOMS", "CAR_BOLO_INSURANCE"])
+export const genderEnum = pgEnum("gender", ["MALE", "FEMALE"])
+export const familyStatusEnum = pgEnum("family_status", ["MARRIED", "UNMARRIED"])
 export const permitStatusEnum = pgEnum("permit_status", ["PENDING", "SUBMITTED", "APPROVED", "REJECTED", "EXPIRED"])
 export const eventTypeEnum = pgEnum("event_type", ["permit", "deadline", "meeting", "interview", "other"])
 export const reportStatusEnum = pgEnum("report_status", ["DRAFT", "GENERATED", "PUBLISHED", "ARCHIVED"])
@@ -134,7 +136,30 @@ export const people = pgTable("people", {
   firstName: varchar("first_name", { length: 255 }).notNull(),
   lastName: varchar("last_name", { length: 255 }).notNull(),
   nationality: varchar("nationality", { length: 100 }),
+  dateOfBirth: timestamp("date_of_birth"),
+  gender: genderEnum("gender"),
+  familyStatus: familyStatusEnum("family_status"),
+  
+  // Passport details
   passportNo: varchar("passport_no", { length: 100 }),
+  passportIssueDate: timestamp("passport_issue_date"),
+  passportExpiryDate: timestamp("passport_expiry_date"),
+  
+  // Medical License details
+  medicalLicenseNo: varchar("medical_license_no", { length: 100 }),
+  medicalLicenseIssueDate: timestamp("medical_license_issue_date"),
+  medicalLicenseExpiryDate: timestamp("medical_license_expiry_date"),
+  
+  // Work Permit details
+  workPermitNo: varchar("work_permit_no", { length: 100 }),
+  workPermitIssueDate: timestamp("work_permit_issue_date"),
+  workPermitExpiryDate: timestamp("work_permit_expiry_date"),
+  
+  // Residence ID details
+  residenceIdNo: varchar("residence_id_no", { length: 100 }),
+  residenceIdIssueDate: timestamp("residence_id_issue_date"),
+  residenceIdExpiryDate: timestamp("residence_id_expiry_date"),
+  
   phone: varchar("phone", { length: 50 }),
   email: varchar("email", { length: 255 }),
   guardianId: uuid("guardian_id").references((): any => people.id), // self-reference for dependents

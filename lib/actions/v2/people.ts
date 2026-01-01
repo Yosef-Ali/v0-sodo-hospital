@@ -22,7 +22,21 @@ export async function getPeople(params?: {
         firstName: people.firstName,
         lastName: people.lastName,
         nationality: people.nationality,
+        dateOfBirth: people.dateOfBirth,
+        gender: people.gender,
+        familyStatus: people.familyStatus,
         passportNo: people.passportNo,
+        passportIssueDate: people.passportIssueDate,
+        passportExpiryDate: people.passportExpiryDate,
+        medicalLicenseNo: people.medicalLicenseNo,
+        medicalLicenseIssueDate: people.medicalLicenseIssueDate,
+        medicalLicenseExpiryDate: people.medicalLicenseExpiryDate,
+        workPermitNo: people.workPermitNo,
+        workPermitIssueDate: people.workPermitIssueDate,
+        workPermitExpiryDate: people.workPermitExpiryDate,
+        residenceIdNo: people.residenceIdNo,
+        residenceIdIssueDate: people.residenceIdIssueDate,
+        residenceIdExpiryDate: people.residenceIdExpiryDate,
         phone: people.phone,
         email: people.email,
         guardianId: people.guardianId,
@@ -130,7 +144,21 @@ export async function createPerson(data: {
   firstName: string
   lastName: string
   nationality?: string
+  dateOfBirth?: Date
+  gender?: "MALE" | "FEMALE"
+  familyStatus?: "MARRIED" | "UNMARRIED"
   passportNo?: string
+  passportIssueDate?: Date
+  passportExpiryDate?: Date
+  medicalLicenseNo?: string
+  medicalLicenseIssueDate?: Date
+  medicalLicenseExpiryDate?: Date
+  workPermitNo?: string
+  workPermitIssueDate?: Date
+  workPermitExpiryDate?: Date
+  residenceIdNo?: string
+  residenceIdIssueDate?: Date
+  residenceIdExpiryDate?: Date
   phone?: string
   email?: string
   guardianId?: string
@@ -191,7 +219,21 @@ export async function updatePerson(
     firstName: string
     lastName: string
     nationality: string
+    dateOfBirth: Date
+    gender: "MALE" | "FEMALE"
+    familyStatus: "MARRIED" | "UNMARRIED"
     passportNo: string
+    passportIssueDate: Date
+    passportExpiryDate: Date
+    medicalLicenseNo: string
+    medicalLicenseIssueDate: Date
+    medicalLicenseExpiryDate: Date
+    workPermitNo: string
+    workPermitIssueDate: Date
+    workPermitExpiryDate: Date
+    residenceIdNo: string
+    residenceIdIssueDate: Date
+    residenceIdExpiryDate: Date
     phone: string
     email: string
     guardianId: string
