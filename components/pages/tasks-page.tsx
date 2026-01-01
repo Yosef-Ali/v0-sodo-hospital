@@ -10,8 +10,9 @@ import { Search, Filter, Plus, Calendar, SortAsc } from "lucide-react"
 import { TaskSheet } from "@/components/sheets/task-sheet"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
-import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { createTaskWithWorkflow } from "@/lib/actions/v2/tasks"
+import { useRouter } from "next/navigation"
 
 // Task type definition
 export interface Task {
@@ -54,6 +55,7 @@ export function TasksPage({ initialData }: TasksPageProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const { toast } = useToast()
+  const router = useRouter()
 
   // Filter tasks based on active tab and search query
   const filteredTasks = tasks.filter((task) => {
@@ -86,23 +88,49 @@ export function TasksPage({ initialData }: TasksPageProps) {
   }
 
   // Handle adding or updating a task
-  const handleAddTask = (taskData: Omit<Task, "id" | "createdAt"> & { id?: string }) => {
+  const handleAddTask = async (taskData: any) => {
     if (taskData.id) {
-      // Edit mode - update existing task
+      // Edit mode - update existing task (TODO: Use update action)
       setTasks(tasks.map(task => task.id === taskData.id ? { ...task, ...taskData } : task))
       toast({
         title: "Task Updated",
         description: `"${taskData.title}" has been updated successfully.`,
       })
     } else {
-      // Create mode - add new task
-      const id = `task-${tasks.length + 1}`
-      const createdAt = new Date().toISOString().split("T")[0]
-      setTasks([...tasks, { id, createdAt, ...taskData }])
-      toast({
-        title: "Task Created",
-        description: `"${taskData.title}" has been created successfully.`,
-      })
+      // Create mode - add new task via Server Action
+      try {
+        const result = await createTaskWithWorkflow({
+          title: taskData.title,
+          description: taskData.description,
+          status: taskData.status,
+          priority: taskData.priority,
+          dueDate: taskData.dueDate ? new Date(taskData.dueDate) : undefined, // Check if TaskSheet sends string or Date
+          assigneeId: taskData.assigneeId, // TaskSheet might not send this yet, or sends string
+          personId: taskData.personId,
+          category: taskData.category,
+          subType: taskData.subType,
+        })
+
+        if (result.success) {
+           toast({
+            title: "Task Created",
+            description: `"${taskData.title}" has been created successfully.`,
+          })
+          router.refresh()
+        } else {
+           toast({
+            title: "Error",
+            description: result.error || "Failed to create task",
+            variant: "destructive"
+          })
+        }
+      } catch (e) {
+         toast({
+            title: "Error",
+            description: "Something went wrong",
+            variant: "destructive"
+          })
+      }
     }
     setIsSheetOpen(false)
     setSelectedTask(null)

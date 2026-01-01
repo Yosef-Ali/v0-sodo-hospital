@@ -1,9 +1,10 @@
 "use server"
 
-import { db, tasksV2, users, permits, people, type TaskV2, type NewTaskV2 } from "@/lib/db"
-import { eq, desc, and, gte, lte, sql, or, isNull } from "drizzle-orm"
+import { db, tasksV2, users, permits, people, permitChecklistItems, checklists, documentsV2 } from "@/lib/db"
+import { eq, desc, and, gte, lte, sql, or, isNull, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { gregorianToEC, formatEC } from "@/lib/dates/ethiopian"
+import { hospitalTaskCategories, getAllWorkflows, TaskWorkflow, DocumentItem } from "@/lib/data/hospital-tasks"
 
 /**
  * Get all tasks with optional filters and pagination
@@ -508,8 +509,10 @@ export async function generateReminderTasks(permitId: string) {
         const categoryLabel = {
           WORK_PERMIT: "Work Permit",
           RESIDENCE_ID: "Residence ID",
-          LICENSE: "MOH License",
+          MEDICAL_LICENSE: "MOH License",
           PIP: "EFDA PIP",
+          CUSTOMS: "Customs",
+          CAR_BOLO_INSURANCE: "Bolo & Insurance"
         }[permit.category]
 
         const personName = person
@@ -601,5 +604,151 @@ export async function getUpcomingTasks(daysAhead: number = 7) {
   } catch (error) {
     console.error("Error fetching upcoming tasks:", error)
     return { success: false, error: "Failed to fetch upcoming tasks" }
+  }
+}
+/**
+ * Create a new task with full workflow support (Permits, Checklists, Document Linking)
+ */
+export async function createTaskWithWorkflow(data: {
+  title: string
+  description?: string
+  status?: "pending" | "in-progress" | "completed" | "urgent"
+  priority?: "low" | "medium" | "high"
+  dueDate?: Date
+  assigneeId?: string
+  personId?: string
+  category: string // e.g., "work-permit", "moh-licensing"
+  subType?: string // e.g., "NEW", "RENEWAL"
+  notes?: string
+}) {
+  try {
+    // 1. Find matching workflow
+    let workflow: TaskWorkflow | undefined
+    if (data.category && data.subType) {
+      const allWorkflows = getAllWorkflows()
+      workflow = allWorkflows.find(
+        (wf) => wf.category === data.category && wf.subcategory === data.subType
+      )
+    }
+
+    // Default description if workflow found
+    let finalDescription = data.description || ""
+    if (workflow && !finalDescription) {
+      finalDescription = workflow.description
+    }
+
+    // 2. Create Permit if applicable (requires personId)
+    let permitId: string | undefined
+    if (workflow && data.personId) {
+      // Map frontend category to DB enum
+      // "work-permit" -> "WORK_PERMIT"
+      // "residence-id" -> "RESIDENCE_ID"
+      // "moh-licensing" -> "MEDICAL_LICENSE"
+      // "customs" -> "CUSTOMS"
+      // "bolo-insurance" -> "CAR_BOLO_INSURANCE" (approximated)
+
+      let dbCategory: "WORK_PERMIT" | "RESIDENCE_ID" | "MEDICAL_LICENSE" | "PIP" | "CUSTOMS" | "CAR_BOLO_INSURANCE" | null = null
+
+      if (data.category === "work-permit") dbCategory = "WORK_PERMIT"
+      else if (data.category === "residence-id") dbCategory = "RESIDENCE_ID"
+      else if (data.category === "moh-licensing") dbCategory = "MEDICAL_LICENSE"
+      else if (data.category === "customs" || "pip") dbCategory = "CUSTOMS" // Simplified mapping
+      else if (data.category === "bolo-insurance") dbCategory = "CAR_BOLO_INSURANCE"
+
+      if (dbCategory) {
+        // Create Permit
+        const [newPermit] = await db.insert(permits).values({
+          category: dbCategory,
+          subType: data.subType as any,
+          personId: data.personId,
+          status: "PENDING",
+          dueDate: data.dueDate,
+          createdAt: new Date(),
+        }).returning()
+
+        permitId = newPermit.id
+
+        // 3. Create Checklist Items & Smart Document Linking
+        // Check what docs the person ALREADY has
+        const personDocs = await db.query.documentsV2.findMany({
+          where: eq(documentsV2.personId, data.personId)
+        })
+
+        const personRecord = await db.query.people.findFirst({
+          where: eq(people.id, data.personId)
+        })
+
+        if (workflow.documents.length > 0) {
+          for (const doc of workflow.documents) {
+            let isCompleted = false
+            let fileUrls: string[] = []
+
+            // SMART CHECK 1: Specific Person Columns
+            if (personRecord) {
+              if (doc.name.toLowerCase().includes("passport") && personRecord.passportDocuments?.length) {
+                isCompleted = true
+                fileUrls = personRecord.passportDocuments
+              } else if (doc.name.toLowerCase().includes("work permit") && personRecord.workPermitDocuments?.length) {
+                isCompleted = true
+                fileUrls = personRecord.workPermitDocuments
+              } else if (doc.name.toLowerCase().includes("residence id") && personRecord.residenceIdDocuments?.length) {
+                isCompleted = true
+                fileUrls = personRecord.residenceIdDocuments
+              }
+            }
+
+            // SMART CHECK 2: Generic Documents
+            if (!isCompleted) {
+              // Fuzzy match document type/title
+              // e.g. doc.name="Passport Copy" matches existing doc with title="Passport"
+              const matchingDoc = personDocs.find(d =>
+                (d.title && doc.name.toLowerCase().includes(d.title.toLowerCase())) ||
+                (d.type && doc.name.toLowerCase().includes(d.type.toLowerCase()))
+              )
+              if (matchingDoc && matchingDoc.fileUrl) {
+                isCompleted = true
+                fileUrls = [matchingDoc.fileUrl]
+              }
+            }
+
+            // Create Checklist Item
+            await db.insert(permitChecklistItems).values({
+              permitId: newPermit.id,
+              label: doc.name,
+              required: doc.required,
+              completed: isCompleted,
+              fileUrls: fileUrls,
+              notes: doc.notes, // + (isCompleted ? " (Auto-linked from existing)" : ""),
+            })
+          }
+        }
+      }
+    }
+
+    // 4. Create Task
+    const result = await db
+      .insert(tasksV2)
+      .values({
+        title: data.title.trim(),
+        description: finalDescription,
+        status: data.status || "pending",
+        priority: data.priority || "medium",
+        dueDate: data.dueDate,
+        assigneeId: data.assigneeId,
+        permitId: permitId, // Linked to newly created permit
+        notes: data.notes || (workflow ? `Generated from ${workflow.title}` : ""),
+      })
+      .returning()
+
+    revalidatePath("/tasks")
+    revalidatePath("/dashboard")
+    if (permitId) {
+      revalidatePath(`/permits/${permitId}`)
+    }
+
+    return { success: true, data: result[0] }
+  } catch (error) {
+    console.error("Error creating task with workflow:", error)
+    return { success: false, error: "Failed to create task" }
   }
 }
