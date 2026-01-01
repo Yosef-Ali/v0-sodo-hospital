@@ -13,6 +13,9 @@ import {
   UserCircle,
   ClipboardCheck,
   Calendar,
+  Package,
+  Car,
+  Building2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -52,7 +55,7 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto py-4 relative z-10">
         <ul className="space-y-1 px-2">
           <NavItem href="/dashboard" icon={<LayoutDashboard size={20} />} label="Dashboard" active={pathname === "/dashboard"} />
-          <NavItem href="/people" icon={<UserCircle size={20} />} label="People" active={pathname === "/people"} />
+          <NavItem href="/foreigners" icon={<UserCircle size={20} />} label="Foreigners" active={pathname === "/foreigners"} />
           <NavItem
             href="/permits"
             icon={<ClipboardCheck size={20} />}
@@ -60,6 +63,9 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
             active={pathname === "/permits"}
           />
           <NavItem href="/tasks" icon={<CheckSquare size={20} />} label="Tasks" active={pathname === "/tasks"} />
+          <NavItem href="/import" icon={<Package size={20} />} label="Import" active={pathname === "/import"} />
+          <NavItem href="/vehicle" icon={<Car size={20} />} label="Vehicle" active={pathname === "/vehicle"} />
+          <NavItem href="/company" icon={<Building2 size={20} />} label="Company Reg." active={pathname === "/company"} />
           <NavItem href="/calendar" icon={<Calendar size={20} />} label="Calendar" active={pathname === "/calendar"} />
           <NavItem href="/reports" icon={<BarChart size={20} />} label="Reports" active={pathname === "/reports"} />
           <NavItem href="/settings" icon={<Settings size={20} />} label="Settings" active={pathname === "/settings"} />

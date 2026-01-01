@@ -15,7 +15,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { PersonSheet } from "@/components/sheets/person-sheet"
 
-interface PeoplePageProps {
+interface ForeignersPageProps {
   initialData: {
     people: any[]
     stats: {
@@ -26,7 +26,7 @@ interface PeoplePageProps {
   }
 }
 
-export function PeoplePage({ initialData }: PeoplePageProps) {
+export function ForeignersPage({ initialData }: ForeignersPageProps) {
   const { t } = useTranslation()
   const router = useRouter()
 
@@ -99,14 +99,14 @@ export function PeoplePage({ initialData }: PeoplePageProps) {
     setSheetOpen(true)
   }
 
-  const pageTitle = translateWithFallback("person.persons", "People")
-  const createPersonText = translateWithFallback("person.createPerson", "Create Person")
+  const pageTitle = translateWithFallback("person.persons", "Foreigners")
+  const createPersonText = translateWithFallback("person.createPerson", "Add Foreigner")
 
   return (
     <div className="p-8">
       <PageHeader
         title={pageTitle}
-        description="Manage hospital staff, patients, and their dependents"
+        description="Manage foreign staff, their permits, and dependents"
       />
 
       <div className="mt-8 md:mt-10 lg:mt-12 mb-6 flex flex-col gap-4">
@@ -153,7 +153,7 @@ export function PeoplePage({ initialData }: PeoplePageProps) {
             <div className="relative flex-1 md:w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={16} />
               <Input
-                placeholder={t("actions.search") + " people..."}
+                placeholder={t("actions.search") + " foreigners..."}
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10 pr-4 py-2 bg-gray-800/60 backdrop-blur-sm border border-gray-700 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500 w-full text-gray-300"
@@ -239,11 +239,11 @@ export function PeoplePage({ initialData }: PeoplePageProps) {
       {!loading && !error && people.length === 0 && (
         <div className="bg-gray-800/60 backdrop-blur-sm rounded-lg border border-gray-700 p-12 text-center">
           <User className="h-16 w-16 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No people found</h3>
+          <h3 className="text-lg font-medium text-white mb-2">No foreigners found</h3>
           <p className="text-gray-400 mb-6">
             {searchQuery
-              ? "No people match your search criteria."
-              : "Get started by adding your first person."}
+              ? "No foreigners match your search criteria."
+              : "Get started by adding your first foreigner."}
           </p>
           <Button
             onClick={handleCreateNew}
@@ -310,7 +310,7 @@ export function PeoplePage({ initialData }: PeoplePageProps) {
 
               <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center">
                 <button
-                  onClick={() => router.push(`/people/${person.id}`)}
+                  onClick={() => router.push(`/foreigners/${person.id}`)}
                   className="text-xs text-green-400 hover:text-green-300 font-medium"
                 >
                   View Profile
@@ -331,7 +331,7 @@ export function PeoplePage({ initialData }: PeoplePageProps) {
       {people.length >= 100 && (
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-400">
-            Showing first 100 results. Use search to find specific people.
+            Showing first 100 results. Use search to find specific foreigners.
           </p>
         </div>
       )}
