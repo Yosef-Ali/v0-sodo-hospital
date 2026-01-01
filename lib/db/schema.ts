@@ -147,25 +147,25 @@ export const people = pgTable("people", {
   passportNo: varchar("passport_no", { length: 100 }),
   passportIssueDate: timestamp("passport_issue_date"),
   passportExpiryDate: timestamp("passport_expiry_date"),
-  passportDocumentUrl: text("passport_document_url"),
+  passportDocuments: jsonb("passport_documents").$type<string[]>().default([]),
   
   // Medical License details
   medicalLicenseNo: varchar("medical_license_no", { length: 100 }),
   medicalLicenseIssueDate: timestamp("medical_license_issue_date"),
   medicalLicenseExpiryDate: timestamp("medical_license_expiry_date"),
-  medicalLicenseDocumentUrl: text("medical_license_document_url"),
+  medicalLicenseDocuments: jsonb("medical_license_documents").$type<string[]>().default([]),
   
   // Work Permit details
   workPermitNo: varchar("work_permit_no", { length: 100 }),
   workPermitIssueDate: timestamp("work_permit_issue_date"),
   workPermitExpiryDate: timestamp("work_permit_expiry_date"),
-  workPermitDocumentUrl: text("work_permit_document_url"),
+  workPermitDocuments: jsonb("work_permit_documents").$type<string[]>().default([]),
   
   // Residence ID details
   residenceIdNo: varchar("residence_id_no", { length: 100 }),
   residenceIdIssueDate: timestamp("residence_id_issue_date"),
   residenceIdExpiryDate: timestamp("residence_id_expiry_date"),
-  residenceIdDocumentUrl: text("residence_id_document_url"),
+  residenceIdDocuments: jsonb("residence_id_documents").$type<string[]>().default([]),
   
   phone: varchar("phone", { length: 50 }),
   email: varchar("email", { length: 255 }),

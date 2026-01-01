@@ -29,19 +29,19 @@ export async function getPeople(params?: {
         passportNo: people.passportNo,
         passportIssueDate: people.passportIssueDate,
         passportExpiryDate: people.passportExpiryDate,
-        passportDocumentUrl: people.passportDocumentUrl,
+        passportDocuments: people.passportDocuments,
         medicalLicenseNo: people.medicalLicenseNo,
         medicalLicenseIssueDate: people.medicalLicenseIssueDate,
         medicalLicenseExpiryDate: people.medicalLicenseExpiryDate,
-        medicalLicenseDocumentUrl: people.medicalLicenseDocumentUrl,
+        medicalLicenseDocuments: people.medicalLicenseDocuments,
         workPermitNo: people.workPermitNo,
         workPermitIssueDate: people.workPermitIssueDate,
         workPermitExpiryDate: people.workPermitExpiryDate,
-        workPermitDocumentUrl: people.workPermitDocumentUrl,
+        workPermitDocuments: people.workPermitDocuments,
         residenceIdNo: people.residenceIdNo,
         residenceIdIssueDate: people.residenceIdIssueDate,
         residenceIdExpiryDate: people.residenceIdExpiryDate,
-        residenceIdDocumentUrl: people.residenceIdDocumentUrl,
+        residenceIdDocuments: people.residenceIdDocuments,
         phone: people.phone,
         email: people.email,
         guardianId: people.guardianId,
@@ -156,19 +156,19 @@ export async function createPerson(data: {
   passportNo?: string
   passportIssueDate?: Date
   passportExpiryDate?: Date
-  passportDocumentUrl?: string
+  passportDocuments?: string[]
   medicalLicenseNo?: string
   medicalLicenseIssueDate?: Date
   medicalLicenseExpiryDate?: Date
-  medicalLicenseDocumentUrl?: string
+  medicalLicenseDocuments?: string[]
   workPermitNo?: string
   workPermitIssueDate?: Date
   workPermitExpiryDate?: Date
-  workPermitDocumentUrl?: string
+  workPermitDocuments?: string[]
   residenceIdNo?: string
   residenceIdIssueDate?: Date
   residenceIdExpiryDate?: Date
-  residenceIdDocumentUrl?: string
+  residenceIdDocuments?: string[]
   phone?: string
   email?: string
   guardianId?: string
@@ -236,19 +236,19 @@ export async function updatePerson(
     passportNo: string
     passportIssueDate: Date
     passportExpiryDate: Date
-    passportDocumentUrl: string
+    passportDocuments: string[]
     medicalLicenseNo: string
     medicalLicenseIssueDate: Date
     medicalLicenseExpiryDate: Date
-    medicalLicenseDocumentUrl: string
+    medicalLicenseDocuments: string[]
     workPermitNo: string
     workPermitIssueDate: Date
     workPermitExpiryDate: Date
-    workPermitDocumentUrl: string
+    workPermitDocuments: string[]
     residenceIdNo: string
     residenceIdIssueDate: Date
     residenceIdExpiryDate: Date
-    residenceIdDocumentUrl: string
+    residenceIdDocuments: string[]
     phone: string
     email: string
     guardianId: string

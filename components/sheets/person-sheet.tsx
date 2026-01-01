@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, FileText, Briefcase, Home, Upload, X, Image as ImageIcon, File } from "lucide-react"
+import { User, FileText, Briefcase, Home, X, Image as ImageIcon, File, Plus } from "lucide-react"
 import { UploadDropzone } from "@/lib/uploadthing-utils"
 
 interface PersonFormData {
@@ -25,22 +25,22 @@ interface PersonFormData {
   passportNo: string
   passportIssueDate: string
   passportExpiryDate: string
-  passportDocumentUrl: string
+  passportDocuments: string[]
   // Medical License
   medicalLicenseNo: string
   medicalLicenseIssueDate: string
   medicalLicenseExpiryDate: string
-  medicalLicenseDocumentUrl: string
+  medicalLicenseDocuments: string[]
   // Work Permit
   workPermitNo: string
   workPermitIssueDate: string
   workPermitExpiryDate: string
-  workPermitDocumentUrl: string
+  workPermitDocuments: string[]
   // Residence ID
   residenceIdNo: string
   residenceIdIssueDate: string
   residenceIdExpiryDate: string
-  residenceIdDocumentUrl: string
+  residenceIdDocuments: string[]
   // Contact
   email: string
   phone: string
@@ -54,42 +54,120 @@ interface PersonSheetProps {
   person?: PersonFormData | null
 }
 
-// Document Preview Component
+// Document Preview Component for single document
 function DocumentPreview({ 
   url, 
-  label, 
+  index,
   onRemove 
 }: { 
-  url: string; 
-  label: string; 
+  url: string
+  index: number
   onRemove: () => void 
 }) {
   const isImage = url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+  const fileName = url.split('/').pop() || `Document ${index + 1}`
   
   return (
     <div className="relative group">
-      <div className="border border-gray-600 rounded-lg p-2 bg-gray-700/50">
+      <div className="border border-gray-600 rounded-lg p-2 bg-gray-700/50 h-28">
         {isImage ? (
           <img 
             src={url} 
-            alt={label} 
-            className="w-full h-32 object-cover rounded"
+            alt={`Document ${index + 1}`}
+            className="w-full h-full object-cover rounded"
           />
         ) : (
-          <div className="w-full h-32 flex flex-col items-center justify-center text-gray-400">
-            <File className="h-10 w-10 mb-2" />
-            <span className="text-xs">PDF Document</span>
+          <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+            <File className="h-8 w-8 mb-1" />
+            <span className="text-[10px] text-center truncate w-full px-1">PDF</span>
           </div>
         )}
-        <p className="text-xs text-gray-400 mt-2 truncate">{label}</p>
       </div>
       <button
         type="button"
         onClick={onRemove}
-        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
       >
         <X className="h-3 w-3" />
       </button>
+    </div>
+  )
+}
+
+// Multi-Document Upload Section
+function MultiDocumentUpload({
+  label,
+  documents,
+  onAdd,
+  onRemove
+}: {
+  label: string
+  documents: string[]
+  onAdd: (url: string) => void
+  onRemove: (index: number) => void
+}) {
+  const [showUploader, setShowUploader] = useState(false)
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-gray-300">{label}</Label>
+        <span className="text-xs text-gray-500">{documents.length} file(s)</span>
+      </div>
+      
+      {/* Document Grid */}
+      {documents.length > 0 && (
+        <div className="grid grid-cols-4 gap-2">
+          {documents.map((url, index) => (
+            <DocumentPreview
+              key={index}
+              url={url}
+              index={index}
+              onRemove={() => onRemove(index)}
+            />
+          ))}
+        </div>
+      )}
+      
+      {/* Upload Area */}
+      {showUploader ? (
+        <div className="relative">
+          <UploadDropzone
+            endpoint="permitDocumentUploader"
+            onClientUploadComplete={(res) => {
+              if (res) {
+                res.forEach((file) => {
+                  if (file.url) onAdd(file.url)
+                })
+              }
+              setShowUploader(false)
+            }}
+            onUploadError={(error: Error) => {
+              console.error("Upload error:", error)
+              setShowUploader(false)
+            }}
+            className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 ut-button:hover:bg-green-700 border-gray-600 bg-gray-700/30"
+          />
+          <button
+            type="button"
+            onClick={() => setShowUploader(false)}
+            className="absolute top-2 right-2 text-gray-400 hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setShowUploader(true)}
+          className="w-full border-dashed border-gray-600 bg-gray-700/30 hover:bg-gray-700/50 text-gray-400"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Document
+        </Button>
+      )}
     </div>
   )
 }
@@ -107,24 +185,23 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
     passportNo: "",
     passportIssueDate: "",
     passportExpiryDate: "",
-    passportDocumentUrl: "",
+    passportDocuments: [],
     medicalLicenseNo: "",
     medicalLicenseIssueDate: "",
     medicalLicenseExpiryDate: "",
-    medicalLicenseDocumentUrl: "",
+    medicalLicenseDocuments: [],
     workPermitNo: "",
     workPermitIssueDate: "",
     workPermitExpiryDate: "",
-    workPermitDocumentUrl: "",
+    workPermitDocuments: [],
     residenceIdNo: "",
     residenceIdIssueDate: "",
     residenceIdExpiryDate: "",
-    residenceIdDocumentUrl: "",
+    residenceIdDocuments: [],
     email: "",
     phone: "",
   })
 
-  // Populate form when editing
   useEffect(() => {
     if (person) {
       setFormData({
@@ -139,19 +216,19 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
         passportNo: person.passportNo || "",
         passportIssueDate: person.passportIssueDate || "",
         passportExpiryDate: person.passportExpiryDate || "",
-        passportDocumentUrl: person.passportDocumentUrl || "",
+        passportDocuments: person.passportDocuments || [],
         medicalLicenseNo: person.medicalLicenseNo || "",
         medicalLicenseIssueDate: person.medicalLicenseIssueDate || "",
         medicalLicenseExpiryDate: person.medicalLicenseExpiryDate || "",
-        medicalLicenseDocumentUrl: person.medicalLicenseDocumentUrl || "",
+        medicalLicenseDocuments: person.medicalLicenseDocuments || [],
         workPermitNo: person.workPermitNo || "",
         workPermitIssueDate: person.workPermitIssueDate || "",
         workPermitExpiryDate: person.workPermitExpiryDate || "",
-        workPermitDocumentUrl: person.workPermitDocumentUrl || "",
+        workPermitDocuments: person.workPermitDocuments || [],
         residenceIdNo: person.residenceIdNo || "",
         residenceIdIssueDate: person.residenceIdIssueDate || "",
         residenceIdExpiryDate: person.residenceIdExpiryDate || "",
-        residenceIdDocumentUrl: person.residenceIdDocumentUrl || "",
+        residenceIdDocuments: person.residenceIdDocuments || [],
         email: person.email || "",
         phone: person.phone || "",
       })
@@ -167,19 +244,19 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
         passportNo: "",
         passportIssueDate: "",
         passportExpiryDate: "",
-        passportDocumentUrl: "",
+        passportDocuments: [],
         medicalLicenseNo: "",
         medicalLicenseIssueDate: "",
         medicalLicenseExpiryDate: "",
-        medicalLicenseDocumentUrl: "",
+        medicalLicenseDocuments: [],
         workPermitNo: "",
         workPermitIssueDate: "",
         workPermitExpiryDate: "",
-        workPermitDocumentUrl: "",
+        workPermitDocuments: [],
         residenceIdNo: "",
         residenceIdIssueDate: "",
         residenceIdExpiryDate: "",
-        residenceIdDocumentUrl: "",
+        residenceIdDocuments: [],
         email: "",
         phone: "",
       })
@@ -237,8 +314,8 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
           </SheetTitle>
           <SheetDescription className="text-gray-400">
             {isEditMode
-              ? "Update the foreigner's details and documents below."
-              : "Fill in the foreigner's details and upload required documents."}
+              ? "Update details and upload multiple documents per section."
+              : "Fill in details and upload required documents (multiple allowed per section)."}
           </SheetDescription>
         </SheetHeader>
 
@@ -265,99 +342,74 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
 
             {/* Personal Info Tab */}
             <TabsContent value="personal" className="space-y-4">
-              {/* Profile Photo Upload */}
+              {/* Profile Photo */}
               <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-700">
                 <h4 className="text-sm font-medium text-green-400 mb-3 flex items-center">
                   <ImageIcon className="h-4 w-4 mr-2" />
                   Profile Photo
                 </h4>
                 {formData.photoUrl ? (
-                  <DocumentPreview
-                    url={formData.photoUrl}
-                    label="Profile Photo"
-                    onRemove={() => setFormData({ ...formData, photoUrl: "" })}
-                  />
+                  <div className="relative inline-block">
+                    <img src={formData.photoUrl} alt="Profile" className="w-24 h-24 object-cover rounded-lg" />
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, photoUrl: "" })}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
                 ) : (
                   <UploadDropzone
                     endpoint="permitDocumentUploader"
                     onClientUploadComplete={(res) => {
-                      if (res?.[0]?.url) {
-                        setFormData({ ...formData, photoUrl: res[0].url })
-                      }
+                      if (res?.[0]?.url) setFormData({ ...formData, photoUrl: res[0].url })
                     }}
-                    onUploadError={(error: Error) => {
-                      console.error("Upload error:", error)
-                    }}
-                    className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 ut-button:hover:bg-green-700 border-gray-600 bg-gray-700/30"
+                    onUploadError={(error: Error) => console.error("Upload error:", error)}
+                    className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 border-gray-600 bg-gray-700/30"
                   />
                 )}
               </div>
 
+              {/* Name Fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName" className="text-gray-300">First Name *</Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    placeholder="Enter first name"
-                    className="bg-gray-700 border-gray-600 text-white"
-                    required
-                  />
+                  <Input id="firstName" name="firstName" value={formData.firstName} onChange={handleChange}
+                    placeholder="Enter first name" className="bg-gray-700 border-gray-600 text-white" required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="lastName" className="text-gray-300">Last Name *</Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    placeholder="Enter last name"
-                    className="bg-gray-700 border-gray-600 text-white"
-                    required
-                  />
+                  <Input id="lastName" name="lastName" value={formData.lastName} onChange={handleChange}
+                    placeholder="Enter last name" className="bg-gray-700 border-gray-600 text-white" required />
                 </div>
               </div>
 
+              {/* Nationality */}
               <div className="space-y-2">
-                <Label htmlFor="nationality" className="text-gray-300">Nationality *</Label>
-                <Select
-                  value={formData.nationality}
-                  onValueChange={(value) => setFormData({ ...formData, nationality: value })}
-                >
+                <Label className="text-gray-300">Nationality *</Label>
+                <Select value={formData.nationality} onValueChange={(value) => setFormData({ ...formData, nationality: value })}>
                   <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                     <SelectValue placeholder="Select nationality" />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-700 border-gray-600">
-                    {nationalities.map((nat) => (
-                      <SelectItem key={nat.value} value={nat.value} className="text-white">
-                        {nat.label}
-                      </SelectItem>
+                    {nationalities.map((n) => (
+                      <SelectItem key={n.value} value={n.value} className="text-white">{n.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
+              {/* DOB & Gender */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="dateOfBirth" className="text-gray-300">Date of Birth *</Label>
-                  <Input
-                    id="dateOfBirth"
-                    name="dateOfBirth"
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={handleChange}
-                    className="bg-gray-700 border-gray-600 text-white"
-                    required
-                  />
+                  <Input id="dateOfBirth" name="dateOfBirth" type="date" value={formData.dateOfBirth}
+                    onChange={handleChange} className="bg-gray-700 border-gray-600 text-white" required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="gender" className="text-gray-300">Gender *</Label>
-                  <Select
-                    value={formData.gender}
-                    onValueChange={(value) => setFormData({ ...formData, gender: value })}
-                  >
+                  <Label className="text-gray-300">Gender *</Label>
+                  <Select value={formData.gender} onValueChange={(value) => setFormData({ ...formData, gender: value })}>
                     <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
@@ -370,12 +422,10 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                 </div>
               </div>
 
+              {/* Family Status */}
               <div className="space-y-2">
-                <Label htmlFor="familyStatus" className="text-gray-300">Family Status</Label>
-                <Select
-                  value={formData.familyStatus}
-                  onValueChange={(value) => setFormData({ ...formData, familyStatus: value })}
-                >
+                <Label className="text-gray-300">Family Status</Label>
+                <Select value={formData.familyStatus} onValueChange={(value) => setFormData({ ...formData, familyStatus: value })}>
                   <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -387,7 +437,7 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                 </Select>
               </div>
 
-              {/* Passport Section with Upload */}
+              {/* Passport Section with Multi-Upload */}
               <div className="border-t border-gray-700 pt-4 mt-4">
                 <h4 className="text-sm font-medium text-green-400 mb-3 flex items-center">
                   <FileText className="h-4 w-4 mr-2" />
@@ -396,66 +446,32 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="passportNo" className="text-gray-300">Passport Number *</Label>
-                    <Input
-                      id="passportNo"
-                      name="passportNo"
-                      value={formData.passportNo}
-                      onChange={handleChange}
-                      placeholder="Enter passport number"
-                      className="bg-gray-700 border-gray-600 text-white"
-                      required
-                    />
+                    <Input id="passportNo" name="passportNo" value={formData.passportNo} onChange={handleChange}
+                      placeholder="Enter passport number" className="bg-gray-700 border-gray-600 text-white" required />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="passportIssueDate" className="text-gray-300">Issue Date</Label>
-                      <Input
-                        id="passportIssueDate"
-                        name="passportIssueDate"
-                        type="date"
-                        value={formData.passportIssueDate}
-                        onChange={handleChange}
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
+                      <Input id="passportIssueDate" name="passportIssueDate" type="date" value={formData.passportIssueDate}
+                        onChange={handleChange} className="bg-gray-700 border-gray-600 text-white" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="passportExpiryDate" className="text-gray-300">Expiry Date *</Label>
-                      <Input
-                        id="passportExpiryDate"
-                        name="passportExpiryDate"
-                        type="date"
-                        value={formData.passportExpiryDate}
-                        onChange={handleChange}
-                        className="bg-gray-700 border-gray-600 text-white"
-                        required
-                      />
+                      <Input id="passportExpiryDate" name="passportExpiryDate" type="date" value={formData.passportExpiryDate}
+                        onChange={handleChange} className="bg-gray-700 border-gray-600 text-white" required />
                     </div>
                   </div>
                   
-                  {/* Passport Document Upload */}
-                  <div className="space-y-2">
-                    <Label className="text-gray-300">Passport Hard Copy</Label>
-                    {formData.passportDocumentUrl ? (
-                      <DocumentPreview
-                        url={formData.passportDocumentUrl}
-                        label="Passport Document"
-                        onRemove={() => setFormData({ ...formData, passportDocumentUrl: "" })}
-                      />
-                    ) : (
-                      <UploadDropzone
-                        endpoint="permitDocumentUploader"
-                        onClientUploadComplete={(res) => {
-                          if (res?.[0]?.url) {
-                            setFormData({ ...formData, passportDocumentUrl: res[0].url })
-                          }
-                        }}
-                        onUploadError={(error: Error) => {
-                          console.error("Upload error:", error)
-                        }}
-                        className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 ut-button:hover:bg-green-700 border-gray-600 bg-gray-700/30"
-                      />
-                    )}
-                  </div>
+                  {/* Passport Documents - Multiple Upload */}
+                  <MultiDocumentUpload
+                    label="Passport Documents (Multiple Allowed)"
+                    documents={formData.passportDocuments}
+                    onAdd={(url) => setFormData({ ...formData, passportDocuments: [...formData.passportDocuments, url] })}
+                    onRemove={(index) => setFormData({ 
+                      ...formData, 
+                      passportDocuments: formData.passportDocuments.filter((_, i) => i !== index) 
+                    })}
+                  />
                 </div>
               </div>
 
@@ -465,27 +481,13 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-gray-300">Email</Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="email@example.com"
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
+                    <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange}
+                      placeholder="email@example.com" className="bg-gray-700 border-gray-600 text-white" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="phone" className="text-gray-300">Phone</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="+251 912 345 678"
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
+                    <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange}
+                      placeholder="+251 912 345 678" className="bg-gray-700 border-gray-600 text-white" />
                   </div>
                 </div>
               </div>
@@ -501,64 +503,32 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="medicalLicenseNo" className="text-gray-300">License Number</Label>
-                    <Input
-                      id="medicalLicenseNo"
-                      name="medicalLicenseNo"
-                      value={formData.medicalLicenseNo}
-                      onChange={handleChange}
-                      placeholder="Enter medical license number"
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
+                    <Input id="medicalLicenseNo" name="medicalLicenseNo" value={formData.medicalLicenseNo}
+                      onChange={handleChange} placeholder="Enter license number" className="bg-gray-700 border-gray-600 text-white" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="medicalLicenseIssueDate" className="text-gray-300">Issue Date</Label>
-                      <Input
-                        id="medicalLicenseIssueDate"
-                        name="medicalLicenseIssueDate"
-                        type="date"
-                        value={formData.medicalLicenseIssueDate}
-                        onChange={handleChange}
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
+                      <Input id="medicalLicenseIssueDate" name="medicalLicenseIssueDate" type="date"
+                        value={formData.medicalLicenseIssueDate} onChange={handleChange} className="bg-gray-700 border-gray-600 text-white" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="medicalLicenseExpiryDate" className="text-gray-300">Expiry Date</Label>
-                      <Input
-                        id="medicalLicenseExpiryDate"
-                        name="medicalLicenseExpiryDate"
-                        type="date"
-                        value={formData.medicalLicenseExpiryDate}
-                        onChange={handleChange}
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
+                      <Input id="medicalLicenseExpiryDate" name="medicalLicenseExpiryDate" type="date"
+                        value={formData.medicalLicenseExpiryDate} onChange={handleChange} className="bg-gray-700 border-gray-600 text-white" />
                     </div>
                   </div>
                   
-                  {/* Medical License Document Upload */}
-                  <div className="space-y-2">
-                    <Label className="text-gray-300">Medical License Hard Copy</Label>
-                    {formData.medicalLicenseDocumentUrl ? (
-                      <DocumentPreview
-                        url={formData.medicalLicenseDocumentUrl}
-                        label="Medical License Document"
-                        onRemove={() => setFormData({ ...formData, medicalLicenseDocumentUrl: "" })}
-                      />
-                    ) : (
-                      <UploadDropzone
-                        endpoint="permitDocumentUploader"
-                        onClientUploadComplete={(res) => {
-                          if (res?.[0]?.url) {
-                            setFormData({ ...formData, medicalLicenseDocumentUrl: res[0].url })
-                          }
-                        }}
-                        onUploadError={(error: Error) => {
-                          console.error("Upload error:", error)
-                        }}
-                        className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 ut-button:hover:bg-green-700 border-gray-600 bg-gray-700/30"
-                      />
-                    )}
-                  </div>
+                  {/* Medical License Documents - Multiple Upload */}
+                  <MultiDocumentUpload
+                    label="Medical License Documents (Multiple Allowed)"
+                    documents={formData.medicalLicenseDocuments}
+                    onAdd={(url) => setFormData({ ...formData, medicalLicenseDocuments: [...formData.medicalLicenseDocuments, url] })}
+                    onRemove={(index) => setFormData({ 
+                      ...formData, 
+                      medicalLicenseDocuments: formData.medicalLicenseDocuments.filter((_, i) => i !== index) 
+                    })}
+                  />
                 </div>
               </div>
             </TabsContent>
@@ -573,64 +543,32 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="workPermitNo" className="text-gray-300">Permit Number</Label>
-                    <Input
-                      id="workPermitNo"
-                      name="workPermitNo"
-                      value={formData.workPermitNo}
-                      onChange={handleChange}
-                      placeholder="Enter work permit number"
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
+                    <Input id="workPermitNo" name="workPermitNo" value={formData.workPermitNo}
+                      onChange={handleChange} placeholder="Enter permit number" className="bg-gray-700 border-gray-600 text-white" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="workPermitIssueDate" className="text-gray-300">Issue Date</Label>
-                      <Input
-                        id="workPermitIssueDate"
-                        name="workPermitIssueDate"
-                        type="date"
-                        value={formData.workPermitIssueDate}
-                        onChange={handleChange}
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
+                      <Input id="workPermitIssueDate" name="workPermitIssueDate" type="date"
+                        value={formData.workPermitIssueDate} onChange={handleChange} className="bg-gray-700 border-gray-600 text-white" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="workPermitExpiryDate" className="text-gray-300">Expiry Date</Label>
-                      <Input
-                        id="workPermitExpiryDate"
-                        name="workPermitExpiryDate"
-                        type="date"
-                        value={formData.workPermitExpiryDate}
-                        onChange={handleChange}
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
+                      <Input id="workPermitExpiryDate" name="workPermitExpiryDate" type="date"
+                        value={formData.workPermitExpiryDate} onChange={handleChange} className="bg-gray-700 border-gray-600 text-white" />
                     </div>
                   </div>
                   
-                  {/* Work Permit Document Upload */}
-                  <div className="space-y-2">
-                    <Label className="text-gray-300">Work Permit Hard Copy</Label>
-                    {formData.workPermitDocumentUrl ? (
-                      <DocumentPreview
-                        url={formData.workPermitDocumentUrl}
-                        label="Work Permit Document"
-                        onRemove={() => setFormData({ ...formData, workPermitDocumentUrl: "" })}
-                      />
-                    ) : (
-                      <UploadDropzone
-                        endpoint="permitDocumentUploader"
-                        onClientUploadComplete={(res) => {
-                          if (res?.[0]?.url) {
-                            setFormData({ ...formData, workPermitDocumentUrl: res[0].url })
-                          }
-                        }}
-                        onUploadError={(error: Error) => {
-                          console.error("Upload error:", error)
-                        }}
-                        className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 ut-button:hover:bg-green-700 border-gray-600 bg-gray-700/30"
-                      />
-                    )}
-                  </div>
+                  {/* Work Permit Documents - Multiple Upload */}
+                  <MultiDocumentUpload
+                    label="Work Permit Documents (Multiple Allowed)"
+                    documents={formData.workPermitDocuments}
+                    onAdd={(url) => setFormData({ ...formData, workPermitDocuments: [...formData.workPermitDocuments, url] })}
+                    onRemove={(index) => setFormData({ 
+                      ...formData, 
+                      workPermitDocuments: formData.workPermitDocuments.filter((_, i) => i !== index) 
+                    })}
+                  />
                 </div>
               </div>
             </TabsContent>
@@ -645,64 +583,32 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="residenceIdNo" className="text-gray-300">Residence ID Number</Label>
-                    <Input
-                      id="residenceIdNo"
-                      name="residenceIdNo"
-                      value={formData.residenceIdNo}
-                      onChange={handleChange}
-                      placeholder="Enter residence ID number"
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
+                    <Input id="residenceIdNo" name="residenceIdNo" value={formData.residenceIdNo}
+                      onChange={handleChange} placeholder="Enter ID number" className="bg-gray-700 border-gray-600 text-white" />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="residenceIdIssueDate" className="text-gray-300">Issue Date</Label>
-                      <Input
-                        id="residenceIdIssueDate"
-                        name="residenceIdIssueDate"
-                        type="date"
-                        value={formData.residenceIdIssueDate}
-                        onChange={handleChange}
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
+                      <Input id="residenceIdIssueDate" name="residenceIdIssueDate" type="date"
+                        value={formData.residenceIdIssueDate} onChange={handleChange} className="bg-gray-700 border-gray-600 text-white" />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="residenceIdExpiryDate" className="text-gray-300">Expiry Date</Label>
-                      <Input
-                        id="residenceIdExpiryDate"
-                        name="residenceIdExpiryDate"
-                        type="date"
-                        value={formData.residenceIdExpiryDate}
-                        onChange={handleChange}
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
+                      <Input id="residenceIdExpiryDate" name="residenceIdExpiryDate" type="date"
+                        value={formData.residenceIdExpiryDate} onChange={handleChange} className="bg-gray-700 border-gray-600 text-white" />
                     </div>
                   </div>
                   
-                  {/* Residence ID Document Upload */}
-                  <div className="space-y-2">
-                    <Label className="text-gray-300">Residence ID Hard Copy</Label>
-                    {formData.residenceIdDocumentUrl ? (
-                      <DocumentPreview
-                        url={formData.residenceIdDocumentUrl}
-                        label="Residence ID Document"
-                        onRemove={() => setFormData({ ...formData, residenceIdDocumentUrl: "" })}
-                      />
-                    ) : (
-                      <UploadDropzone
-                        endpoint="permitDocumentUploader"
-                        onClientUploadComplete={(res) => {
-                          if (res?.[0]?.url) {
-                            setFormData({ ...formData, residenceIdDocumentUrl: res[0].url })
-                          }
-                        }}
-                        onUploadError={(error: Error) => {
-                          console.error("Upload error:", error)
-                        }}
-                        className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 ut-button:hover:bg-green-700 border-gray-600 bg-gray-700/30"
-                      />
-                    )}
-                  </div>
+                  {/* Residence ID Documents - Multiple Upload */}
+                  <MultiDocumentUpload
+                    label="Residence ID Documents (Multiple Allowed)"
+                    documents={formData.residenceIdDocuments}
+                    onAdd={(url) => setFormData({ ...formData, residenceIdDocuments: [...formData.residenceIdDocuments, url] })}
+                    onRemove={(index) => setFormData({ 
+                      ...formData, 
+                      residenceIdDocuments: formData.residenceIdDocuments.filter((_, i) => i !== index) 
+                    })}
+                  />
                 </div>
               </div>
             </TabsContent>
@@ -710,19 +616,12 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
 
           {/* Actions */}
           <div className="flex gap-3 pt-6 border-t border-gray-700 mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1 bg-gray-700 border-gray-600 hover:bg-gray-600"
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}
+              className="flex-1 bg-gray-700 border-gray-600 hover:bg-gray-600">
               Cancel
             </Button>
-            <Button
-              type="submit"
-              className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!formData.firstName || !formData.lastName || !formData.nationality || !formData.passportNo || !formData.dateOfBirth || !formData.gender || !formData.passportExpiryDate}
-            >
+            <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700"
+              disabled={!formData.firstName || !formData.lastName || !formData.nationality || !formData.passportNo || !formData.dateOfBirth || !formData.gender || !formData.passportExpiryDate}>
               {isEditMode ? "Update Foreigner" : "Add Foreigner"}
             </Button>
           </div>
