@@ -33,6 +33,7 @@ interface PersonFormData {
   medicalLicenseDocuments: string[]
   // Work Permit
   workPermitNo: string
+  workPermitSubType: string
   workPermitIssueDate: string
   workPermitExpiryDate: string
   workPermitDocuments: string[]
@@ -191,6 +192,7 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
     medicalLicenseExpiryDate: "",
     medicalLicenseDocuments: [],
     workPermitNo: "",
+    workPermitSubType: "",
     workPermitIssueDate: "",
     workPermitExpiryDate: "",
     workPermitDocuments: [],
@@ -222,6 +224,7 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
         medicalLicenseExpiryDate: person.medicalLicenseExpiryDate || "",
         medicalLicenseDocuments: person.medicalLicenseDocuments || [],
         workPermitNo: person.workPermitNo || "",
+        workPermitSubType: person.workPermitSubType || "",
         workPermitIssueDate: person.workPermitIssueDate || "",
         workPermitExpiryDate: person.workPermitExpiryDate || "",
         workPermitDocuments: person.workPermitDocuments || [],
@@ -250,6 +253,7 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
         medicalLicenseExpiryDate: "",
         medicalLicenseDocuments: [],
         workPermitNo: "",
+        workPermitSubType: "",
         workPermitIssueDate: "",
         workPermitExpiryDate: "",
         workPermitDocuments: [],
@@ -290,6 +294,12 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
   const familyStatuses = [
     { value: "MARRIED", label: "Married" },
     { value: "UNMARRIED", label: "Unmarried" },
+  ]
+
+  const workPermitSubTypes = [
+    { value: "NEW", label: "New Work Permit" },
+    { value: "RENEWAL", label: "Renewal Work Permit" },
+    { value: "OTHER", label: "Other" },
   ]
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -541,6 +551,21 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                   Work Permit Details
                 </h4>
                 <div className="space-y-4">
+                  {/* Work Permit Sub-Type */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Permit Type *</Label>
+                    <Select value={formData.workPermitSubType} onValueChange={(value) => setFormData({ ...formData, workPermitSubType: value })}>
+                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                        <SelectValue placeholder="Select permit type" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-700 border-gray-600">
+                        {workPermitSubTypes.map((t) => (
+                          <SelectItem key={t.value} value={t.value} className="text-white">{t.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="workPermitNo" className="text-gray-300">Permit Number</Label>
                     <Input id="workPermitNo" name="workPermitNo" value={formData.workPermitNo}

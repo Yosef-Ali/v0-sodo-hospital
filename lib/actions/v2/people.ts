@@ -35,6 +35,7 @@ export async function getPeople(params?: {
         medicalLicenseExpiryDate: people.medicalLicenseExpiryDate,
         medicalLicenseDocuments: people.medicalLicenseDocuments,
         workPermitNo: people.workPermitNo,
+        workPermitSubType: people.workPermitSubType,
         workPermitIssueDate: people.workPermitIssueDate,
         workPermitExpiryDate: people.workPermitExpiryDate,
         workPermitDocuments: people.workPermitDocuments,
@@ -162,6 +163,7 @@ export async function createPerson(data: {
   medicalLicenseExpiryDate?: Date
   medicalLicenseDocuments?: string[]
   workPermitNo?: string
+  workPermitSubType?: "NEW" | "RENEWAL" | "OTHER"
   workPermitIssueDate?: Date
   workPermitExpiryDate?: Date
   workPermitDocuments?: string[]
@@ -242,6 +244,7 @@ export async function updatePerson(
     medicalLicenseExpiryDate: Date
     medicalLicenseDocuments: string[]
     workPermitNo: string
+    workPermitSubType: "NEW" | "RENEWAL" | "OTHER"
     workPermitIssueDate: Date
     workPermitExpiryDate: Date
     workPermitDocuments: string[]
