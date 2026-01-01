@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, FileText, Briefcase, Home } from "lucide-react"
+import { User, FileText, Briefcase, Home, Upload, X, Image as ImageIcon, File } from "lucide-react"
+import { UploadDropzone } from "@/lib/uploadthing-utils"
 
 interface PersonFormData {
   id?: string
@@ -19,22 +20,27 @@ interface PersonFormData {
   dateOfBirth: string
   gender: string
   familyStatus: string
+  photoUrl: string
   // Passport
   passportNo: string
   passportIssueDate: string
   passportExpiryDate: string
+  passportDocumentUrl: string
   // Medical License
   medicalLicenseNo: string
   medicalLicenseIssueDate: string
   medicalLicenseExpiryDate: string
+  medicalLicenseDocumentUrl: string
   // Work Permit
   workPermitNo: string
   workPermitIssueDate: string
   workPermitExpiryDate: string
+  workPermitDocumentUrl: string
   // Residence ID
   residenceIdNo: string
   residenceIdIssueDate: string
   residenceIdExpiryDate: string
+  residenceIdDocumentUrl: string
   // Contact
   email: string
   phone: string
@@ -48,6 +54,46 @@ interface PersonSheetProps {
   person?: PersonFormData | null
 }
 
+// Document Preview Component
+function DocumentPreview({ 
+  url, 
+  label, 
+  onRemove 
+}: { 
+  url: string; 
+  label: string; 
+  onRemove: () => void 
+}) {
+  const isImage = url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+  
+  return (
+    <div className="relative group">
+      <div className="border border-gray-600 rounded-lg p-2 bg-gray-700/50">
+        {isImage ? (
+          <img 
+            src={url} 
+            alt={label} 
+            className="w-full h-32 object-cover rounded"
+          />
+        ) : (
+          <div className="w-full h-32 flex flex-col items-center justify-center text-gray-400">
+            <File className="h-10 w-10 mb-2" />
+            <span className="text-xs">PDF Document</span>
+          </div>
+        )}
+        <p className="text-xs text-gray-400 mt-2 truncate">{label}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  )
+}
+
 export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonSheetProps) {
   const [activeTab, setActiveTab] = useState("personal")
   const [formData, setFormData] = useState<PersonFormData>({
@@ -57,18 +103,23 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
     dateOfBirth: "",
     gender: "",
     familyStatus: "",
+    photoUrl: "",
     passportNo: "",
     passportIssueDate: "",
     passportExpiryDate: "",
+    passportDocumentUrl: "",
     medicalLicenseNo: "",
     medicalLicenseIssueDate: "",
     medicalLicenseExpiryDate: "",
+    medicalLicenseDocumentUrl: "",
     workPermitNo: "",
     workPermitIssueDate: "",
     workPermitExpiryDate: "",
+    workPermitDocumentUrl: "",
     residenceIdNo: "",
     residenceIdIssueDate: "",
     residenceIdExpiryDate: "",
+    residenceIdDocumentUrl: "",
     email: "",
     phone: "",
   })
@@ -84,18 +135,23 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
         dateOfBirth: person.dateOfBirth || "",
         gender: person.gender || "",
         familyStatus: person.familyStatus || "",
+        photoUrl: person.photoUrl || "",
         passportNo: person.passportNo || "",
         passportIssueDate: person.passportIssueDate || "",
         passportExpiryDate: person.passportExpiryDate || "",
+        passportDocumentUrl: person.passportDocumentUrl || "",
         medicalLicenseNo: person.medicalLicenseNo || "",
         medicalLicenseIssueDate: person.medicalLicenseIssueDate || "",
         medicalLicenseExpiryDate: person.medicalLicenseExpiryDate || "",
+        medicalLicenseDocumentUrl: person.medicalLicenseDocumentUrl || "",
         workPermitNo: person.workPermitNo || "",
         workPermitIssueDate: person.workPermitIssueDate || "",
         workPermitExpiryDate: person.workPermitExpiryDate || "",
+        workPermitDocumentUrl: person.workPermitDocumentUrl || "",
         residenceIdNo: person.residenceIdNo || "",
         residenceIdIssueDate: person.residenceIdIssueDate || "",
         residenceIdExpiryDate: person.residenceIdExpiryDate || "",
+        residenceIdDocumentUrl: person.residenceIdDocumentUrl || "",
         email: person.email || "",
         phone: person.phone || "",
       })
@@ -107,18 +163,23 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
         dateOfBirth: "",
         gender: "",
         familyStatus: "",
+        photoUrl: "",
         passportNo: "",
         passportIssueDate: "",
         passportExpiryDate: "",
+        passportDocumentUrl: "",
         medicalLicenseNo: "",
         medicalLicenseIssueDate: "",
         medicalLicenseExpiryDate: "",
+        medicalLicenseDocumentUrl: "",
         workPermitNo: "",
         workPermitIssueDate: "",
         workPermitExpiryDate: "",
+        workPermitDocumentUrl: "",
         residenceIdNo: "",
         residenceIdIssueDate: "",
         residenceIdExpiryDate: "",
+        residenceIdDocumentUrl: "",
         email: "",
         phone: "",
       })
@@ -176,8 +237,8 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
           </SheetTitle>
           <SheetDescription className="text-gray-400">
             {isEditMode
-              ? "Update the foreigner's details below."
-              : "Fill in the foreigner's details to create a new record."}
+              ? "Update the foreigner's details and documents below."
+              : "Fill in the foreigner's details and upload required documents."}
           </SheetDescription>
         </SheetHeader>
 
@@ -204,6 +265,34 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
 
             {/* Personal Info Tab */}
             <TabsContent value="personal" className="space-y-4">
+              {/* Profile Photo Upload */}
+              <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-700">
+                <h4 className="text-sm font-medium text-green-400 mb-3 flex items-center">
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Profile Photo
+                </h4>
+                {formData.photoUrl ? (
+                  <DocumentPreview
+                    url={formData.photoUrl}
+                    label="Profile Photo"
+                    onRemove={() => setFormData({ ...formData, photoUrl: "" })}
+                  />
+                ) : (
+                  <UploadDropzone
+                    endpoint="permitDocumentUploader"
+                    onClientUploadComplete={(res) => {
+                      if (res?.[0]?.url) {
+                        setFormData({ ...formData, photoUrl: res[0].url })
+                      }
+                    }}
+                    onUploadError={(error: Error) => {
+                      console.error("Upload error:", error)
+                    }}
+                    className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 ut-button:hover:bg-green-700 border-gray-600 bg-gray-700/30"
+                  />
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="firstName" className="text-gray-300">First Name *</Label>
@@ -298,9 +387,12 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                 </Select>
               </div>
 
-              {/* Passport Section */}
+              {/* Passport Section with Upload */}
               <div className="border-t border-gray-700 pt-4 mt-4">
-                <h4 className="text-sm font-medium text-green-400 mb-3">Passport Details</h4>
+                <h4 className="text-sm font-medium text-green-400 mb-3 flex items-center">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Passport Details
+                </h4>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="passportNo" className="text-gray-300">Passport Number *</Label>
@@ -338,6 +430,31 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                         required
                       />
                     </div>
+                  </div>
+                  
+                  {/* Passport Document Upload */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Passport Hard Copy</Label>
+                    {formData.passportDocumentUrl ? (
+                      <DocumentPreview
+                        url={formData.passportDocumentUrl}
+                        label="Passport Document"
+                        onRemove={() => setFormData({ ...formData, passportDocumentUrl: "" })}
+                      />
+                    ) : (
+                      <UploadDropzone
+                        endpoint="permitDocumentUploader"
+                        onClientUploadComplete={(res) => {
+                          if (res?.[0]?.url) {
+                            setFormData({ ...formData, passportDocumentUrl: res[0].url })
+                          }
+                        }}
+                        onUploadError={(error: Error) => {
+                          console.error("Upload error:", error)
+                        }}
+                        className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 ut-button:hover:bg-green-700 border-gray-600 bg-gray-700/30"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -417,6 +534,31 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                       />
                     </div>
                   </div>
+                  
+                  {/* Medical License Document Upload */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Medical License Hard Copy</Label>
+                    {formData.medicalLicenseDocumentUrl ? (
+                      <DocumentPreview
+                        url={formData.medicalLicenseDocumentUrl}
+                        label="Medical License Document"
+                        onRemove={() => setFormData({ ...formData, medicalLicenseDocumentUrl: "" })}
+                      />
+                    ) : (
+                      <UploadDropzone
+                        endpoint="permitDocumentUploader"
+                        onClientUploadComplete={(res) => {
+                          if (res?.[0]?.url) {
+                            setFormData({ ...formData, medicalLicenseDocumentUrl: res[0].url })
+                          }
+                        }}
+                        onUploadError={(error: Error) => {
+                          console.error("Upload error:", error)
+                        }}
+                        className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 ut-button:hover:bg-green-700 border-gray-600 bg-gray-700/30"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </TabsContent>
@@ -464,6 +606,31 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                       />
                     </div>
                   </div>
+                  
+                  {/* Work Permit Document Upload */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Work Permit Hard Copy</Label>
+                    {formData.workPermitDocumentUrl ? (
+                      <DocumentPreview
+                        url={formData.workPermitDocumentUrl}
+                        label="Work Permit Document"
+                        onRemove={() => setFormData({ ...formData, workPermitDocumentUrl: "" })}
+                      />
+                    ) : (
+                      <UploadDropzone
+                        endpoint="permitDocumentUploader"
+                        onClientUploadComplete={(res) => {
+                          if (res?.[0]?.url) {
+                            setFormData({ ...formData, workPermitDocumentUrl: res[0].url })
+                          }
+                        }}
+                        onUploadError={(error: Error) => {
+                          console.error("Upload error:", error)
+                        }}
+                        className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 ut-button:hover:bg-green-700 border-gray-600 bg-gray-700/30"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </TabsContent>
@@ -510,6 +677,31 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                         className="bg-gray-700 border-gray-600 text-white"
                       />
                     </div>
+                  </div>
+                  
+                  {/* Residence ID Document Upload */}
+                  <div className="space-y-2">
+                    <Label className="text-gray-300">Residence ID Hard Copy</Label>
+                    {formData.residenceIdDocumentUrl ? (
+                      <DocumentPreview
+                        url={formData.residenceIdDocumentUrl}
+                        label="Residence ID Document"
+                        onRemove={() => setFormData({ ...formData, residenceIdDocumentUrl: "" })}
+                      />
+                    ) : (
+                      <UploadDropzone
+                        endpoint="permitDocumentUploader"
+                        onClientUploadComplete={(res) => {
+                          if (res?.[0]?.url) {
+                            setFormData({ ...formData, residenceIdDocumentUrl: res[0].url })
+                          }
+                        }}
+                        onUploadError={(error: Error) => {
+                          console.error("Upload error:", error)
+                        }}
+                        className="ut-label:text-gray-400 ut-allowed-content:text-gray-500 ut-button:bg-green-600 ut-button:hover:bg-green-700 border-gray-600 bg-gray-700/30"
+                      />
+                    )}
                   </div>
                 </div>
               </div>

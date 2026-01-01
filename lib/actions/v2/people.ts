@@ -25,18 +25,23 @@ export async function getPeople(params?: {
         dateOfBirth: people.dateOfBirth,
         gender: people.gender,
         familyStatus: people.familyStatus,
+        photoUrl: people.photoUrl,
         passportNo: people.passportNo,
         passportIssueDate: people.passportIssueDate,
         passportExpiryDate: people.passportExpiryDate,
+        passportDocumentUrl: people.passportDocumentUrl,
         medicalLicenseNo: people.medicalLicenseNo,
         medicalLicenseIssueDate: people.medicalLicenseIssueDate,
         medicalLicenseExpiryDate: people.medicalLicenseExpiryDate,
+        medicalLicenseDocumentUrl: people.medicalLicenseDocumentUrl,
         workPermitNo: people.workPermitNo,
         workPermitIssueDate: people.workPermitIssueDate,
         workPermitExpiryDate: people.workPermitExpiryDate,
+        workPermitDocumentUrl: people.workPermitDocumentUrl,
         residenceIdNo: people.residenceIdNo,
         residenceIdIssueDate: people.residenceIdIssueDate,
         residenceIdExpiryDate: people.residenceIdExpiryDate,
+        residenceIdDocumentUrl: people.residenceIdDocumentUrl,
         phone: people.phone,
         email: people.email,
         guardianId: people.guardianId,
@@ -147,18 +152,23 @@ export async function createPerson(data: {
   dateOfBirth?: Date
   gender?: "MALE" | "FEMALE"
   familyStatus?: "MARRIED" | "UNMARRIED"
+  photoUrl?: string
   passportNo?: string
   passportIssueDate?: Date
   passportExpiryDate?: Date
+  passportDocumentUrl?: string
   medicalLicenseNo?: string
   medicalLicenseIssueDate?: Date
   medicalLicenseExpiryDate?: Date
+  medicalLicenseDocumentUrl?: string
   workPermitNo?: string
   workPermitIssueDate?: Date
   workPermitExpiryDate?: Date
+  workPermitDocumentUrl?: string
   residenceIdNo?: string
   residenceIdIssueDate?: Date
   residenceIdExpiryDate?: Date
+  residenceIdDocumentUrl?: string
   phone?: string
   email?: string
   guardianId?: string
@@ -222,18 +232,23 @@ export async function updatePerson(
     dateOfBirth: Date
     gender: "MALE" | "FEMALE"
     familyStatus: "MARRIED" | "UNMARRIED"
+    photoUrl: string
     passportNo: string
     passportIssueDate: Date
     passportExpiryDate: Date
+    passportDocumentUrl: string
     medicalLicenseNo: string
     medicalLicenseIssueDate: Date
     medicalLicenseExpiryDate: Date
+    medicalLicenseDocumentUrl: string
     workPermitNo: string
     workPermitIssueDate: Date
     workPermitExpiryDate: Date
+    workPermitDocumentUrl: string
     residenceIdNo: string
     residenceIdIssueDate: Date
     residenceIdExpiryDate: Date
+    residenceIdDocumentUrl: string
     phone: string
     email: string
     guardianId: string
