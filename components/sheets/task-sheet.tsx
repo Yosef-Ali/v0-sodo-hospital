@@ -20,6 +20,7 @@ interface TaskFormData {
   dueDate: string
   assignee: string
   category: string
+  subType: string
 }
 
 interface TaskSheetProps {
@@ -38,6 +39,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
     dueDate: new Date().toISOString().split("T")[0],
     assignee: "",
     category: "",
+    subType: "",
   })
 
   // Populate form when editing
@@ -52,6 +54,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
         dueDate: task.dueDate || new Date().toISOString().split("T")[0],
         assignee: task.assignee || "",
         category: task.category || "",
+        subType: task.subType || "",
       })
     } else {
       // Reset for create mode
@@ -63,6 +66,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
         dueDate: new Date().toISOString().split("T")[0],
         assignee: "",
         category: "",
+        subType: "",
       })
     }
   }, [task, open])
@@ -71,46 +75,54 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
   const categories = [
     { value: "work_permit", label: "Work Permit" },
     { value: "residence_id", label: "Residence ID" },
-    { value: "license", label: "Professional License" },
-    { value: "document_verification", label: "Document Verification" },
-    { value: "interview", label: "Interview" },
-    { value: "onboarding", label: "Onboarding" },
+    { value: "medical_license", label: "Medical License" },
+    { value: "pip", label: "Pre Import Permit (PIP)" },
+    { value: "customs", label: "Customs / Single Window" },
+    { value: "car_bolo_insurance", label: "Car Bolo & Insurance" },
+  ]
+
+  const workPermitSubTypes = [
+    { value: "NEW", label: "New Work Permit" },
+    { value: "RENEWAL", label: "Renewal Work Permit" },
+    { value: "OTHER", label: "Other" },
   ]
 
   const quickTitles: Record<string, string[]> = {
     work_permit: [
-      "Review Work Permit Application",
-      "Submit Work Permit Documents",
+      "Submit Work Permit Application",
+      "Collect Required Documents",
       "Follow up on Work Permit Status",
-      "Renew Work Permit",
+      "Work Permit Approved - Collect",
     ],
     residence_id: [
-      "Review Residence ID Application",
-      "Submit Residence ID Documents",
+      "Submit Residence ID Application",
+      "Collect Required Documents",
       "Follow up on Residence ID Status",
-      "Renew Residence ID",
+      "Residence ID Ready - Collect",
     ],
-    license: [
-      "Review License Application",
-      "Submit License Documents",
-      "Schedule License Exam",
-      "Renew Professional License",
+    medical_license: [
+      "Submit Medical License Application",
+      "Prepare License Documents",
+      "License Verification Process",
+      "Medical License Renewal",
     ],
-    document_verification: [
-      "Verify Educational Certificates",
-      "Verify Employment Contract",
-      "Verify Health Certificate",
-      "Verify Passport Copy",
+    pip: [
+      "Submit Pre Import Permit Request",
+      "Prepare PIP Documents",
+      "Follow up on PIP Status",
+      "PIP Approved - Proceed",
     ],
-    interview: [
-      "Conduct Candidate Interview",
-      "Conduct Exit Interview",
-      "Conduct Performance Review",
+    customs: [
+      "Submit Customs Declaration",
+      "Single Window Application",
+      "Customs Clearance Process",
+      "Collect Cleared Items",
     ],
-    onboarding: [
-      "Prepare Onboarding Materials",
-      "Conduct Orientation Session",
-      "Complete HR Paperwork",
+    car_bolo_insurance: [
+      "Apply for Car Bolo",
+      "Renew Car Insurance",
+      "Update Vehicle Registration",
+      "Car Bolo & Insurance Renewal",
     ],
   }
 
@@ -157,7 +169,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
             </Label>
             <Select
               value={formData.category}
-              onValueChange={(value) => setFormData({ ...formData, category: value, title: "" })}
+              onValueChange={(value) => setFormData({ ...formData, category: value, title: "", subType: "" })}
             >
               <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                 <SelectValue placeholder="Select category" />
@@ -171,6 +183,30 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
               </SelectContent>
             </Select>
           </div>
+
+          {/* Work Permit Sub-Type (only shows for Work Permit category) */}
+          {formData.category === "work_permit" && (
+            <div className="space-y-2">
+              <Label htmlFor="subType" className="text-gray-300">
+                Work Permit Type *
+              </Label>
+              <Select
+                value={formData.subType}
+                onValueChange={(value) => setFormData({ ...formData, subType: value })}
+              >
+                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Select work permit type" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {workPermitSubTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value} className="text-white">
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Quick Title Selection (based on category) */}
           {formData.category && (
@@ -317,7 +353,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
             <Button
               type="submit"
               className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!formData.category || !formData.title || !formData.description || !formData.assignee}
+              disabled={!formData.category || !formData.title || !formData.description || !formData.assignee || (formData.category === "work_permit" && !formData.subType)}
             >
               {isEditMode ? "Update Task" : "Create Task"}
             </Button>
