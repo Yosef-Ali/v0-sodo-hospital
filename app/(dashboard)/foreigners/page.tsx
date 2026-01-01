@@ -1,4 +1,4 @@
-import { PeoplePage } from "@/components/pages/people-page"
+import { ForeignersPage } from "@/components/pages/foreigners-page"
 import { getPeople, getPeopleStats } from "@/lib/actions/v2/people"
 import { unstable_cache } from "next/cache"
 
@@ -22,7 +22,7 @@ const getCachedPeopleData = unstable_cache(
   }
 )
 
-export default async function PeopleRoute() {
+export default async function ForeignersRoute() {
   const peopleData = await getCachedPeopleData()
-  return <PeoplePage initialData={peopleData} />
+  return <ForeignersPage initialData={peopleData} />
 }

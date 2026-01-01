@@ -11,10 +11,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getUsers } from "@/lib/actions/users"
 import { getPeople } from "@/lib/actions/v2/people"
-import { Badge } from "@/components/ui/badge"
 import { 
   Briefcase, 
-  user as UserIcon, 
+  UserCircle, 
   Calendar, 
   FileText, 
   CheckCircle2, 
@@ -23,10 +22,8 @@ import {
   Car,
   Stethoscope,
   Plane,
-  CreditCard,
-  UserCircle
+  User
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 // Define the shape of the task object coming from the database/parent
 interface Task {
@@ -159,14 +156,13 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
 
   // Predefined options
   const categories = [
-    { value: "work_permit", label: "Work Permit", icon: Briefcase },
-    { value: "residence_id", label: "Residence ID", icon: UserCircle },
-    { value: "medical_license", label: "Medical License / MOH", icon: Stethoscope },
-    { value: "pip", label: "Pre Import Permit (PIP)", icon: Plane },
-    { value: "customs", label: "Customs / Single Window", icon: Plane },
-    { value: "car_bolo_insurance", label: "Car Bolo & Insurance", icon: Car },
-    { value: "company_registration", label: "Company Registration", icon: Building2 },
-    { value: "govt_affairs", label: "Gov't Affairs", icon: Building2 },
+    { value: "work-permit", label: "Work Permit", icon: Briefcase },
+    { value: "residence-id", label: "Residence ID", icon: UserCircle },
+    { value: "moh-licensing", label: "MOH Licensing", icon: Stethoscope },
+    { value: "customs", label: "Customs / PIP / ESW", icon: Plane },
+    { value: "bolo-insurance", label: "Vehicle Bolo & Insurance", icon: Car },
+    { value: "company-registration", label: "Company Registration", icon: Building2 },
+    { value: "govt-affairs", label: "Gov't Affairs", icon: Building2 },
   ]
 
   const workPermitSubTypes = [
@@ -182,60 +178,65 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
     { value: "RETURN", label: "Return Expired" },
   ]
 
+  const customsSubTypes = [
+    { value: "PIP", label: "Pre Import Permit (PIP)" },
+    { value: "ESW", label: "Ethiopia Single Window (ESW)" },
+    { value: "OTHER", label: "General Customs" },
+  ]
+
+  const boloSubTypes = [
+    { value: "NEW", label: "New Inspection/Bolo" },
+    { value: "RENEWAL", label: "Renewal" },
+  ]
+
   // Mapping simple categories to data keys if needed, 
   // but for now keeping the quick titles simple
   const quickTitles: Record<string, string[]> = {
-    work_permit: [
-      "Submit Work Permit Application",
+    "work-permit": [
+      "New Work Permit Application",
+      "Work Permit Renewal",
       "Collect Required Documents",
       "Follow up on Work Permit Status",
-      "Work Permit Approved - Collect",
+      "Submit Physical Documents",
     ],
-    residence_id: [
-      "Submit Residence ID Application",
-      "Collect Required Documents",
-      "Follow up on Residence ID Status",
-      "Residence ID Ready - Collect",
+    "residence-id": [
+      "New Residence ID Application",
+      "Residence ID Renewal",
+      "New Residence ID for Wife & Child",
+      "Renewal Residence ID for Dependents",
+      "Submit Document AND Payment",
     ],
-    medical_license: [
-      "Submit Medical License Application",
-      "Prepare License Documents",
-      "License Verification Process",
-      "Medical License Renewal",
-    ],
-    moh_licensing: [ // Alias for medical_license if needed
+    "moh-licensing": [
       "Permanent/New License Application",
       "Temporary License Application",
       "License Renewal",
       "Return Expired License",
+      "Document Preparation",
     ],
-    pip: [
-      "Submit Pre Import Permit Request",
-      "Prepare PIP Documents",
-      "Follow up on PIP Status",
-      "PIP Approved - Proceed",
-    ],
-    customs: [
+    "customs": [
+      "Pre Import Permit (PIP)",
+      "Ethiopia Single Window (ESW)",
       "Submit Customs Declaration",
-      "Single Window Application",
-      "Customs Clearance Process",
       "Collect Cleared Items",
+      "Document Collection for PIP",
     ],
-    car_bolo_insurance: [
-      "Apply for Car Bolo",
-      "Renew Car Insurance",
-      "Update Vehicle Registration",
-      "Car Bolo & Insurance Renewal",
+    "bolo-insurance": [
+      "Bolo and Insurance Inspection",
+      "Process Road Fund Payment",
+      "Obtain Vehicle Insurance",
+      "Complete Road Transport Requirements",
     ],
-    company_registration: [
+    "company-registration": [
+      "Company Registration",
       "Prepare Registration Documents",
       "Submit Online Application",
       "Collect Business License",
     ],
-    govt_affairs: [
+    "govt-affairs": [
       "Investment Commission Process",
       "ETA Requirements",
       "PACCS Process",
+      "Family Medicine Licensing",
     ]
   }
 
@@ -247,147 +248,151 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSubmit(formData)
-    // onOpenChange(false) // Let parent handle closing if needed, or keep it here
   }
 
   const isEditMode = !!task
 
   // Determine which fields to show based on category
-  const showPersonSelector = ["work_permit", "residence_id", "medical_license", "moh_licensing"].includes(formData.category)
-  const showSubType = ["work_permit", "medical_license", "moh_licensing"].includes(formData.category)
+  const showPersonSelector = ["work-permit", "residence-id", "moh-licensing"].includes(formData.category)
+  const showSubType = ["work-permit", "moh-licensing", "customs", "bolo-insurance"].includes(formData.category)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="bg-slate-950 border-l border-slate-800 w-full sm:max-w-xl p-0 shadow-2xl overflow-y-auto">
-        
-        {/* Header */}
-        <div className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 p-6 sticky top-0 z-10">
-          <SheetHeader>
-            <SheetTitle className="text-2xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-              {isEditMode ? "Update Task" : "Create New Task"}
-            </SheetTitle>
-            <SheetDescription className="text-slate-400">
-              {isEditMode
-                ? "Refine and update the task details below."
-                : "Orchestrate a new workflow item."}
-            </SheetDescription>
-          </SheetHeader>
-        </div>
+      <SheetContent className="bg-gray-800 border-gray-700 w-full sm:max-w-xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="text-white">
+            {isEditMode ? "Edit Task" : "Create New Task"}
+          </SheetTitle>
+          <SheetDescription className="text-gray-400">
+            {isEditMode
+              ? "Update the task details below."
+              : "Orchestrate a new workflow item."}
+          </SheetDescription>
+        </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-8 pb-24">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
           
           {/* GROUP 1: CONTEXT */}
-          <section className="space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-8 w-1 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-              <h3 className="text-sm font-semibold text-blue-400 tracking-wider uppercase">
-                Context & Subject
-              </h3>
-            </div>
+          <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-700">
+            <h4 className="text-sm font-medium text-green-400 mb-3 flex items-center uppercase tracking-wider">
+              <Building2 className="h-4 w-4 mr-2" />
+              Context & Subject
+            </h4>
             
-            <div className="bg-slate-900/40 rounded-xl p-5 border border-slate-800/60 shadow-inner space-y-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Category */}
-                <div className="space-y-2">
-                  <Label htmlFor="category" className="text-slate-300 text-xs font-medium uppercase tracking-wide">
-                    Workflow Category
-                  </Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value, title: "", subType: "" })}
-                  >
-                    <SelectTrigger className="bg-slate-800/50 border-slate-700 text-slate-100 h-10 hover:bg-slate-800 hover:border-blue-500/50 transition-all duration-200">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-700">
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value} className="text-slate-200 focus:bg-slate-800 focus:text-blue-400">
-                          <div className="flex items-center gap-2">
-                            <cat.icon className="w-4 h-4 text-slate-400" />
-                            {cat.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Sub-Type (Dynamic) */}
-                {showSubType && (
-                  <div className="space-y-2">
-                    <Label htmlFor="subType" className="text-slate-300 text-xs font-medium uppercase tracking-wide">
-                      Specific Type
-                    </Label>
-                    <Select
-                      value={formData.subType}
-                      onValueChange={(value) => setFormData({ ...formData, subType: value })}
-                    >
-                      <SelectTrigger className="bg-slate-800/50 border-slate-700 text-slate-100 h-10 hover:bg-slate-800 transition-all">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-700">
-                      {formData.category === "work_permit" ? (
-                        workPermitSubTypes.map((type) => (
-                          <SelectItem key={type.value} value={type.value} className="text-slate-200 focus:bg-slate-800">
-                            {type.label}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        mohSubTypes.map((type) => (
-                           <SelectItem key={type.value} value={type.value} className="text-slate-200 focus:bg-slate-800">
-                            {type.label}
-                          </SelectItem>
-                        ))
-                      )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Category */}
+              <div className="space-y-2">
+                <Label htmlFor="category" className="text-gray-300">
+                  Workflow Category
+                </Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData({ ...formData, category: value, title: "", subType: "" })}
+                >
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600">
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value} className="text-white">
+                        <div className="flex items-center gap-2">
+                          <cat.icon className="w-4 h-4 text-gray-400" />
+                          {cat.label}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Person Selector (Dynamic) */}
-              {showPersonSelector && (
-                <div className="space-y-2 pt-1">
-                  <Label htmlFor="personId" className="text-slate-300 text-xs font-medium uppercase tracking-wide flex items-center justify-between">
-                    <span>Subject Person</span>
-                    <span className="text-[10px] text-slate-500 normal-case font-normal">Who is this for?</span>
+              {/* Sub-Type (Dynamic) */}
+              {showSubType && (
+                <div className="space-y-2">
+                  <Label htmlFor="subType" className="text-gray-300">
+                    Specific Type
                   </Label>
                   <Select
-                    value={formData.personId}
-                    onValueChange={(value) => setFormData({ ...formData, personId: value })}
-                    disabled={loadingPeople}
+                    value={formData.subType}
+                    onValueChange={(value) => setFormData({ ...formData, subType: value })}
                   >
-                    <SelectTrigger className="bg-gradient-to-r from-slate-800/80 to-slate-800/40 border-slate-700 text-slate-100 h-11 hover:border-blue-500/50 transition-all duration-300 group">
-                      <div className="flex items-center gap-2">
-                        <UserCircle className="w-4 h-4 text-blue-400 group-hover:text-blue-300 transition-colors" />
-                        <SelectValue placeholder={loadingPeople ? "Loading..." : "Link to a person..."} />
-                      </div>
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
+                      <SelectValue placeholder="Select type" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-700 max-h-[250px]">
-                      {people.map((p) => (
-                        <SelectItem key={p.id} value={p.id} className="text-slate-200 focus:bg-slate-800 focus:text-blue-400 cursor-pointer">
-                          {p.firstName} {p.lastName}
+                    <SelectContent className="bg-gray-700 border-gray-600">
+                    {formData.category === "work-permit" && (
+                      workPermitSubTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value} className="text-white">
+                          {type.label}
                         </SelectItem>
-                      ))}
+                      ))
+                    )}
+                    {formData.category === "moh-licensing" && (
+                      mohSubTypes.map((type) => (
+                         <SelectItem key={type.value} value={type.value} className="text-white">
+                          {type.label}
+                        </SelectItem>
+                      ))
+                    )}
+                    {formData.category === "customs" && (
+                      customsSubTypes.map((type) => (
+                         <SelectItem key={type.value} value={type.value} className="text-white">
+                          {type.label}
+                        </SelectItem>
+                      ))
+                    )}
+                    {formData.category === "bolo-insurance" && (
+                      boloSubTypes.map((type) => (
+                         <SelectItem key={type.value} value={type.value} className="text-white">
+                          {type.label}
+                        </SelectItem>
+                      ))
+                    )}
                     </SelectContent>
                   </Select>
                 </div>
               )}
             </div>
-          </section>
+
+            {/* Person Selector (Dynamic) */}
+            {showPersonSelector && (
+              <div className="space-y-2 mt-4 pt-4 border-t border-gray-700/50">
+                <Label htmlFor="personId" className="text-gray-300 flex items-center justify-between">
+                  Subject Person
+                  <span className="text-xs text-gray-500 font-normal">Who is this for?</span>
+                </Label>
+                <Select
+                  value={formData.personId}
+                  onValueChange={(value) => setFormData({ ...formData, personId: value })}
+                  disabled={loadingPeople}
+                >
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-green-400" />
+                      <SelectValue placeholder={loadingPeople ? "Loading..." : "Link to a person..."} />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600 max-h-[200px]">
+                    {people.map((p) => (
+                      <SelectItem key={p.id} value={p.id} className="text-white">
+                        {p.firstName} {p.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
 
           {/* GROUP 2: DETAILS */}
-          <section className="space-y-4">
-             <div className="flex items-center gap-2 mb-2">
-              <div className="h-8 w-1 bg-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
-              <h3 className="text-sm font-semibold text-purple-400 tracking-wider uppercase">
-                Task Specifics
-              </h3>
-            </div>
+          <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-700">
+            <h4 className="text-sm font-medium text-green-400 mb-3 flex items-center uppercase tracking-wider">
+              <FileText className="h-4 w-4 mr-2" />
+              Task Specifics
+            </h4>
 
-            <div className="bg-slate-900/40 rounded-xl p-5 border border-slate-800/60 shadow-inner space-y-5">
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-slate-300 text-xs font-medium uppercase tracking-wide">
+                <Label htmlFor="title" className="text-gray-300">
                   Task Title
                 </Label>
                 {/* Quick Title Logic */}
@@ -405,17 +410,17 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                         }
                       }}
                     >
-                      <SelectTrigger className="bg-slate-800/50 border-slate-700 text-slate-100 h-10 hover:bg-slate-800 hover:border-purple-500/50 transition-all">
+                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
                         <SelectValue placeholder="Select a standard task..." />
                       </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-slate-700">
+                      <SelectContent className="bg-gray-700 border-gray-600">
                         {quickTitles[formData.category]?.map((title) => (
-                          <SelectItem key={title} value={title} className="text-slate-200 focus:bg-slate-800">
+                          <SelectItem key={title} value={title} className="text-white">
                             {title}
                           </SelectItem>
                         ))}
-                        <SelectItem value="custom" className="text-purple-400 font-medium border-t border-slate-700 mt-1 pt-1 focus:bg-slate-800">
-                          + create custom title
+                        <SelectItem value="custom" className="text-green-400 font-medium border-t border-gray-600 mt-1 pt-1">
+                          + Create custom title
                         </SelectItem>
                       </SelectContent>
                     </Select>
@@ -426,7 +431,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                     <Input
                       value={formData.title}
                       placeholder="e.g., Renew Medical License for Dr. Smith"
-                      className="bg-slate-800/50 border-slate-700 text-slate-100 placeholder:text-slate-500 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
+                      className="bg-gray-700 border-gray-600 text-white"
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     />
                   )}
@@ -434,7 +439,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-slate-300 text-xs font-medium uppercase tracking-wide">
+                <Label htmlFor="description" className="text-gray-300">
                   Description & Notes
                 </Label>
                 <Textarea
@@ -443,122 +448,115 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                   value={formData.description}
                   onChange={handleChange}
                   placeholder="Enter detailed steps, required documents, or special instructions..."
-                  className="bg-slate-800/50 border-slate-700 text-slate-100 min-h-[120px] placeholder:text-slate-500 focus:ring-purple-500/20 focus:border-purple-500 resize-none transition-all"
+                  className="bg-gray-700 border-gray-600 text-white min-h-[100px]"
                   required
                 />
               </div>
             </div>
-          </section>
+          </div>
 
           {/* GROUP 3: EXECUTION */}
-          <section className="space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-8 w-1 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-              <h3 className="text-sm font-semibold text-emerald-400 tracking-wider uppercase">
-                Execution Logic
-              </h3>
-            </div>
+          <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-700">
+             <h4 className="text-sm font-medium text-green-400 mb-3 flex items-center uppercase tracking-wider">
+              <CheckCircle2 className="h-4 w-4 mr-2" />
+              Execution
+            </h4>
 
-            <div className="bg-slate-900/40 rounded-xl p-5 border border-slate-800/60 shadow-inner space-y-5">
-              <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <Label htmlFor="assignee" className="text-slate-300 text-xs font-medium uppercase tracking-wide">
-                    Assign To
-                  </Label>
-                  <Select
-                    value={formData.assignee}
-                    onValueChange={(value) => setFormData({ ...formData, assignee: value })}
-                    disabled={loadingUsers}
-                  >
-                    <SelectTrigger className="bg-slate-800/50 border-slate-700 text-slate-100 h-10 hover:bg-slate-800 hover:border-emerald-500/50 transition-all">
-                      <SelectValue placeholder={loadingUsers ? "Loading..." : "Select assignee"} />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-700 max-h-[200px]">
-                      {users.map((user) => (
-                        <SelectItem key={user.id} value={user.id} className="text-slate-200 focus:bg-slate-800">
-                          {user.name || user.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                   <Label htmlFor="dueDate" className="text-slate-300 text-xs font-medium uppercase tracking-wide">
-                    Due Date
-                  </Label>
-                  <Input
-                    id="dueDate"
-                    name="dueDate"
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={handleChange}
-                    className="bg-slate-800/50 border-slate-700 text-slate-100 h-10 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-                    required
-                  />
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="assignee" className="text-gray-300">
+                  Assign To
+                </Label>
+                <Select
+                  value={formData.assignee}
+                  onValueChange={(value) => setFormData({ ...formData, assignee: value })}
+                  disabled={loadingUsers}
+                >
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
+                    <SelectValue placeholder={loadingUsers ? "Loading..." : "Select assignee"} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600 max-h-[200px]">
+                    {users.map((user) => (
+                      <SelectItem key={user.id} value={user.id} className="text-white">
+                        {user.name || user.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-5">
-                <div className="space-y-2">
-                  <Label htmlFor="status" className="text-slate-300 text-xs font-medium uppercase tracking-wide">
-                    Initial Status
-                  </Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value })}
-                  >
-                    <SelectTrigger className="bg-slate-800/50 border-slate-700 text-slate-100 h-10 hover:bg-slate-800 transition-all">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-700">
-                      <SelectItem value="pending" className="text-slate-200 focus:bg-slate-800">Pending</SelectItem>
-                      <SelectItem value="in-progress" className="text-blue-400 focus:bg-slate-800">In Progress</SelectItem>
-                      <SelectItem value="completed" className="text-emerald-400 focus:bg-slate-800">Completed</SelectItem>
-                      <SelectItem value="urgent" className="text-red-400 focus:bg-slate-800">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="priority" className="text-slate-300 text-xs font-medium uppercase tracking-wide">
-                    Priority Level
-                  </Label>
-                  <Select
-                    value={formData.priority}
-                    onValueChange={(value) => setFormData({ ...formData, priority: value })}
-                  >
-                    <SelectTrigger className="bg-slate-800/50 border-slate-700 text-slate-100 h-10 hover:bg-slate-800 transition-all">
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-slate-700">
-                      <SelectItem value="low" className="text-slate-400 focus:bg-slate-800">Low</SelectItem>
-                      <SelectItem value="medium" className="text-yellow-400 focus:bg-slate-800">Medium</SelectItem>
-                      <SelectItem value="high" className="text-red-500 focus:bg-slate-800">High</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                 <Label htmlFor="dueDate" className="text-gray-300">
+                  Due Date
+                </Label>
+                <Input
+                  id="dueDate"
+                  name="dueDate"
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={handleChange}
+                  className="bg-gray-700 border-gray-600 text-white"
+                  required
+                />
               </div>
             </div>
-          </section>
+
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="status" className="text-gray-300">
+                  Initial Status
+                </Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value })}
+                >
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600">
+                    <SelectItem value="pending" className="text-white">Pending</SelectItem>
+                    <SelectItem value="in-progress" className="text-blue-400">In Progress</SelectItem>
+                    <SelectItem value="completed" className="text-green-400">Completed</SelectItem>
+                    <SelectItem value="urgent" className="text-red-400">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="priority" className="text-gray-300">
+                  Priority Level
+                </Label>
+                <Select
+                  value={formData.priority}
+                  onValueChange={(value) => setFormData({ ...formData, priority: value })}
+                >
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600">
+                    <SelectItem value="low" className="text-gray-400">Low</SelectItem>
+                    <SelectItem value="medium" className="text-yellow-400">Medium</SelectItem>
+                    <SelectItem value="high" className="text-red-500">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
 
           {/* Footer / Actions */}
-          <div className="sticky bottom-0 -mx-6 -mb-6 p-6 bg-slate-900/80 backdrop-blur-md border-t border-slate-800 flex items-center justify-end gap-3 z-10">
+          <div className="flex gap-3 pt-4 border-t border-gray-700">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="border-slate-700 bg-transparent text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
+              className="flex-1 bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-200"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={!formData.title || !formData.category || !formData.assignee}
-              className={cn(
-                "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-blue-500/20 transition-all duration-300",
-                !formData.title && "opacity-50 grayscale cursor-not-allowed"
-              )}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isEditMode ? "Save Changes" : "Create Task"}
             </Button>

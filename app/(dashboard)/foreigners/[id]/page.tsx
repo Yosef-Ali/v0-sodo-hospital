@@ -4,8 +4,9 @@ import { notFound } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, User, Mail, Phone, Globe, Calendar, UserCheck } from "lucide-react"
+import { ArrowLeft, User, Mail, Phone, Globe, Calendar, UserCheck, FileText } from "lucide-react"
 import Link from "next/link"
+import { PersonActionsCard } from "@/components/people/person-actions-card"
 
 interface PersonPageProps {
   params: Promise<{
@@ -121,6 +122,54 @@ export default async function PersonPage({ params }: PersonPageProps) {
             </div>
           </Card>
 
+          {/* Documents Information */}
+          {documents && documents.length > 0 && (
+            <Card className="bg-gray-800 border-gray-700 p-6">
+              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <FileText className="h-5 w-5 text-blue-500" />
+                Uploaded Documents
+              </h2>
+              <div className="grid grid-cols-1 gap-3">
+                {documents.map((doc: any) => (
+                  <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gray-800 rounded-md border border-gray-700">
+                        <FileText className="h-5 w-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">{doc.title || doc.type}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Badge variant="outline" className="text-[10px] text-gray-400 border-gray-700 h-5 px-1.5">
+                            {doc.fileType || "Document"}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            {new Date(doc.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      {doc.fileUrl ? (
+                         <Link 
+                           href={doc.fileUrl} 
+                           target="_blank"
+                           prefetch={false}
+                         >
+                           <Button variant="ghost" size="sm" className="h-8 text-green-400 hover:text-green-300 hover:bg-green-900/20">
+                             View
+                           </Button>
+                         </Link>
+                      ) : (
+                        <span className="text-xs text-gray-500 italic px-2">No file</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           {/* Guardian Information */}
           {guardian && (
             <Card className="bg-gray-800 border-gray-700 p-6">
@@ -222,6 +271,13 @@ export default async function PersonPage({ params }: PersonPageProps) {
               </div>
             </Card>
           )}
+
+
+          {/* Actions Card */}
+          <PersonActionsCard 
+            personId={person.id} 
+            hasRelatedData={(permits && permits.length > 0) || (dependents && dependents.length > 0) || (documents && documents.length > 0)}
+          />
         </div>
       </div>
     </div>

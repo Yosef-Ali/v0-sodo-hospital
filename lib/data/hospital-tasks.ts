@@ -1,6 +1,6 @@
 /**
  * Hospital Work Task Categories and Workflows
- * Comprehensive list of permit-related tasks for Sodo Hospital
+ * Comprehensive list of permit-related tasks for Soddo Christian Hospital
  */
 
 export interface TaskStep {

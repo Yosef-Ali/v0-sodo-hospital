@@ -1,7 +1,7 @@
 "use server"
 
-import { db, people, documentsV2, permits, type Person, type NewPerson } from "@/lib/db"
-import { eq, desc, or, like, sql } from "drizzle-orm"
+import { db, people, documentsV2, permits, tasksV2, permitChecklistItems, type Person, type NewPerson } from "@/lib/db"
+import { eq, desc, or, like, sql, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 /**
@@ -320,19 +320,31 @@ export async function updatePerson(
 /**
  * Delete a person
  */
-export async function deletePerson(personId: string) {
+/**
+ * Delete a person
+ */
+export async function deletePerson(personId: string, options?: { cascade?: boolean }) {
   try {
+    const { cascade = false } = options || {}
+
     // Check if person has dependents
     const dependents = await db
       .select({ id: people.id })
       .from(people)
       .where(eq(people.guardianId, personId))
-      .limit(1)
 
     if (dependents.length > 0) {
-      return {
-        success: false,
-        error: "Cannot delete person with dependents. Please remove or reassign dependents first.",
+      if (cascade) {
+        // Unlink dependents (set guardianId to null) rather than deleting them
+        await db
+          .update(people)
+          .set({ guardianId: null, updatedAt: new Date() })
+          .where(eq(people.guardianId, personId))
+      } else {
+        return {
+          success: false,
+          error: "Cannot delete person with dependents. Please remove or reassign dependents first.",
+        }
       }
     }
 
@@ -341,13 +353,32 @@ export async function deletePerson(personId: string) {
       .select({ id: permits.id })
       .from(permits)
       .where(eq(permits.personId, personId))
-      .limit(1)
 
     if (activePermits.length > 0) {
-      return {
-        success: false,
-        error: "Cannot delete person with active permits. Please remove permits first.",
+      if (cascade) {
+        // DELETE RELATED DATA
+        const permitIds = activePermits.map(p => p.id)
+
+        // 1. Delete tasks associated with these permits
+        await db.delete(tasksV2).where(inArray(tasksV2.permitId, permitIds))
+
+        // 2. Delete checklist items associated with these permits
+        await db.delete(permitChecklistItems).where(inArray(permitChecklistItems.permitId, permitIds))
+
+        // 3. Delete permits themselves
+        await db.delete(permits).where(inArray(permits.id, permitIds))
+
+      } else {
+        return {
+          success: false,
+          error: "Cannot delete person with active permits. Please remove permits first.",
+        }
       }
+    }
+
+    // If cascade, also delete documents owned by this person
+    if (cascade) {
+      await db.delete(documentsV2).where(eq(documentsV2.personId, personId))
     }
 
     const result = await db

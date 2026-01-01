@@ -22,7 +22,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
           <SidebarTrigger className="-ml-1 text-gray-400 hover:text-white" />
           <Separator orientation="vertical" className="mr-2 h-4 bg-gray-700/50" />
           <div className="flex items-center gap-2 text-sm text-gray-400">
-            <span className="font-medium text-white">SODDO Hospital</span>
+            <span className="font-medium text-white">Soddo Christian Hospital</span>
             <span>|</span>
             <span>Permit Management System</span>
           </div>

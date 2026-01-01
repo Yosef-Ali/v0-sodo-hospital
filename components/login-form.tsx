@@ -86,7 +86,7 @@ export function LoginForm({
                 </div>
                 <h1 className="text-2xl font-bold text-white">Welcome back</h1>
                 <p className="text-balance text-gray-400">
-                  Login to your SODDO Hospital account
+                  Login to your Soddo Christian Hospital account
                 </p>
               </div>
               <div className="grid gap-2">
@@ -152,7 +152,7 @@ export function LoginForm({
               <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center">
                 <Activity className="h-12 w-12 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-white">SODDO Hospital</h2>
+              <h2 className="text-2xl font-bold text-white">Soddo Christian Hospital</h2>
               <p className="text-gray-300">Permit Management System</p>
               <p className="text-sm text-gray-400 max-w-md">
                 Streamline your hospital permits, manage work IDs, residence documents, and licenses all in one place.
