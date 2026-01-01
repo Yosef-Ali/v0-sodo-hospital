@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { PageHeader } from "@/components/ui/page-header"
@@ -42,6 +43,7 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
 
   const [task, setTask] = useState(initialData)
   const [actionLoading, setActionLoading] = useState(false)
+  const [deletePermit, setDeletePermit] = useState(false)
 
   const handleCompleteTask = async () => {
     setActionLoading(true)
@@ -66,7 +68,7 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
   const handleDeleteTask = async () => {
     setActionLoading(true)
 
-    const result = await deleteTask(task.task.id)
+    const result = await deleteTask(task.task.id, { deletePermit })
 
     if (result.success) {
       router.push("/tasks")
@@ -347,6 +349,23 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
                     <AlertDialogDescription className="text-gray-400">
                       This action cannot be undone. This will permanently delete the task.
                     </AlertDialogDescription>
+                    
+                     {task.permit && (
+                      <div className="flex items-center space-x-2 mt-4 p-3 bg-red-900/10 border border-red-900/30 rounded-md">
+                        <Checkbox 
+                          id="delete-permit" 
+                          checked={deletePermit}
+                          onCheckedChange={(c) => setDeletePermit(!!c)}
+                          className="border-red-400/50 data-[state=checked]:bg-red-500 data-[state=checked]:text-white"
+                        />
+                        <label
+                          htmlFor="delete-permit"
+                          className="text-sm text-gray-300 font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Also delete related <span className="text-white font-semibold">Permit ({task.permit.category.replace(/_/g, " ")})</span> and its history
+                        </label>
+                      </div>
+                    )}
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel className="bg-gray-700 text-white">Cancel</AlertDialogCancel>

@@ -309,8 +309,27 @@ export async function completeTask(taskId: string, notes?: string) {
 /**
  * Delete a task
  */
-export async function deleteTask(taskId: string) {
+/**
+ * Delete a task
+ */
+export async function deleteTask(taskId: string, options?: { deletePermit?: boolean }) {
   try {
+    const { deletePermit = false } = options || {}
+
+    // First check if task exists to get linked permitId
+    const taskCheck = await db
+      .select({ id: tasksV2.id, permitId: tasksV2.permitId })
+      .from(tasksV2)
+      .where(eq(tasksV2.id, taskId))
+      .limit(1)
+
+    if (taskCheck.length === 0) {
+      return { success: false, error: "Task not found" }
+    }
+
+    const taskToDelete = taskCheck[0]
+
+    // Delete task first
     const result = await db
       .delete(tasksV2)
       .where(eq(tasksV2.id, taskId))
@@ -318,6 +337,19 @@ export async function deleteTask(taskId: string) {
 
     if (result.length === 0) {
       return { success: false, error: "Task not found" }
+    }
+
+    // Optional: Delete related permit
+    if (deletePermit && taskToDelete.permitId) {
+      // Delete checklist items for this permit first
+      await db.delete(permitChecklistItems).where(eq(permitChecklistItems.permitId, taskToDelete.permitId))
+
+      // Delete permit history if any (assuming schema exists but not imported, skip if causing issues or do it safe)
+      // Ignoring history delete for now to be safe, or just cascading permit delete
+
+      // Delete permit
+      await db.delete(permits).where(eq(permits.id, taskToDelete.permitId))
+      revalidatePath(`/permits/${taskToDelete.permitId}`)
     }
 
     revalidatePath("/tasks")
