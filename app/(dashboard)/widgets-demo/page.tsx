@@ -404,7 +404,7 @@ export default function WidgetsDemoPage() {
             <p className="text-sm text-gray-300">
               User gets <strong className="text-white">complete support entirely within the chat</strong> -
               no redirects to dashboards, no context switching, no confusion.
-              This is the <strong className="text-green-400">"sale point"</strong> that makes SODO Hospital stand out!
+              This is the <strong className="text-green-400">"sale point"</strong> that makes SODDO Hospital stand out!
             </p>
           </div>
         </CardContent>

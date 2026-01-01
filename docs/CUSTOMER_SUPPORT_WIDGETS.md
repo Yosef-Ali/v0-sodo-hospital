@@ -2,7 +2,7 @@
 
 ## Overview
 
-These inline customer support widgets are the **key differentiator** of the SODO Hospital Document Management System. They allow customers to get complete support **entirely within the chat interface** - no redirects to dashboards needed.
+These inline customer support widgets are the **key differentiator** of the SODDO Hospital Document Management System. They allow customers to get complete support **entirely within the chat interface** - no redirects to dashboards needed.
 
 ## The 4 Core Customer Support Widgets
 
@@ -320,7 +320,7 @@ if (userAsksAboutTimeline || userAsksHowLong) {
 
 ## Widget Styling
 
-All widgets use **consistent dark theme** matching the SODO Hospital design:
+All widgets use **consistent dark theme** matching the SODDO Hospital design:
 - Background: `bg-gray-800`
 - Borders: `border-gray-700`
 - Text: `text-white` for primary, `text-gray-400` for secondary
@@ -335,7 +335,7 @@ All widgets use **consistent dark theme** matching the SODO Hospital design:
 ### Traditional Support Systems:
 ❌ Chatbot asks question → Redirects to dashboard → User logs in → Finds page → Gets info
 
-### SODO Hospital Support:
+### SODDO Hospital Support:
 ✅ Chatbot asks question → Shows widget inline → User gets complete info → Can take action immediately
 
 ### Benefits:
@@ -414,7 +414,7 @@ All widgets have full TypeScript interfaces with comprehensive props for customi
 
 ## Conclusion
 
-These customer support widgets represent the **core value proposition** of the SODO Hospital system:
+These customer support widgets represent the **core value proposition** of the SODDO Hospital system:
 
 > **"Complete customer support without ever leaving the chat"**
 

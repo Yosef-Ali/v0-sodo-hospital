@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-display" })
 
 export const metadata: Metadata = {
-  title: "Sodo Hospital - Administrative Dashboard",
+  title: "Soddo Hospital - Administrative Dashboard",
   description: "Track document processing and administrative tasks",
   generator: 'v0.dev'
 }

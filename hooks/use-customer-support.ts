@@ -96,7 +96,7 @@ export function useCustomerSupport() {
       suggestions = ["Show all limitations", "File formats", "Processing times", "User access"]
       action = "show-limitations"
     } else if (lowerMessage.includes("start") || lowerMessage.includes("begin") || lowerMessage.includes("how to use")) {
-      response = "Welcome to SODO Hospital Document Management! Here's how to get started:"
+      response = "Welcome to SODDO Hospital Document Management! Here's how to get started:"
       suggestions = ["Upload document", "View dashboard", "Check tasks", "System tour"]
       widgets = [
         {
@@ -117,13 +117,13 @@ export function useCustomerSupport() {
       suggestions = ["Submit ticket", "View FAQ", "Document help", "Workflow help"]
       action = "open-ticket"
     } else if (lowerMessage.includes("feature") || lowerMessage.includes("what can") || lowerMessage.includes("capabilities")) {
-      response = "SODO Hospital Document Management System features:\n\n📄 Document Processing (license renewals, support letters, authentication)\n✅ Multi-level Approval Workflows (Ministry of Labor, HERQA, Internal)\n⏱️ Processing Time Tracking (avg 4.2 days)\n👥 Team Collaboration (9 departments, multiple teams)\n📊 Comprehensive Reporting (9 report types)\n🔒 Secure & HIPAA-compliant\n📋 Kanban task management\n\nWhat would you like to know more about?"
+      response = "SODDO Hospital Document Management System features:\n\n📄 Document Processing (license renewals, support letters, authentication)\n✅ Multi-level Approval Workflows (Ministry of Labor, HERQA, Internal)\n⏱️ Processing Time Tracking (avg 4.2 days)\n👥 Team Collaboration (9 departments, multiple teams)\n📊 Comprehensive Reporting (9 report types)\n🔒 Secure & HIPAA-compliant\n📋 Kanban task management\n\nWhat would you like to know more about?"
       suggestions = ["Document types", "Approval process", "Team features", "Reports"]
     } else if (lowerMessage.includes("secure") || lowerMessage.includes("security") || lowerMessage.includes("complian") || lowerMessage.includes("hipaa")) {
       response = "Security and compliance information:\n\n🔐 AES-256 encryption at rest\n🌐 TLS 1.3 in transit\n🏥 HIPAA compliant for healthcare data\n📝 Complete audit trail and activity logging\n🔄 Daily automated backups (90-day retention)\n👤 Two-factor authentication available\n🔒 Role-based access control\n\nNeed specific security details?"
       suggestions = ["Access control", "Data backup", "Compliance info", "Security settings"]
     } else if (lowerMessage.includes("hello") || lowerMessage.includes("hi") || lowerMessage.includes("hey")) {
-      response = "👋 Hello! Welcome to SODO Hospital Document Management System. I'm here to help hospital staff with document processing, approvals, task management, and system navigation.\n\nWhat can I help you with today?"
+      response = "👋 Hello! Welcome to SODDO Hospital Document Management System. I'm here to help hospital staff with document processing, approvals, task management, and system navigation.\n\nWhat can I help you with today?"
       suggestions = ["Upload document", "Check status", "View tasks", "System features"]
     } else {
       response = "Thanks for reaching out! I can help you with:\n\n📄 Document Upload & Processing\n✅ Approval Workflows & Tasks\n👥 Team Collaboration\n📊 Reports & Analytics\n🔧 Technical Support\n❓ System Navigation\n\nWhat would you like to know more about?"
@@ -191,7 +191,7 @@ export function useCustomerSupport() {
       const welcomeMessage: CustomerMessage = {
         id: "welcome",
         role: "assistant",
-        content: "👋 Welcome! I'm here to help you with SODO Hospital Document Management. Ask me about document processing, approvals, tasks, teams, or any system features!",
+        content: "👋 Welcome! I'm here to help you with SODDO Hospital Document Management. Ask me about document processing, approvals, tasks, teams, or any system features!",
         timestamp: new Date(),
         metadata: {
           suggestions: ["Upload document", "Check approvals", "View tasks", "System features"]

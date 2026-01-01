@@ -1,6 +1,6 @@
 # OpenAI ChatKit Integration Guide
 
-This document explains the OpenAI ChatKit customer support integration for SODO Hospital.
+This document explains the OpenAI ChatKit customer support integration for SODDO Hospital.
 
 ## 🚀 Features Implemented
 
@@ -74,7 +74,7 @@ Create 4 assistants in the OpenAI dashboard with the following configurations:
 
 #### 1. Classification Assistant
 
-**Name:** SODO Classification Agent
+**Name:** SODDO Classification Agent
 **Model:** gpt-4-turbo-preview
 **Instructions:** Copy from `lib/openai/config.ts` → `SYSTEM_PROMPTS.classification`
 **Functions/Tools:** None required
@@ -82,7 +82,7 @@ Create 4 assistants in the OpenAI dashboard with the following configurations:
 
 #### 2. General Support Assistant
 
-**Name:** SODO General Support
+**Name:** SODDO General Support
 **Model:** gpt-4-turbo-preview
 **Instructions:** Copy from `lib/openai/config.ts` → `SYSTEM_PROMPTS.generalSupport`
 **Functions/Tools:** None (can add custom tools later)
@@ -90,7 +90,7 @@ Create 4 assistants in the OpenAI dashboard with the following configurations:
 
 #### 3. Document Support Assistant
 
-**Name:** SODO Document Specialist
+**Name:** SODDO Document Specialist
 **Model:** gpt-4-turbo-preview
 **Instructions:** Copy from `lib/openai/config.ts` → `SYSTEM_PROMPTS.documentSupport`
 **Functions/Tools:**
@@ -100,7 +100,7 @@ Create 4 assistants in the OpenAI dashboard with the following configurations:
 
 #### 4. Technical Support Assistant
 
-**Name:** SODO Technical Support
+**Name:** SODDO Technical Support
 **Model:** gpt-4-turbo-preview
 **Instructions:** Copy from `lib/openai/config.ts` → `SYSTEM_PROMPTS.technicalSupport`
 **Functions/Tools:** None
@@ -422,4 +422,4 @@ For issues or questions:
 
 ## 📝 License
 
-This integration is part of the SODO Hospital project.
+This integration is part of the SODDO Hospital project.

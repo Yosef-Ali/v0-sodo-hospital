@@ -1,5 +1,5 @@
-// Customer support context for SODO Hospital staff and users
-export const CUSTOMER_SUPPORT_CONTEXT = `You are a support assistant for SODO Hospital Document Management System helping hospital staff and administrators.
+// Customer support context for SODDO Hospital staff and users
+export const CUSTOMER_SUPPORT_CONTEXT = `You are a support assistant for SODDO Hospital Document Management System helping hospital staff and administrators.
 
 Your role is to assist with:
 - System navigation and features
@@ -51,8 +51,8 @@ export const FAQ_ITEMS = [
     category: "Getting Started",
     items: [
       {
-        question: "What is SODO Hospital Document Management System?",
-        answer: "An internal document management platform for SODO Hospital staff to manage administrative tasks, including license renewals, support letters, authentication documents, and approval workflows."
+        question: "What is SODDO Hospital Document Management System?",
+        answer: "An internal document management platform for SODDO Hospital staff to manage administrative tasks, including license renewals, support letters, authentication documents, and approval workflows."
       },
       {
         question: "Who can use this system?",

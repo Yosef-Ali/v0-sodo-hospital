@@ -100,7 +100,7 @@ export function useOpenAIChat(options: UseOpenAIChatOptions = {}) {
       const welcomeMessage: Message = {
         id: "welcome",
         role: "assistant",
-        content: `👋 Hello${options.userName ? ` ${options.userName}` : ""}! I'm your SODO Hospital support assistant.
+        content: `👋 Hello${options.userName ? ` ${options.userName}` : ""}! I'm your SODDO Hospital support assistant.
 
 I can help you with:
 ✅ Check permit/document status

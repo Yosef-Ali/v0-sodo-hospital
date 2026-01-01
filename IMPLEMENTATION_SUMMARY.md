@@ -2,7 +2,7 @@
 
 ## ✅ What Was Implemented
 
-This branch implements a complete OpenAI ChatKit integration for SODO Hospital with advanced AI features.
+This branch implements a complete OpenAI ChatKit integration for SODDO Hospital with advanced AI features.
 
 ### 🎯 Core Features
 

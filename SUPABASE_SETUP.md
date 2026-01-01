@@ -1,6 +1,6 @@
 # Supabase Authentication & RLS Setup Guide
 
-This guide will help you set up Supabase authentication and Row Level Security (RLS) policies for the SODO Hospital Document Management System.
+This guide will help you set up Supabase authentication and Row Level Security (RLS) policies for the SODDO Hospital Document Management System.
 
 ## Prerequisites
 

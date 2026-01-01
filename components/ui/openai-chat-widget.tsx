@@ -123,7 +123,7 @@ export function OpenAIChatWidget({
                 <Sparkles className="w-3 h-3 absolute -top-0.5 -right-0.5 text-yellow-300 animate-pulse" />
               </div>
               <div>
-                <h3 className="font-semibold text-white">SODO Hospital Support</h3>
+                <h3 className="font-semibold text-white">SODDO Hospital Support</h3>
                 <p className="text-xs text-gray-400 flex items-center gap-1">
                   <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                   Online • Ready to help
@@ -278,7 +278,7 @@ export function OpenAIChatWidget({
                   placeholder={
                     pendingApproval
                       ? "Approve or reject the action above first..."
-                      : "Ask me anything about SODO Hospital..."
+                      : "Ask me anything about SODDO Hospital..."
                   }
                 />
                 <div className="mt-2 flex items-center justify-between text-xs text-gray-500">

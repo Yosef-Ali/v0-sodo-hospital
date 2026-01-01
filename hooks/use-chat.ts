@@ -127,7 +127,7 @@ export function useChat() {
       response = "I'm here to help! The system has several main sections:\n\n📊 Dashboard - Overview and metrics\n📄 Documents - All document processing\n✅ Tasks - Approvals and workflows\n👥 Teams - Staff management\n🏢 Departments - Department info\n📈 Reports - Analytics\n⚙️ Settings - Configuration\n\nWhat would you like to explore?"
       suggestions = ["Go to Dashboard", "View Documents", "Check Tasks", "System tour"]
     } else if (lowerMessage.includes("hello") || lowerMessage.includes("hi") || lowerMessage.includes("hey")) {
-      response = "Hello! I'm your SODO Hospital support assistant. I can help you with document processing, approvals, navigation, and any questions about the system. What can I help you with today?"
+      response = "Hello! I'm your SODDO Hospital support assistant. I can help you with document processing, approvals, navigation, and any questions about the system. What can I help you with today?"
       suggestions = ["Check document status", "View pending approvals", "System help", "Processing time"]
     } else {
       response = "I understand you need help with that. Let me assist you. Could you provide more details about what you're looking for? I can help with documents, approvals, tasks, navigation, or general system questions."
@@ -204,7 +204,7 @@ export function useChat() {
       const welcomeMessage: Message = {
         id: "welcome",
         role: "assistant",
-        content: "👋 Welcome to SODO Hospital support! I'm here to help you with document management, approvals, and system navigation. How can I assist you today?",
+        content: "👋 Welcome to SODDO Hospital support! I'm here to help you with document management, approvals, and system navigation. How can I assist you today?",
         timestamp: new Date(),
         metadata: {
           suggestions: ["Check document status", "View pending approvals", "Processing help", "System tour"]

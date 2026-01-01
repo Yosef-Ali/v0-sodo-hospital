@@ -60,7 +60,7 @@ export function NextAuthLoginForm() {
           </div>
           <CardTitle className="text-2xl font-bold text-center text-white">Welcome Back</CardTitle>
           <CardDescription className="text-center text-gray-400">
-            Sign in to your SODO Hospital account
+            Sign in to your SODDO Hospital account
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -69,7 +69,7 @@ export function NextAuthLoginForm() {
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-sm text-center text-gray-400">
             Need help signing in?{" "}
-            <Link href="mailto:support@sodohospital.com" className="text-green-400 hover:text-green-300 font-medium">
+            <Link href="mailto:support@soddohospital.com" className="text-green-400 hover:text-green-300 font-medium">
               Contact Support
             </Link>
           </div>

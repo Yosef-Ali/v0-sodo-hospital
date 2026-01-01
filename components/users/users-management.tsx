@@ -110,7 +110,7 @@ export function UsersManagement() {
             <DialogHeader>
               <DialogTitle className="text-white">Invite New User</DialogTitle>
               <DialogDescription className="text-gray-400">
-                Send an invitation to join SODO Hospital's system
+                Send an invitation to join SODDO Hospital's system
               </DialogDescription>
             </DialogHeader>
 

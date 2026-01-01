@@ -25,7 +25,7 @@ export function SettingsOrganizationPage() {
               <Label htmlFor="org-name">Organization Name</Label>
               <Input
                 id="org-name"
-                defaultValue="SODO Hospital"
+                defaultValue="SODDO Hospital"
                 className="bg-gray-700 border-gray-600"
               />
             </div>
@@ -34,7 +34,7 @@ export function SettingsOrganizationPage() {
               <Input
                 id="org-email"
                 type="email"
-                defaultValue="info@sodohospital.com"
+                defaultValue="info@soddohospital.com"
                 className="bg-gray-700 border-gray-600"
               />
             </div>

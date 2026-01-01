@@ -2,7 +2,7 @@
 
 ## 🎯 Overview
 
-The SODO Hospital chatbot now features **4 beautiful customer support widgets** that display inline - no redirects needed! This is the "sale point" that makes the system stand out.
+The SODDO Hospital chatbot now features **4 beautiful customer support widgets** that display inline - no redirects needed! This is the "sale point" that makes the system stand out.
 
 ## 🚀 How to Test
 
@@ -77,7 +77,7 @@ Click the floating chat button to open the chat interface.
 ## 🎨 Widget Features to Notice
 
 ### Visual Design
-- ✨ **Consistent dark theme** - All widgets match SODO Hospital brand
+- ✨ **Consistent dark theme** - All widgets match SODDO Hospital brand
 - 🟢 **Green accents** - For active states and important actions
 - 📊 **Status colors** - Green (approved/processing), Amber (pending), Red (rejected), Blue (info)
 - 🎯 **Clean borders** - Subtle gray-700 borders with hover effects
@@ -168,7 +168,7 @@ Bot: "Please visit the dashboard"
 → User sees status
 ```
 
-### SODO Hospital Flow:
+### SODDO Hospital Flow:
 ```
 User: "Check my permit"
 Bot: Shows Ticket Verification Widget (inline)
@@ -261,4 +261,4 @@ When showing this to clients or stakeholders:
 4. Emphasize: **"No redirects, no page changes, everything in chat"**
 5. Compare to traditional systems with multiple page loads
 
-**This is what makes SODO Hospital stand out! ✨**
+**This is what makes SODDO Hospital stand out! ✨**

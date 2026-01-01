@@ -18,27 +18,27 @@ async function seed() {
       .insert(users)
       .values([
         {
-          email: "dr.samuel@sodohospital.com",
+          email: "dr.samuel@soddohospital.com",
           name: "Dr. Samuel",
           role: "Doctor",
         },
         {
-          email: "nurse.johnson@sodohospital.com",
+          email: "nurse.johnson@soddohospital.com",
           name: "Nurse Johnson",
           role: "Nurse",
         },
         {
-          email: "store.manager@sodohospital.com",
+          email: "store.manager@soddohospital.com",
           name: "Store Manager",
           role: "Inventory Manager",
         },
         {
-          email: "hr.director@sodohospital.com",
+          email: "hr.director@soddohospital.com",
           name: "HR Director",
           role: "HR Manager",
         },
         {
-          email: "finance.officer@sodohospital.com",
+          email: "finance.officer@soddohospital.com",
           name: "Finance Officer",
           role: "Finance",
         },
