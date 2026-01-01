@@ -48,7 +48,7 @@ async function seedDocuments() {
               type: "employment_contract",
               title: "Employment Contract",
               number: ticketNumber,
-              issuedBy: "Sodo Hospital",
+              issuedBy: "Soddo Hospital",
               issueDate: new Date("2025-01-01"),
               fileUrl: "/uploads/demo/contract-john-smith.pdf",
               fileSize: 524288, // 512KB

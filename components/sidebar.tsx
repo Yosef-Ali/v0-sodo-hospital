@@ -29,7 +29,7 @@ export function Sidebar() {
         >
           <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
         </svg>
-        <span className="font-semibold text-lg">Sodo Hospital</span>
+        <span className="font-semibold text-lg">Soddo Hospital</span>
       </div>
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1 px-2">

@@ -51,7 +51,7 @@ export function TasksPage() {
               >
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
               </svg>
-              <span className="font-bold text-lg text-white">SODO HOSPITAL</span>
+              <span className="font-bold text-lg text-white">SODDO HOSPITAL</span>
             </div>
           </div>
 

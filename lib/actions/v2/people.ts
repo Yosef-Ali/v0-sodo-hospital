@@ -22,7 +22,27 @@ export async function getPeople(params?: {
         firstName: people.firstName,
         lastName: people.lastName,
         nationality: people.nationality,
+        dateOfBirth: people.dateOfBirth,
+        gender: people.gender,
+        familyStatus: people.familyStatus,
+        photoUrl: people.photoUrl,
         passportNo: people.passportNo,
+        passportIssueDate: people.passportIssueDate,
+        passportExpiryDate: people.passportExpiryDate,
+        passportDocuments: people.passportDocuments,
+        medicalLicenseNo: people.medicalLicenseNo,
+        medicalLicenseIssueDate: people.medicalLicenseIssueDate,
+        medicalLicenseExpiryDate: people.medicalLicenseExpiryDate,
+        medicalLicenseDocuments: people.medicalLicenseDocuments,
+        workPermitNo: people.workPermitNo,
+        workPermitSubType: people.workPermitSubType,
+        workPermitIssueDate: people.workPermitIssueDate,
+        workPermitExpiryDate: people.workPermitExpiryDate,
+        workPermitDocuments: people.workPermitDocuments,
+        residenceIdNo: people.residenceIdNo,
+        residenceIdIssueDate: people.residenceIdIssueDate,
+        residenceIdExpiryDate: people.residenceIdExpiryDate,
+        residenceIdDocuments: people.residenceIdDocuments,
         phone: people.phone,
         email: people.email,
         guardianId: people.guardianId,
@@ -130,7 +150,27 @@ export async function createPerson(data: {
   firstName: string
   lastName: string
   nationality?: string
+  dateOfBirth?: Date
+  gender?: "MALE" | "FEMALE"
+  familyStatus?: "MARRIED" | "UNMARRIED"
+  photoUrl?: string
   passportNo?: string
+  passportIssueDate?: Date
+  passportExpiryDate?: Date
+  passportDocuments?: string[]
+  medicalLicenseNo?: string
+  medicalLicenseIssueDate?: Date
+  medicalLicenseExpiryDate?: Date
+  medicalLicenseDocuments?: string[]
+  workPermitNo?: string
+  workPermitSubType?: "NEW" | "RENEWAL" | "OTHER"
+  workPermitIssueDate?: Date
+  workPermitExpiryDate?: Date
+  workPermitDocuments?: string[]
+  residenceIdNo?: string
+  residenceIdIssueDate?: Date
+  residenceIdExpiryDate?: Date
+  residenceIdDocuments?: string[]
   phone?: string
   email?: string
   guardianId?: string
@@ -191,7 +231,27 @@ export async function updatePerson(
     firstName: string
     lastName: string
     nationality: string
+    dateOfBirth: Date
+    gender: "MALE" | "FEMALE"
+    familyStatus: "MARRIED" | "UNMARRIED"
+    photoUrl: string
     passportNo: string
+    passportIssueDate: Date
+    passportExpiryDate: Date
+    passportDocuments: string[]
+    medicalLicenseNo: string
+    medicalLicenseIssueDate: Date
+    medicalLicenseExpiryDate: Date
+    medicalLicenseDocuments: string[]
+    workPermitNo: string
+    workPermitSubType: "NEW" | "RENEWAL" | "OTHER"
+    workPermitIssueDate: Date
+    workPermitExpiryDate: Date
+    workPermitDocuments: string[]
+    residenceIdNo: string
+    residenceIdIssueDate: Date
+    residenceIdExpiryDate: Date
+    residenceIdDocuments: string[]
     phone: string
     email: string
     guardianId: string

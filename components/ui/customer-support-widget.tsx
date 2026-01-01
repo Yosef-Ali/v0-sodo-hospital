@@ -222,7 +222,7 @@ export function CustomerSupportWidget() {
           {/* Footer */}
           <div className="border-t border-gray-700 bg-gray-800/50 px-4 py-3">
             <div className="flex items-center justify-between text-xs text-gray-400">
-              <span>Powered by SODO Hospital</span>
+              <span>Powered by SODDO Hospital</span>
               <a
                 href="#"
                 className="flex items-center gap-1 text-green-400 hover:text-green-300 transition-colors"

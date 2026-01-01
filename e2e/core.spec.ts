@@ -4,8 +4,8 @@ test.describe('Core App Flows', () => {
   test('homepage loads and shows login prompt', async ({ page }) => {
     await page.goto('/');
 
-    // Expect title to contain Sodo Hospital
-    await expect(page).toHaveTitle(/Sodo Hospital/);
+    // Expect title to contain Soddo Hospital
+    await expect(page).toHaveTitle(/Soddo Hospital/);
 
     // Check for main heading or login button
     // Adjust selector based on actual login page content

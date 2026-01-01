@@ -6,7 +6,10 @@ export const taskStatusEnum = pgEnum("task_status", ["pending", "in-progress", "
 export const taskPriorityEnum = pgEnum("task_priority", ["low", "medium", "high"])
 export const documentStatusEnum = pgEnum("document_status", ["pending", "approved", "review"])
 export const userRoleEnum = pgEnum("user_role", ["ADMIN", "HR_MANAGER", "HR", "LOGISTICS", "FINANCE", "USER"])
-export const permitCategoryEnum = pgEnum("permit_category", ["WORK_PERMIT", "RESIDENCE_ID", "LICENSE", "PIP"])
+export const permitCategoryEnum = pgEnum("permit_category", ["WORK_PERMIT", "RESIDENCE_ID", "MEDICAL_LICENSE", "PIP", "CUSTOMS", "CAR_BOLO_INSURANCE"])
+export const workPermitSubTypeEnum = pgEnum("work_permit_sub_type", ["NEW", "RENEWAL", "OTHER"])
+export const genderEnum = pgEnum("gender", ["MALE", "FEMALE"])
+export const familyStatusEnum = pgEnum("family_status", ["MARRIED", "UNMARRIED"])
 export const permitStatusEnum = pgEnum("permit_status", ["PENDING", "SUBMITTED", "APPROVED", "REJECTED", "EXPIRED"])
 export const eventTypeEnum = pgEnum("event_type", ["permit", "deadline", "meeting", "interview", "other"])
 export const reportStatusEnum = pgEnum("report_status", ["DRAFT", "GENERATED", "PUBLISHED", "ARCHIVED"])
@@ -134,7 +137,38 @@ export const people = pgTable("people", {
   firstName: varchar("first_name", { length: 255 }).notNull(),
   lastName: varchar("last_name", { length: 255 }).notNull(),
   nationality: varchar("nationality", { length: 100 }),
+  dateOfBirth: timestamp("date_of_birth"),
+  gender: genderEnum("gender"),
+  familyStatus: familyStatusEnum("family_status"),
+  
+  // Profile photo
+  photoUrl: text("photo_url"),
+  
+  // Passport details
   passportNo: varchar("passport_no", { length: 100 }),
+  passportIssueDate: timestamp("passport_issue_date"),
+  passportExpiryDate: timestamp("passport_expiry_date"),
+  passportDocuments: jsonb("passport_documents").$type<string[]>().default([]),
+  
+  // Medical License details
+  medicalLicenseNo: varchar("medical_license_no", { length: 100 }),
+  medicalLicenseIssueDate: timestamp("medical_license_issue_date"),
+  medicalLicenseExpiryDate: timestamp("medical_license_expiry_date"),
+  medicalLicenseDocuments: jsonb("medical_license_documents").$type<string[]>().default([]),
+  
+  // Work Permit details
+  workPermitNo: varchar("work_permit_no", { length: 100 }),
+  workPermitSubType: workPermitSubTypeEnum("work_permit_sub_type"), // NEW, RENEWAL, OTHER
+  workPermitIssueDate: timestamp("work_permit_issue_date"),
+  workPermitExpiryDate: timestamp("work_permit_expiry_date"),
+  workPermitDocuments: jsonb("work_permit_documents").$type<string[]>().default([]),
+  
+  // Residence ID details
+  residenceIdNo: varchar("residence_id_no", { length: 100 }),
+  residenceIdIssueDate: timestamp("residence_id_issue_date"),
+  residenceIdExpiryDate: timestamp("residence_id_expiry_date"),
+  residenceIdDocuments: jsonb("residence_id_documents").$type<string[]>().default([]),
+  
   phone: varchar("phone", { length: 50 }),
   email: varchar("email", { length: 255 }),
   guardianId: uuid("guardian_id").references((): any => people.id), // self-reference for dependents
@@ -147,6 +181,7 @@ export const permits = pgTable("permits", {
   id: uuid("id").primaryKey().defaultRandom(),
   ticketNumber: varchar("ticket_number", { length: 100 }).unique(), // e.g. WRK-2025-0001
   category: permitCategoryEnum("category").notNull(),
+  subType: workPermitSubTypeEnum("sub_type"), // For work permits: NEW, RENEWAL, OTHER
   status: permitStatusEnum("status").default("PENDING").notNull(),
   personId: uuid("person_id").references(() => people.id).notNull(),
   dueDate: timestamp("due_date"), // Gregorian UTC

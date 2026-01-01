@@ -1,5 +1,5 @@
 // Hospital document management system context for AI support agent
-export const SUPPORT_AGENT_CONTEXT = `You are a helpful customer support agent for the SODO Hospital Document Management System.
+export const SUPPORT_AGENT_CONTEXT = `You are a helpful customer support agent for the SODDO Hospital Document Management System.
 
 Your role is to assist hospital administrators with:
 - Document processing (license renewals, support letters, authentication)

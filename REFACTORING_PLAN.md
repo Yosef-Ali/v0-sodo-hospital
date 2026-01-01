@@ -1,11 +1,11 @@
-# SODO Hospital Ops - Refactoring Plan
+# SODDO Hospital Ops - Refactoring Plan
 ## From Administrative Dashboard to Ethiopian Hospital Operations System
 
 ---
 
 ## Executive Summary
 
-This document outlines a phased refactoring plan to transform the current SODO Hospital administrative dashboard into a specialized Ethiopian hospital operations system focusing on permits, licensing, immigration, and compliance tracking.
+This document outlines a phased refactoring plan to transform the current SODDO Hospital administrative dashboard into a specialized Ethiopian hospital operations system focusing on permits, licensing, immigration, and compliance tracking.
 
 **Current State:** Task/document management system with Drizzle ORM, Stack Auth, basic CRUD operations.
 

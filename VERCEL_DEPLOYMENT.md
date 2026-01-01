@@ -245,7 +245,7 @@ Run through entire user flow:
 
 ## Success! 🎉
 
-Your SODO Hospital app is now live on Vercel with:
+Your SODDO Hospital app is now live on Vercel with:
 - ✅ Neon PostgreSQL database
 - ✅ Stack Auth authentication
 - ✅ Google OAuth

@@ -51,7 +51,7 @@ export function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" defaultValue="dr.samuel@sodohospital.com" className="bg-gray-700 border-gray-600" />
+                  <Input id="email" defaultValue="dr.samuel@soddohospital.com" className="bg-gray-700 border-gray-600" />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="title">Job Title</Label>

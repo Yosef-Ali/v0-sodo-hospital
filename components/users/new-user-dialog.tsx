@@ -112,7 +112,7 @@ export function NewUserDialog({ open, onOpenChange, onUserCreated }: NewUserDial
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="john.doe@sodohospital.com"
+              placeholder="john.doe@soddohospital.com"
               className="bg-gray-700 border-gray-600 text-white"
               required
             />

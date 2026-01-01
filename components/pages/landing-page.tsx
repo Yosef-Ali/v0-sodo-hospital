@@ -22,7 +22,7 @@ export function LandingPage() {
             <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
               <Activity className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-semibold tracking-tight">SODO Hospital</span>
+            <span className="text-xl font-semibold tracking-tight">SODDO Hospital</span>
           </div>
           <div className="hidden md:flex items-center space-x-4 text-sm">
             <Link href="/admin-guide" className="text-slate-400 hover:text-white transition-colors">
@@ -53,7 +53,7 @@ export function LandingPage() {
             <div className="mb-6">
               <div className="inline-flex items-center space-x-2 bg-green-500/10 border border-green-500/20 px-3 py-1 rounded-full text-xs font-medium text-green-400 mb-6">
                 <Sparkles className="w-3 h-3" />
-                <span>SODO Hospital Management System</span>
+                <span>SODDO Hospital Management System</span>
               </div>
               <h1 className="sm:text-5xl lg:text-6xl leading-tight text-4xl font-bold tracking-tight mb-4">
                 Streamline <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">permits</span>
@@ -180,7 +180,7 @@ export function LandingPage() {
               <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full" alt="Dr. Ahmed Hassan" />
               <div>
                 <p className="font-semibold">Dr. Ahmed Hassan</p>
-                <p className="text-xs text-slate-400">Director of Administration, SODO Hospital</p>
+                <p className="text-xs text-slate-400">Director of Administration, SODDO Hospital</p>
               </div>
               <div className="flex text-yellow-400 ml-auto">
                 <Star className="w-4 h-4 fill-current" />
@@ -215,7 +215,7 @@ export function LandingPage() {
       {/* Footer */}
       <footer className="max-w-7xl mx-auto px-6 py-16 border-t border-slate-800">
         <div className="pt-8 flex flex-col md:flex-row justify-between items-center fade-in fade-in-delay-1">
-          <p className="text-slate-400 text-sm">© 2024 SODO Hospital. All rights reserved.</p>
+          <p className="text-slate-400 text-sm">© 2024 SODDO Hospital. All rights reserved.</p>
         </div>
       </footer>
 

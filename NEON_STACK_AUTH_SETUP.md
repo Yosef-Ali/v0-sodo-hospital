@@ -1,6 +1,6 @@
 # Neon Database + Stack Auth Setup Guide
 
-This guide will help you understand and configure the authentication system for SODO Hospital using Neon database and Stack Auth.
+This guide will help you understand and configure the authentication system for SODDO Hospital using Neon database and Stack Auth.
 
 ## What's Configured
 

@@ -40,7 +40,7 @@ export default function AdminGuidePage() {
             <BookOpen className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white">SODO Hospital - Admin Guide</h1>
+            <h1 className="text-3xl font-bold text-white">SODDO Hospital - Admin Guide</h1>
             <p className="text-gray-400 mt-1">Complete guide to understanding and managing the system</p>
           </div>
         </div>
@@ -90,7 +90,7 @@ export default function AdminGuidePage() {
             <CardHeader>
               <CardTitle className="text-white">System Architecture</CardTitle>
               <CardDescription className="text-gray-400">
-                SODO Hospital Document Management System - Complete Module Overview
+                SODDO Hospital Document Management System - Complete Module Overview
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -892,7 +892,7 @@ export default function AdminGuidePage() {
             <CardHeader>
               <CardTitle className="text-white">Advanced Features</CardTitle>
               <CardDescription className="text-gray-400">
-                Powerful capabilities that set SODO Hospital apart
+                Powerful capabilities that set SODDO Hospital apart
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">

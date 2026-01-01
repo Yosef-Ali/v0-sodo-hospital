@@ -10,7 +10,7 @@ export async function GET() {
 
     // 1. Create admin user
     const existingAdmin = await db.query.users.findFirst({
-      where: (users, { eq }) => eq(users.email, "admin@sodohospital.com"),
+      where: (users, { eq }) => eq(users.email, "admin@soddohospital.com"),
     })
 
     let adminUser
@@ -19,7 +19,7 @@ export async function GET() {
       const [admin] = await db
         .insert(users)
         .values({
-          email: "admin@sodohospital.com",
+          email: "admin@soddohospital.com",
           name: "System Administrator",
           password: hashedPassword,
           role: "ADMIN",
@@ -145,7 +145,7 @@ export async function GET() {
         lastName: "Johnson",
         nationality: "United States",
         passportNo: "US123456789",
-        email: "sarah.johnson@sodohospital.com",
+        email: "sarah.johnson@soddohospital.com",
         phone: "+251-11-555-0101",
       })
       .returning()
@@ -158,7 +158,7 @@ export async function GET() {
         lastName: "Garcia",
         nationality: "Philippines",
         passportNo: "PH987654321",
-        email: "maria.garcia@sodohospital.com",
+        email: "maria.garcia@soddohospital.com",
         phone: "+251-11-555-0102",
       })
       .returning()
@@ -198,7 +198,7 @@ export async function GET() {
       message: "✅ Database seeded successfully!",
       data: {
         admin: {
-          email: "admin@sodohospital.com",
+          email: "admin@soddohospital.com",
           password: "Admin123!",
           role: "ADMIN",
         },
