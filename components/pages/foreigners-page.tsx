@@ -73,20 +73,34 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
     return !value || value === key ? fallback : value
   }
 
-  const handleCreatePerson = (personData: any) => {
-    if (personData.id) {
-      // Edit mode
-      console.log("Update person data:", personData)
-      // TODO: Call updatePerson API action
-    } else {
-      // Create mode
-      console.log("New person data:", personData)
-      // TODO: Call createPerson API action
+  const handleCreatePerson = async (personData: any) => {
+    try {
+      if (personData.id) {
+        // Edit mode - call updatePerson
+        const { updatePerson } = await import("@/lib/actions/v2/people")
+        const result = await updatePerson(personData.id, personData)
+        if (result.success) {
+          console.log("Person updated successfully")
+        } else {
+          console.error("Failed to update person:", result.error)
+        }
+      } else {
+        // Create mode - call createPerson
+        const { createPerson } = await import("@/lib/actions/v2/people")
+        const result = await createPerson(personData)
+        if (result.success) {
+          console.log("Person created successfully")
+        } else {
+          console.error("Failed to create person:", result.error)
+        }
+      }
+      // After successful operation, reload the list
+      loadPeople()
+      loadStats()
+      setSelectedPerson(null)
+    } catch (error) {
+      console.error("Error saving person:", error)
     }
-    // After successful operation, reload the list
-    loadPeople()
-    loadStats()
-    setSelectedPerson(null)
   }
 
   const handleEditPerson = (person: any) => {

@@ -11,6 +11,7 @@ export const workPermitSubTypeEnum = pgEnum("work_permit_sub_type", ["NEW", "REN
 export const genderEnum = pgEnum("gender", ["MALE", "FEMALE"])
 export const familyStatusEnum = pgEnum("family_status", ["MARRIED", "UNMARRIED"])
 export const permitStatusEnum = pgEnum("permit_status", ["PENDING", "SUBMITTED", "APPROVED", "REJECTED", "EXPIRED"])
+export const permitStageEnum = pgEnum("permit_stage", ["SUPPORT_LETTER", "DOCUMENT_ARRANGEMENT", "APPLY_ONLINE", "SUBMIT_DOCUMENT", "PAYMENT", "PICK_ID", "COMPLETED"])
 export const eventTypeEnum = pgEnum("event_type", ["permit", "deadline", "meeting", "interview", "other"])
 export const reportStatusEnum = pgEnum("report_status", ["DRAFT", "GENERATED", "PUBLISHED", "ARCHIVED"])
 export const reportFrequencyEnum = pgEnum("report_frequency", ["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "YEARLY", "ON_DEMAND"])
@@ -140,38 +141,49 @@ export const people = pgTable("people", {
   dateOfBirth: timestamp("date_of_birth"),
   gender: genderEnum("gender"),
   familyStatus: familyStatusEnum("family_status"),
-  
+
   // Profile photo
   photoUrl: text("photo_url"),
-  
+
   // Passport details
   passportNo: varchar("passport_no", { length: 100 }),
   passportIssueDate: timestamp("passport_issue_date"),
   passportExpiryDate: timestamp("passport_expiry_date"),
   passportDocuments: jsonb("passport_documents").$type<string[]>().default([]),
-  
+
   // Medical License details
   medicalLicenseNo: varchar("medical_license_no", { length: 100 }),
   medicalLicenseIssueDate: timestamp("medical_license_issue_date"),
   medicalLicenseExpiryDate: timestamp("medical_license_expiry_date"),
   medicalLicenseDocuments: jsonb("medical_license_documents").$type<string[]>().default([]),
-  
+
   // Work Permit details
   workPermitNo: varchar("work_permit_no", { length: 100 }),
   workPermitSubType: workPermitSubTypeEnum("work_permit_sub_type"), // NEW, RENEWAL, OTHER
   workPermitIssueDate: timestamp("work_permit_issue_date"),
   workPermitExpiryDate: timestamp("work_permit_expiry_date"),
   workPermitDocuments: jsonb("work_permit_documents").$type<string[]>().default([]),
-  
+
   // Residence ID details
   residenceIdNo: varchar("residence_id_no", { length: 100 }),
   residenceIdIssueDate: timestamp("residence_id_issue_date"),
   residenceIdExpiryDate: timestamp("residence_id_expiry_date"),
   residenceIdDocuments: jsonb("residence_id_documents").$type<string[]>().default([]),
-  
+
   phone: varchar("phone", { length: 50 }),
   email: varchar("email", { length: 255 }),
+  familyDetails: jsonb("family_details").$type<{
+    spouseName?: string;
+    spousePhone?: string;
+    children?: { name: string; age?: string; gender?: string }[];
+  }>().default({}),
   guardianId: uuid("guardian_id").references((): any => people.id), // self-reference for dependents
+  documentSections: jsonb("document_sections").$type<any[]>().default([]),
+
+  // Permit workflow tracking (v2 redesign)
+  permitType: permitCategoryEnum("permit_type"), // WORK_PERMIT, RESIDENCE_ID, MEDICAL_LICENSE
+  applicationType: workPermitSubTypeEnum("application_type"), // NEW, RENEWAL
+  currentStage: permitStageEnum("current_stage").default("SUPPORT_LETTER"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -299,6 +311,57 @@ export const reports = pgTable("reports", {
   fileSize: integer("file_size"), // bytes
   parameters: jsonb("parameters").$type<Record<string, any>>().default({}), // filter/query params
   createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// ============ IMPORT, VEHICLE, COMPANY ENTITIES ============
+
+// Import Permits (PIP & Single Window)
+export const importPermits = pgTable("import_permits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 50 }).notNull(), // "pip" | "single_window"
+  status: varchar("status", { length: 50 }).default("pending").notNull(),
+  dueDate: timestamp("due_date"),
+  assigneeId: uuid("assignee_id").references(() => users.id),
+  documents: jsonb("documents").$type<string[]>().default([]), // flattened list for easy access
+  documentSections: jsonb("document_sections").$type<any[]>().default([]), // detailed structure for UI
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Vehicles
+export const vehicles = pgTable("vehicles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 50 }).notNull(), // inspection/road_fund/insurance/road_transport
+  status: varchar("status", { length: 50 }).default("pending").notNull(),
+  vehicleInfo: varchar("vehicle_info", { length: 255 }),
+  plateNumber: varchar("plate_number", { length: 50 }),
+  dueDate: timestamp("due_date"),
+  assigneeId: uuid("assignee_id").references(() => users.id),
+  documents: jsonb("documents").$type<string[]>().default([]),
+  documentSections: jsonb("document_sections").$type<any[]>().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Company Registrations
+export const companyRegistrations = pgTable("company_registrations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  stage: varchar("stage", { length: 50 }).default("document_prep").notNull(),
+  status: varchar("status", { length: 50 }).default("pending").notNull(),
+  companyName: varchar("company_name", { length: 255 }),
+  registrationType: varchar("registration_type", { length: 100 }),
+  dueDate: timestamp("due_date"),
+  assigneeId: uuid("assignee_id").references(() => users.id),
+  documents: jsonb("documents").$type<string[]>().default([]),
+  documentSections: jsonb("document_sections").$type<any[]>().default([]),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -611,3 +674,11 @@ export type Testimonial = typeof testimonials.$inferSelect
 export type NewTestimonial = typeof testimonials.$inferInsert
 export type ComplaintUpdate = typeof complaintUpdates.$inferSelect
 export type NewComplaintUpdate = typeof complaintUpdates.$inferInsert
+
+// Import, Vehicle, Company Type exports
+export type ImportPermit = typeof importPermits.$inferSelect
+export type NewImportPermit = typeof importPermits.$inferInsert
+export type Vehicle = typeof vehicles.$inferSelect
+export type NewVehicle = typeof vehicles.$inferInsert
+export type CompanyRegistration = typeof companyRegistrations.$inferSelect
+export type NewCompanyRegistration = typeof companyRegistrations.$inferInsert

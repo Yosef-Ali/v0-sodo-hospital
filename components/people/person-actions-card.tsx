@@ -24,10 +24,11 @@ import { useToast } from "@/components/ui/use-toast"
 
 interface PersonActionsCardProps {
   personId: string
-  hasRelatedData: boolean // if true, show cascade warning
+  hasRelatedData: boolean
+  onEdit?: () => void // Callback to open edit sheet
 }
 
-export function PersonActionsCard({ personId, hasRelatedData }: PersonActionsCardProps) {
+export function PersonActionsCard({ personId, hasRelatedData, onEdit }: PersonActionsCardProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
@@ -47,7 +48,7 @@ export function PersonActionsCard({ personId, hasRelatedData }: PersonActionsCar
         title: "Person Deleted",
         description: "The person and requested data have been permanently removed.",
       })
-      router.push("/people")
+      router.push("/foreigners")
       router.refresh()
     } else {
       toast({
@@ -62,17 +63,24 @@ export function PersonActionsCard({ personId, hasRelatedData }: PersonActionsCar
     setIsLoading(false)
   }
 
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit()
+    } else {
+      // Fallback: navigate back to foreigners page and let them edit from there
+      router.push(`/foreigners`)
+    }
+  }
+
   return (
     <Card className="bg-gray-800 border-gray-700 p-6">
       <h3 className="text-lg font-semibold text-white mb-4">Actions</h3>
 
       <div className="space-y-4">
-        {/* Edit Button - Placeholder for now as route might not exist yet, 
-            but good to have consistent UI */}
         <Button
           variant="outline"
           className="w-full border-gray-700 hover:bg-gray-700 text-gray-200"
-          onClick={() => router.push(`/people/${personId}/edit`)} // Assuming edit route exists or will exist
+          onClick={handleEdit}
           disabled={isLoading}
         >
           <Edit2 className="h-4 w-4 mr-2" />

@@ -173,7 +173,14 @@ export async function createPerson(data: {
   residenceIdDocuments?: string[]
   phone?: string
   email?: string
+  email?: string
+  familyDetails?: any
   guardianId?: string
+  documentSections?: any[]
+  // Permit workflow fields
+  permitType?: "WORK_PERMIT" | "RESIDENCE_ID" | "MEDICAL_LICENSE" | "PIP" | "CUSTOMS" | "CAR_BOLO_INSURANCE"
+  applicationType?: "NEW" | "RENEWAL" | "OTHER"
+  currentStage?: "SUPPORT_LETTER" | "DOCUMENT_ARRANGEMENT" | "APPLY_ONLINE" | "SUBMIT_DOCUMENT" | "PAYMENT" | "PICK_ID" | "COMPLETED"
 }) {
   try {
     // Validate required fields
@@ -209,7 +216,11 @@ export async function createPerson(data: {
 
     const result = await db
       .insert(people)
-      .values(data)
+      .values({
+        ...data,
+        familyDetails: data.familyDetails || {},
+        documentSections: data.documentSections || [],
+      })
       .returning()
 
     revalidatePath("/people")
@@ -254,7 +265,13 @@ export async function updatePerson(
     residenceIdDocuments: string[]
     phone: string
     email: string
+    familyDetails: any
     guardianId: string
+    documentSections: any[]
+    // Permit workflow fields
+    permitType: "WORK_PERMIT" | "RESIDENCE_ID" | "MEDICAL_LICENSE" | "PIP" | "CUSTOMS" | "CAR_BOLO_INSURANCE"
+    applicationType: "NEW" | "RENEWAL" | "OTHER"
+    currentStage: "SUPPORT_LETTER" | "DOCUMENT_ARRANGEMENT" | "APPLY_ONLINE" | "SUBMIT_DOCUMENT" | "PAYMENT" | "PICK_ID" | "COMPLETED"
   }>
 ) {
   try {
