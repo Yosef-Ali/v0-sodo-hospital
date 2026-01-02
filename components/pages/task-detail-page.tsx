@@ -30,9 +30,11 @@ import {
   FileText,
   Shield,
 } from "lucide-react"
-import { completeTask, deleteTask } from "@/lib/actions/v2/tasks"
+import { completeTask, deleteTask, updateTask } from "@/lib/actions/v2/tasks"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { TaskSheet } from "@/components/sheets/task-sheet"
+import { toast } from "sonner"
 
 interface TaskDetailPageProps {
   initialData: any
@@ -44,6 +46,7 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
   const [task, setTask] = useState(initialData)
   const [actionLoading, setActionLoading] = useState(false)
   const [deletePermit, setDeletePermit] = useState(false)
+  const [editSheetOpen, setEditSheetOpen] = useState(false)
 
   const handleCompleteTask = async () => {
     setActionLoading(true)
@@ -75,6 +78,26 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
     }
 
     setActionLoading(false)
+  }
+
+  const handleEditSubmit = async (data: any) => {
+    try {
+      const result = await updateTask(task.task.id, {
+        ...data,
+        assigneeId: data.assignee // Map form field 'assignee' to 'assigneeId'
+      })
+      
+      if (result.success) {
+        toast.success("Task updated successfully")
+        router.refresh()
+        setEditSheetOpen(false)
+        // Ideally update local state too, but router.refresh handles server data
+      } else {
+        toast.error("Failed to update task", { description: result.error })
+      }
+    } catch (error) {
+      toast.error("An error occurred")
+    }
   }
 
   const getStatusIcon = (status: string) => {
@@ -133,6 +156,16 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
   const assignee = task.assignee
   const permit = task.permit
   const person = task.person
+
+  // Prepare task object for sheet
+  const sheetTask = {
+    ...taskData,
+    permit: permit,
+    // Ensure we pass necessary fields for pre-filling
+    assigneeId: taskData.assigneeId,
+    entityType: taskData.entityType,
+    entityId: taskData.entityId
+  }
 
   return (
     <div className="p-8">
@@ -359,7 +392,7 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
               <Button
                 variant="outline"
                 className="w-full border-gray-700"
-                onClick={() => router.push(`/tasks/${taskData.id}/edit`)}
+                onClick={() => setEditSheetOpen(true)}
               >
                 <Edit2 className="h-4 w-4 mr-2" />
                 Edit Task
@@ -447,6 +480,13 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
           </Card>
         </div>
       </div>
+
+      <TaskSheet 
+        open={editSheetOpen} 
+        onOpenChange={setEditSheetOpen} 
+        onSubmit={handleEditSubmit} 
+        task={sheetTask} 
+      />
     </div>
   )
 }

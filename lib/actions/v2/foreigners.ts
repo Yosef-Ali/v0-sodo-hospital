@@ -1,6 +1,6 @@
 "use server"
 
-import { db, people, documentsV2, permits, tasksV2, permitChecklistItems, type Person, type NewPerson } from "@/lib/db"
+import { db, people, documentsV2, permits, tasksV2, permitChecklistItems, calendarEvents, complaints, type Person, type NewPerson } from "@/lib/db"
 import { eq, desc, or, like, sql, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { generateTicketNumber } from "@/lib/utils"
@@ -395,9 +395,22 @@ export async function deletePerson(personId: string, options?: { cascade?: boole
       }
     }
 
-    // If cascade, also delete documents owned by this person
+    // Handle other related tables if cascade
     if (cascade) {
+      // Documents
       await db.delete(documentsV2).where(eq(documentsV2.personId, personId))
+      
+      // Calendar Events
+      await db.delete(calendarEvents).where(eq(calendarEvents.relatedPersonId, personId))
+
+      // Complaints (unlink)
+      await db
+        .update(complaints)
+        .set({ personId: null })
+        .where(eq(complaints.personId, personId))
+
+      // Tasks (linked by entity)
+      await db.delete(tasksV2).where(sql`${tasksV2.entityType} = 'person' AND ${tasksV2.entityId} = ${personId}`)
     }
 
     const result = await db
@@ -409,12 +422,15 @@ export async function deletePerson(personId: string, options?: { cascade?: boole
       return { success: false, error: "Person not found" }
     }
 
-    revalidatePath("/people")
+    revalidatePath("/foreigners")
     revalidatePath("/dashboard")
 
     return { success: true, data: result[0] }
   } catch (error) {
     console.error("Error deleting person:", error)
+    if ((error as any).code === '23503') {
+       return { success: false, error: "Cannot delete person due to existing related records (e.g. complaints, events). Please try 'Delete all related data' option." }
+    }
     return { success: false, error: "Failed to delete person" }
   }
 }

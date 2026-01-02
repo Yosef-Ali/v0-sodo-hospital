@@ -223,55 +223,131 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
     { value: "RENEWAL", label: "Renewal" },
   ]
 
-  // Mapping simple categories to data keys if needed, 
-  // but for now keeping the quick titles simple
-  const quickTitles: Record<string, string[]> = {
-    "work-permit": [
-      "New Work Permit Application",
-      "Work Permit Renewal",
-      "Collect Required Documents",
-      "Follow up on Work Permit Status",
-      "Submit Physical Documents",
-    ],
-    "residence-id": [
-      "New Residence ID Application",
-      "Residence ID Renewal",
-      "New Residence ID for Wife & Child",
-      "Renewal Residence ID for Dependents",
-      "Submit Document AND Payment",
-    ],
-    "moh-licensing": [
-      "Permanent/New License Application",
-      "Temporary License Application",
-      "License Renewal",
-      "Return Expired License",
-      "Document Preparation",
-    ],
-    "customs": [
-      "Pre Import Permit (PIP)",
-      "Ethiopia Single Window (ESW)",
-      "Submit Customs Declaration",
-      "Collect Cleared Items",
-      "Document Collection for PIP",
-    ],
-    "bolo-insurance": [
-      "Bolo and Insurance Inspection",
-      "Process Road Fund Payment",
-      "Obtain Vehicle Insurance",
-      "Complete Road Transport Requirements",
-    ],
-    "company-registration": [
-      "Company Registration",
-      "Prepare Registration Documents",
-      "Submit Online Application",
-      "Collect Business License",
-    ],
-    "govt-affairs": [
-      "Investment Commission Process",
-      "ETA Requirements",
-      "PACCS Process",
-      "Family Medicine Licensing",
-    ]
+  // Mapping categories and sub-types to specific task titles
+  const quickTitles: Record<string, Record<string, string[]>> = {
+    "work-permit": {
+      "NEW": [
+        "New Work Permit Application",
+        "Collect Documents for New Permit",
+        "Submit New Work Permit Request",
+        "Follow up on New Application",
+        "Collect Issued Work Permit"
+      ],
+      "RENEWAL": [
+        "Work Permit Renewal Application",
+        "Collect Renewal Documents",
+        "Submit Renewal Request",
+        "Follow up on Renewal",
+        "Collect Renewed Work Permit"
+      ],
+      "OTHER": [
+        "Work Permit Adjustment",
+        "Cancellation Request",
+        "Lost Permit Replacement"
+      ],
+      "DEFAULT": [
+        "Work Permit Inquiry",
+        "Document Verification"
+      ]
+    },
+    "residence-id": {
+      "DEFAULT": [
+        "New Residence ID Application",
+        "Residence ID Renewal",
+        "New Residence ID for Wife & Child",
+        "Renewal Residence ID for Dependents",
+        "Submit Document AND Payment",
+        "Collect Residence ID"
+      ]
+    },
+    "moh-licensing": {
+      "NEW": [
+        "New Permanent License Application",
+        "Submit Medical Degree for Verification",
+        "Professional Competency Assessment"
+      ],
+      "TEMPORARY": [
+        "Temporary License Application",
+        "Submit Letter of Intent"
+      ],
+      "RENEWAL": [
+        "License Renewal Application",
+        "Submit CPD Certificates",
+        "Pay Renewal Fees"
+      ],
+      "RETURN": [
+        "Return Expired License",
+        "Clearance Process"
+      ],
+      "DEFAULT": [
+        "MOH License Inquiry",
+        "Document Collection"
+      ]
+    },
+    "customs": {
+      "PIP": [
+        "Apply for Pre Import Permit (PIP)",
+        "Submit Proforma Invoice",
+        "Follow up on PIP Approval"
+      ],
+      "ESW": [
+        "Ethiopia Single Window Submission",
+        "Upload Shipping Documents",
+        "Bank Permit Processing"
+      ],
+      "OTHER": [
+        "General Customs Clearance",
+        "Duty Free Request",
+        "Collect Released Goods"
+      ],
+      "DEFAULT": [
+        "Customs Inquiry",
+        "Document Preparation"
+      ]
+    },
+    "bolo-insurance": {
+      "NEW": [
+        "New Vehicle Inspection (Bolo)",
+        "New Insurance Policy Purchase"
+      ],
+      "RENEWAL": [
+        "Annual Bolo Renewal",
+        "Insurance Policy Renewal",
+        "Road Fund Payment"
+      ],
+      "DEFAULT": [
+        "Vehicle Inspection",
+        "Insurance Inquiry"
+      ]
+    },
+    "company-registration": {
+      "DEFAULT": [
+        "Company Registration Application",
+        "Trade Name Registration",
+        "Tax Identification Number (TIN) Application",
+        "Business License Renewal",
+        "Commercial Registration Amendment"
+      ]
+    },
+    "govt-affairs": {
+      "DEFAULT": [
+        "Investment Commission Inquiry",
+        "Submit Quarterly Report",
+        "Visa Extension Request",
+        "Support Letter Request"
+      ]
+    }
+  }
+
+  // Mapping categories to default entity types
+  const categoryToEntityType: Record<string, string> = {
+    "work-permit": "person",
+    "residence-id": "person",
+    "moh-licensing": "person",
+    "customs": "import",
+    "bolo-insurance": "vehicle",
+    "company-registration": "company",
+    "govt-affairs": "company",
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -289,6 +365,23 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
   // Determine which fields to show based on category
   const showPersonSelector = ["work-permit", "residence-id", "moh-licensing"].includes(formData.category)
   const showSubType = ["work-permit", "moh-licensing", "customs", "bolo-insurance"].includes(formData.category)
+
+  // Get relevant titles based on category and subtype
+  const getRelevantTitles = () => {
+    if (!formData.category) return []
+    const categoryData = quickTitles[formData.category]
+    if (!categoryData) return []
+    
+    // If subType is selected, try to find matching titles
+    if (formData.subType && categoryData[formData.subType]) {
+      return categoryData[formData.subType]
+    }
+    
+    // Fallback to DEFAULT
+    return categoryData["DEFAULT"] || []
+  }
+
+  const relevantTitles = getRelevantTitles()
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -321,7 +414,18 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                 </Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value, title: "", subType: "" })}
+                  onValueChange={(value) => {
+                    const defaultEntityType = categoryToEntityType[value] || ""
+                    setFormData({ 
+                      ...formData, 
+                      category: value, 
+                      title: "", 
+                      subType: "",
+                      entityType: defaultEntityType,
+                      entityId: "", // Reset linked record
+                      personId: ""  // Reset legacy
+                    })
+                  }}
                 >
                   <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
                     <SelectValue placeholder="Select category" />
@@ -347,7 +451,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                   </Label>
                   <Select
                     value={formData.subType}
-                    onValueChange={(value) => setFormData({ ...formData, subType: value })}
+                    onValueChange={(value) => setFormData({ ...formData, subType: value, title: "" })}
                   >
                     <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
                       <SelectValue placeholder="Select type" />
@@ -493,14 +597,14 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                 </Label>
                 {/* Quick Title Logic */}
                 <div className="flex gap-2 flex-col">
-                  {formData.category && quickTitles[formData.category] && (
+                  {relevantTitles.length > 0 && (
                     <Select
-                      value={quickTitles[formData.category]?.includes(formData.title) ? formData.title : "custom"}
+                      value={relevantTitles.includes(formData.title) ? formData.title : "custom"}
                       onValueChange={(value) => {
                         if (value !== "custom") {
                           setFormData({ ...formData, title: value })
                         } else {
-                           if (quickTitles[formData.category]?.includes(formData.title)) {
+                           if (relevantTitles.includes(formData.title)) {
                               setFormData({ ...formData, title: "" })
                            }
                         }
@@ -510,7 +614,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                         <SelectValue placeholder="Select a standard task..." />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-700 border-gray-600">
-                        {quickTitles[formData.category]?.map((title) => (
+                        {relevantTitles.map((title) => (
                           <SelectItem key={title} value={title} className="text-white">
                             {title}
                           </SelectItem>
@@ -523,7 +627,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                   )}
                   
                   {/* Custom Input */}
-                  {(!formData.category || !quickTitles[formData.category]?.includes(formData.title)) && (
+                  {(!formData.category || !relevantTitles.includes(formData.title)) && (
                     <Input
                       value={formData.title}
                       placeholder="e.g., Renew Medical License for Dr. Smith"

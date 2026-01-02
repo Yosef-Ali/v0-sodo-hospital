@@ -20,6 +20,7 @@ import { PersonActionsCard } from "@/components/foreigners/person-actions-card"
 import { PersonPermitsCard } from "@/components/foreigners/person-permits-card"
 import { updatePerson } from "@/lib/actions/v2/foreigners"
 import { toast } from "sonner"
+import { PersonSheet } from "@/components/sheets/person-sheet"
 
 interface ForeignerDetailPageProps {
   initialData: {
