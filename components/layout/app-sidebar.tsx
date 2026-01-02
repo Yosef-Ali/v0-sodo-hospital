@@ -74,11 +74,6 @@ const menuItems: MenuItem[] = [
     roles: ["ADMIN", "HR_MANAGER"],
   },
   {
-    title: "Permits",
-    url: "/permits",
-    icon: ClipboardCheck,
-  },
-  {
     title: "Tasks",
     url: "/tasks",
     icon: CheckSquare,
