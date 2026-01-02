@@ -1,4 +1,4 @@
-import { getPersonById } from "@/lib/actions/v2/people"
+import { getPersonById } from "@/lib/actions/v2/foreigners"
 import { unstable_cache } from "next/cache"
 import { notFound } from "next/navigation"
 import { ForeignerDetailPage } from "@/components/pages/foreigner-detail-page"

@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Edit2, Trash2, AlertTriangle } from "lucide-react"
-import { deletePerson } from "@/lib/actions/v2/people"
+import { deletePerson } from "@/lib/actions/v2/foreigners"
 import { useToast } from "@/components/ui/use-toast"
 
 interface PersonActionsCardProps {

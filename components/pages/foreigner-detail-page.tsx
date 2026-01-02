@@ -16,9 +16,9 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { PersonActionsCard } from "@/components/people/person-actions-card"
-import { PersonSheet } from "@/components/sheets/person-sheet"
-import { updatePerson } from "@/lib/actions/v2/people"
+import { PersonActionsCard } from "@/components/foreigners/person-actions-card"
+import { PersonPermitsCard } from "@/components/foreigners/person-permits-card"
+import { updatePerson } from "@/lib/actions/v2/foreigners"
 import { toast } from "sonner"
 
 interface ForeignerDetailPageProps {

@@ -1,5 +1,5 @@
 import { ForeignersPage } from "@/components/pages/foreigners-page"
-import { getPeople, getPeopleStats } from "@/lib/actions/v2/people"
+import { getPeople, getPeopleStats } from "@/lib/actions/v2/foreigners"
 import { unstable_cache } from "next/cache"
 
 // Cache people data for 60 seconds

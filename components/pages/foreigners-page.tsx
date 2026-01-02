@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Search, Plus, User, Filter } from "lucide-react"
-import { getPeople, getPeopleStats } from "@/lib/actions/v2/people"
+import { getPeople, getPeopleStats } from "@/lib/actions/v2/foreigners"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { PersonSheet } from "@/components/sheets/person-sheet"
@@ -77,7 +77,7 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
     try {
       if (personData.id) {
         // Edit mode - call updatePerson
-        const { updatePerson } = await import("@/lib/actions/v2/people")
+        const { updatePerson } = await import("@/lib/actions/v2/foreigners")
         const result = await updatePerson(personData.id, personData)
         if (result.success) {
           console.log("Person updated successfully")
@@ -86,8 +86,9 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
         }
       } else {
         // Create mode - call createPerson
-        const { createPerson } = await import("@/lib/actions/v2/people")
+        const { createPerson } = await import("@/lib/actions/v2/foreigners")
         const result = await createPerson(personData)
+
         if (result.success) {
           console.log("Person created successfully")
         } else {
