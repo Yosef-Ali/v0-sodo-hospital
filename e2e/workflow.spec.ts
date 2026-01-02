@@ -22,17 +22,6 @@ test.describe('Task Workflow Automation', () => {
 
     // Helper to select category and check entity type
     const checkSmartSelection = async (categoryName: string, expectedEntityType: string) => {
-      // Open Category Select
-      const categoryLabel = page.getByText('Workflow Category');
-      const categorySelect = page.locator('button[role="combobox"]').filter({ hasText: 'Select category' }).first(); 
-      // Note: There are multiple selects. We need to be specific.
-      // The label is "Workflow Category", the select is likely the next sibling or contained nearby.
-      // Using locator by label is safer if labels are correctly associated.
-      // But Radix UI Selects use a hidden input with label association, the trigger is a button.
-      
-      // Let's use specific finding by surrounding text if possible, or order.
-      // Context & Subject section has Category and Type.
-      
       // Select Category
       // Locate the container that has the label "Workflow Category"
       await page.locator('div.space-y-2').filter({ has: page.locator('label', { hasText: 'Workflow Category' }) }).getByRole('combobox').click();
@@ -64,7 +53,7 @@ test.describe('Task Workflow Automation', () => {
     await page.getByRole('option', { name: 'New Work Permit' }).click();
 
     // 3. Entity Type should be Person (verified above), now Select Record
-    // Wait for People to load (Select might be disabled initially?)
+    // Wait for People to load
     const recordSelect = page.locator('div.space-y-2').filter({ has: page.locator('label', { hasText: 'Select Record' }) }).getByRole('combobox');
     await expect(recordSelect).toBeEnabled();
     await recordSelect.click();
@@ -83,7 +72,6 @@ test.describe('Task Workflow Automation', () => {
     await page.getByRole('option').first().click(); // Pick first user
 
     // 7. Submit
-    // Using a more specific selector for the submit button inside the sheet
     const submitButton = page.locator('button[type="submit"]').filter({ hasText: 'Create Task' });
     await expect(submitButton).toBeEnabled();
     await submitButton.click();

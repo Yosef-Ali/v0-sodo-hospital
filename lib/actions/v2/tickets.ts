@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { people, vehicles, importPermits, companyRegistrations } from "@/lib/db/schema"
+import { people, vehicles, importPermits, companyRegistrations, permits } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 
 export type TicketDetails = {
@@ -99,6 +99,31 @@ export async function getTicketDetails(ticketNumber: string): Promise<TicketDeta
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
           dueDate: item.dueDate,
+        }
+      }
+    }
+    else if (prefix === "WRK" || prefix === "RES") {
+      const result = await db.select({
+        permit: permits,
+        person: people
+      }).from(permits)
+        .where(eq(permits.ticketNumber, ticketNumber))
+        .innerJoin(people, eq(permits.personId, people.id))
+        .limit(1)
+
+      if (result.length > 0) {
+        const { permit, person } = result[0]
+        return {
+          type: permit.category.replace(/_/g, ' '),
+          id: permit.id,
+          ticketNumber: permit.ticketNumber!,
+          title: `${person.firstName} ${person.lastName}`,
+          status: permit.status.toLowerCase(),
+          description: permit.notes,
+          category: permit.category,
+          createdAt: permit.createdAt,
+          updatedAt: permit.updatedAt,
+          dueDate: permit.dueDate,
         }
       }
     }
