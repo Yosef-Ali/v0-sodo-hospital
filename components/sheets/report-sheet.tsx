@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AIReportAssistant } from "@/components/reports/ai-report-assistant"
+import { Sparkles } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface ReportFormData {
   id?: string
@@ -37,6 +40,7 @@ export function ReportSheet({ open, onOpenChange, onSubmit, report }: ReportShee
     department: "",
     category: "",
   })
+  const [activeModeTab, setActiveModeTab] = useState("manual")
 
   // Populate form when editing
   useEffect(() => {
@@ -105,7 +109,17 @@ export function ReportSheet({ open, onOpenChange, onSubmit, report }: ReportShee
           </SheetDescription>
         </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+        <Tabs value={activeModeTab} onValueChange={setActiveModeTab} className="mt-6">
+          <TabsList className="grid w-full grid-cols-2 bg-gray-800">
+            <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+            <TabsTrigger value="ai" className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-purple-400" />
+              AI Assistant
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="manual">
+            <form onSubmit={handleSubmit} className="mt-4 space-y-6">
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">Report Title *</Label>
@@ -250,7 +264,24 @@ export function ReportSheet({ open, onOpenChange, onSubmit, report }: ReportShee
               {report?.id ? "Update Report" : "Create Report"}
             </Button>
           </div>
-        </form>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="ai">
+            <div className="mt-4">
+              <AIReportAssistant 
+                onApply={(data) => {
+                  setFormData({
+                    ...formData,
+                    title: data.title,
+                    description: data.description
+                  })
+                  setActiveModeTab("manual")
+                }} 
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </SheetContent>
     </Sheet>
   )

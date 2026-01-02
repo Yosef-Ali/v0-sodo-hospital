@@ -45,7 +45,7 @@ export async function POST(req: Request) {
 
     // Use Gemini 2.5 Flash for chat
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash-preview-05-20",
+      model: "gemini-2.5-flash",
       systemInstruction: getHospitalPrompt(),
     })
 
@@ -64,18 +64,15 @@ Type: ${ticketData.type}
 Title: ${ticketData.title}
 Status: ${ticketData.status}
 Details: ${ticketData.description || "N/A"}
-Created: ${ticketData.createdAt.toDateString()}
-Due Date: ${ticketData.dueDate ? ticketData.dueDate.toDateString() : "N/A"}
+Created: ${ticketData.createdAt.toISOString()}
+Due Date: ${ticketData.dueDate ? ticketData.dueDate.toISOString() : "N/A"}
 Stage: ${ticketData.stage || "N/A"}
 
-[Suggested Actions Context]
-Based on the status '${ticketData.status}' and type '${ticketData.type}', suggest relevant Quick Actions to the user.
-Example: If status is 'pending', suggest 'Upload Documents' or 'Check Requirements'.
-If status is 'completed', suggest 'Download Certificate' or 'View Details'.
-
 User Query: ${message}`
+        console.log("Chat Context for Gemini:", contextMessage)
       } else {
         contextMessage = `[User verified ticket ${currentTicket} but data not found in DB] ${message}`
+        console.log("Ticket Data not found for:", currentTicket)
       }
     }
 
@@ -113,8 +110,12 @@ User Query: ${message}`
     })
   } catch (error) {
     console.error("A2UI Chat Error:", error)
+    if (error instanceof Error) {
+      console.error("Error Message:", error.message)
+      console.error("Error Stack:", error.stack)
+    }
     return NextResponse.json(
-      { success: false, error: "Chat processing failed" },
+      { success: false, error: "Chat processing failed", details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }
