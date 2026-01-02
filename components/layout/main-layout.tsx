@@ -5,7 +5,7 @@ import type React from "react"
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
-import { OpenAIChatWidget } from "@/components/ui/openai-chat-widget"
+import { A2UIChatWidget } from "@/components/a2ui"
 import { UserMenu } from "@/components/layout/user-menu"
 import { Bell } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -43,8 +43,8 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
         </div>
       </SidebarInset>
 
-      {/* Customer Support Chat Widget */}
-      <OpenAIChatWidget enableCopilot={true} position="dashboard" />
+      {/* AI Support Chat Widget - Pure Google A2UI + Gemini */}
+      <A2UIChatWidget />
     </SidebarProvider>
   )
 }

@@ -111,8 +111,8 @@ export async function POST(req: Request) {
     const base64Image = Buffer.from(imageBuffer).toString("base64")
     const mimeType = imageResponse.headers.get("content-type") || "image/jpeg"
 
-    // Use Gemini 2.5 Flash for vision
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
+    // Use Gemini 2.5 Flash for vision (multimodal OCR)
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-05-20" })
 
     const result = await model.generateContent([
       prompt,

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { Activity, Sparkles, Users, Briefcase, FileText, Clock, Star, TrendingDown, CheckCircle } from "lucide-react"
-import { OpenAIChatWidget } from "@/components/ui/openai-chat-widget"
+import { A2UIChatWidget } from "@/components/a2ui"
 import { Button } from "@/components/ui/button"
 import { UserButton } from "@/components/auth/user-button"
 
@@ -219,8 +219,8 @@ export function LandingPage() {
         </div>
       </footer>
 
-      {/* Customer Support Chat Widget */}
-      <OpenAIChatWidget enableCopilot={true} position="landing" />
+      {/* AI Support Chat Widget - Pure Google A2UI + Gemini */}
+      <A2UIChatWidget />
 
       <style jsx>{`
         .fade-in { opacity: 0; transform: translateY(20px); animation: fadeInUp 0.8s ease-out forwards; }

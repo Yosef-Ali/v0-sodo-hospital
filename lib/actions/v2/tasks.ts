@@ -1,10 +1,11 @@
 "use server"
 
-import { db, tasksV2, users, permits, people, permitChecklistItems, checklists, documentsV2 } from "@/lib/db"
+import { db, tasksV2, users, permits, people, permitChecklistItems, checklists, documentsV2, vehicles, importPermits, companyRegistrations } from "@/lib/db"
 import { eq, desc, and, gte, lte, sql, or, isNull, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { gregorianToEC, formatEC } from "@/lib/dates/ethiopian"
 import { hospitalTaskCategories, getAllWorkflows, TaskWorkflow, DocumentItem } from "@/lib/data/hospital-tasks"
+import { syncTaskToCalendar } from "@/lib/actions/v2/calendar-events"
 
 /**
  * Get all tasks with optional filters and pagination
@@ -114,7 +115,36 @@ export async function getTaskById(taskId: string) {
       return { success: false, error: "Task not found" }
     }
 
-    return { success: true, data: result[0] }
+    const taskData = result[0]
+    let entityData = null
+
+    // Fetch linked entity if available
+    if (taskData.task.entityType && taskData.task.entityId) {
+      if (taskData.task.entityType === 'vehicle') {
+        const vehicle = await db.query.vehicles.findFirst({
+          where: eq(vehicles.id, taskData.task.entityId)
+        })
+        if (vehicle) entityData = { type: 'vehicle', data: vehicle }
+      } else if (taskData.task.entityType === 'import') {
+        const importPermit = await db.query.importPermits.findFirst({
+          where: eq(importPermits.id, taskData.task.entityId)
+        })
+        if (importPermit) entityData = { type: 'import', data: importPermit }
+      } else if (taskData.task.entityType === 'company') {
+        const company = await db.query.companyRegistrations.findFirst({
+          where: eq(companyRegistrations.id, taskData.task.entityId)
+        })
+        if (company) entityData = { type: 'company', data: company }
+      } else if (taskData.task.entityType === 'person' && !taskData.person) {
+        // If linked as 'person' but not via permit (fallback)
+        const person = await db.query.people.findFirst({
+          where: eq(people.id, taskData.task.entityId)
+        })
+        if (person) entityData = { type: 'person', data: person }
+      }
+    }
+
+    return { success: true, data: { ...taskData, linkedEntity: entityData } }
   } catch (error) {
     console.error("Error fetching task:", error)
     return { success: false, error: "Failed to fetch task details" }
@@ -132,6 +162,8 @@ export async function createTask(data: {
   dueDate?: Date
   assigneeId?: string
   permitId?: string
+  entityType?: string  // 'person', 'vehicle', 'import', 'company'
+  entityId?: string    // ID of the linked entity
   notes?: string
 }) {
   try {
@@ -176,6 +208,8 @@ export async function createTask(data: {
         dueDate: data.dueDate,
         assigneeId: data.assigneeId,
         permitId: data.permitId,
+        entityType: data.entityType,
+        entityId: data.entityId,
         notes: data.notes,
       })
       .returning()
@@ -184,6 +218,24 @@ export async function createTask(data: {
     revalidatePath("/dashboard")
     if (data.permitId) {
       revalidatePath(`/permits/${data.permitId}`)
+    }
+    // Revalidate linked entity page
+    if (data.entityType && data.entityId) {
+      const entityRoutes: Record<string, string> = {
+        person: "foreigners",
+        vehicle: "vehicle",
+        import: "import",
+        company: "company",
+      }
+      const route = entityRoutes[data.entityType]
+      if (route) {
+        revalidatePath(`/${route}/${data.entityId}`)
+      }
+    }
+
+    // Sync to calendar
+    if (data.dueDate) {
+      await syncTaskToCalendar(result[0].id)
     }
 
     return { success: true, data: result[0] }
@@ -206,12 +258,19 @@ export async function updateTask(
     dueDate: Date
     assigneeId: string
     notes: string
+    entityType: string
+    entityId: string
   }>
 ) {
   try {
     // Check if task exists
     const existing = await db
-      .select({ id: tasksV2.id, permitId: tasksV2.permitId })
+      .select({
+        id: tasksV2.id,
+        permitId: tasksV2.permitId,
+        entityType: tasksV2.entityType,
+        entityId: tasksV2.entityId
+      })
       .from(tasksV2)
       .where(eq(tasksV2.id, taskId))
       .limit(1)
@@ -226,7 +285,7 @@ export async function updateTask(
     }
 
     // Validate assignee if provided
-    if (data.assigneeId !== undefined) {
+    if (data.assigneeId !== undefined && data.assigneeId !== "") {
       const assigneeExists = await db
         .select({ id: users.id })
         .from(users)
@@ -258,6 +317,37 @@ export async function updateTask(
     if (existing[0].permitId) {
       revalidatePath(`/permits/${existing[0].permitId}`)
     }
+
+    // Revalidate old entity path
+    if (existing[0].entityType && existing[0].entityId) {
+      const entityRoutes: Record<string, string> = {
+        person: "foreigners",
+        vehicle: "vehicle",
+        import: "import",
+        company: "company",
+      }
+      const route = entityRoutes[existing[0].entityType]
+      if (route) {
+        revalidatePath(`/${route}/${existing[0].entityId}`)
+      }
+    }
+
+    // Revalidate new entity path if different
+    if (data.entityType && data.entityId && (data.entityType !== existing[0].entityType || data.entityId !== existing[0].entityId)) {
+      const entityRoutes: Record<string, string> = {
+        person: "foreigners",
+        vehicle: "vehicle",
+        import: "import",
+        company: "company",
+      }
+      const route = entityRoutes[data.entityType]
+      if (route) {
+        revalidatePath(`/${route}/${data.entityId}`)
+      }
+    }
+
+    // Sync to calendar
+    await syncTaskToCalendar(result[0].id)
 
     return { success: true, data: result[0] }
   } catch (error) {

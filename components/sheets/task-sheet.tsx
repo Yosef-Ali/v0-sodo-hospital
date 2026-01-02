@@ -11,6 +11,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getUsers } from "@/lib/actions/users"
 import { getPeople } from "@/lib/actions/v2/people"
+import { getVehicles } from "@/lib/actions/v2/vehicles"
+import { getImports } from "@/lib/actions/v2/imports"
+import { getCompanies } from "@/lib/actions/v2/companies"
 import { 
   Briefcase, 
   UserCircle, 
@@ -54,7 +57,10 @@ interface TaskFormData {
   assignee: string
   category: string
   subType: string
-  personId: string
+  // Entity linking (NEW)
+  entityType: string  // 'person', 'vehicle', 'import', 'company'
+  entityId: string    // ID of the linked entity
+  personId: string    // Legacy, will be phased out
 }
 
 interface TaskSheetProps {
@@ -66,9 +72,13 @@ interface TaskSheetProps {
 
 export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps) {
   const [users, setUsers] = useState<{ id: string; name: string | null; email: string }[]>([])
-  const [people, setPeople] = useState<{ id: string; firstName: string; lastName: string }[]>([])
+  const [people, setPeople] = useState<any[]>([])
+  const [vehicles, setVehicles] = useState<any[]>([])
+  const [imports, setImports] = useState<any[]>([])
+  const [companies, setCompanies] = useState<any[]>([])
+  
   const [loadingUsers, setLoadingUsers] = useState(false)
-  const [loadingPeople, setLoadingPeople] = useState(false)
+  const [loadingEntities, setLoadingEntities] = useState(false)
   
   const [formData, setFormData] = useState<TaskFormData>({
     title: "",
@@ -79,10 +89,12 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
     assignee: "",
     category: "",
     subType: "",
+    entityType: "",
+    entityId: "",
     personId: ""
   })
 
-  // Fetch users and people on mount
+  // Fetch users and all entities on mount
   useEffect(() => {
     const fetchData = async () => {
       setLoadingUsers(true)
@@ -92,12 +104,30 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
       }
       setLoadingUsers(false)
 
-      setLoadingPeople(true)
-      const peopleResult = await getPeople({ limit: 100 }) // Fetch reasonable limit for dropdown
+      setLoadingEntities(true)
+      
+      // Fetch all entity types in parallel
+      const [peopleResult, vehiclesResult, importsResult, companiesResult] = await Promise.all([
+        getPeople({ limit: 100 }),
+        getVehicles({ limit: 100 }),
+        getImports({ limit: 100 }),
+        getCompanies({ limit: 100 }),
+      ])
+      
       if (peopleResult.success && peopleResult.data) {
         setPeople(peopleResult.data)
       }
-      setLoadingPeople(false)
+      if (vehiclesResult.success && vehiclesResult.data) {
+        setVehicles(vehiclesResult.data)
+      }
+      if (importsResult.success && importsResult.data) {
+        setImports(importsResult.data)
+      }
+      if (companiesResult.success && companiesResult.data) {
+        setCompanies(companiesResult.data)
+      }
+      
+      setLoadingEntities(false)
     }
     fetchData()
   }, [])
@@ -133,9 +163,11 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
         status: task.status || "pending",
         priority: task.priority || "medium",
         dueDate: formattedDueDate,
-        assignee: task.assigneeId || "", // Use assigneeId from DB
+        assignee: task.assigneeId || "",
         category: category,
         subType: subType,
+        entityType: (task as any).entityType || "",
+        entityId: (task as any).entityId || "",
         personId: personId
       })
     } else if (!task && open) {
@@ -149,6 +181,8 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
         assignee: "",
         category: "",
         subType: "",
+        entityType: "",
+        entityId: "",
         personId: ""
       })
     }
@@ -353,34 +387,96 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
               )}
             </div>
 
-            {/* Person Selector (Dynamic) */}
-            {showPersonSelector && (
-              <div className="space-y-2 mt-4 pt-4 border-t border-gray-700/50">
-                <Label htmlFor="personId" className="text-gray-300 flex items-center justify-between">
-                  Subject Person
-                  <span className="text-xs text-gray-500 font-normal">Who is this for?</span>
-                </Label>
-                <Select
-                  value={formData.personId}
-                  onValueChange={(value) => setFormData({ ...formData, personId: value })}
-                  disabled={loadingPeople}
-                >
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-green-400" />
-                      <SelectValue placeholder={loadingPeople ? "Loading..." : "Link to a person..."} />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-700 border-gray-600 max-h-[200px]">
-                    {people.map((p) => (
-                      <SelectItem key={p.id} value={p.id} className="text-white">
-                        {p.firstName} {p.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Entity Selector - Link to existing records */}
+            <div className="space-y-4 mt-4 pt-4 border-t border-gray-700/50">
+              <div className="flex items-center justify-between">
+                <Label className="text-gray-300 font-medium">Link to Entity</Label>
+                <span className="text-xs text-gray-500">Select existing record</span>
               </div>
-            )}
+              
+              <div className="grid grid-cols-2 gap-3">
+                {/* Entity Type Selector */}
+                <div className="space-y-2">
+                  <Label className="text-gray-400 text-xs">Entity Type</Label>
+                  <Select
+                    value={formData.entityType}
+                    onValueChange={(value) => setFormData({ ...formData, entityType: value, entityId: "", personId: "" })}
+                  >
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
+                      <SelectValue placeholder="Select type..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectItem value="person" className="text-white">
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-blue-400" />
+                          Foreigner / Person
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="vehicle" className="text-white">
+                        <div className="flex items-center gap-2">
+                          <Car className="w-4 h-4 text-green-400" />
+                          Vehicle
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="import" className="text-white">
+                        <div className="flex items-center gap-2">
+                          <Plane className="w-4 h-4 text-orange-400" />
+                          Import Permit
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="company" className="text-white">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-purple-400" />
+                          Company
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Entity Selector (Dynamic based on type) */}
+                <div className="space-y-2">
+                  <Label className="text-gray-400 text-xs">Select Record</Label>
+                  <Select
+                    value={formData.entityId}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, entityId: value })
+                      // Also set personId for backward compatibility
+                      if (formData.entityType === "person") {
+                        setFormData(prev => ({ ...prev, entityId: value, personId: value }))
+                      }
+                    }}
+                    disabled={!formData.entityType || loadingEntities}
+                  >
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
+                      <SelectValue placeholder={loadingEntities ? "Loading..." : "Select record..."} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-700 border-gray-600 max-h-[200px]">
+                      {formData.entityType === "person" && people.map((p) => (
+                        <SelectItem key={p.id} value={p.id} className="text-white">
+                          {p.firstName} {p.lastName}
+                        </SelectItem>
+                      ))}
+                      {formData.entityType === "vehicle" && vehicles.map((v) => (
+                        <SelectItem key={v.id} value={v.id} className="text-white">
+                          {v.plateNumber || v.title} {v.ownerName ? `- ${v.ownerName}` : ""}
+                        </SelectItem>
+                      ))}
+                      {formData.entityType === "import" && imports.map((i) => (
+                        <SelectItem key={i.id} value={i.id} className="text-white">
+                          {i.title} ({i.category?.toUpperCase()})
+                        </SelectItem>
+                      ))}
+                      {formData.entityType === "company" && companies.map((c) => (
+                        <SelectItem key={c.id} value={c.id} className="text-white">
+                          {c.companyName || c.title} {c.tinNumber ? `(TIN: ${c.tinNumber})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* GROUP 2: DETAILS */}

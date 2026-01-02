@@ -3,6 +3,7 @@
 import { db, companyRegistrations, type CompanyRegistration, type NewCompanyRegistration } from "@/lib/db"
 import { eq, desc, or, like, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { generateTicketNumber } from "@/lib/utils"
 
 /**
  * Get all company registrations with optional search and pagination
@@ -98,6 +99,7 @@ export async function createCompany(data: {
     const result = await db
       .insert(companyRegistrations)
       .values({
+        ticketNumber: generateTicketNumber("CMP"),
         title: data.title,
         description: data.description,
         stage: data.stage || "document_prep",

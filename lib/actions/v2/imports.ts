@@ -3,6 +3,7 @@
 import { db, importPermits, type ImportPermit, type NewImportPermit } from "@/lib/db"
 import { eq, desc, or, like, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { generateTicketNumber } from "@/lib/utils"
 
 /**
  * Get all import permits with optional search and pagination
@@ -98,6 +99,7 @@ export async function createImport(data: {
     const result = await db
       .insert(importPermits)
       .values({
+        ticketNumber: generateTicketNumber("IMP"),
         title: data.title,
         description: data.description,
         category: data.category,

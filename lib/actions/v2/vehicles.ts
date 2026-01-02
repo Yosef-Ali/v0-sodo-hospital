@@ -3,6 +3,7 @@
 import { db, vehicles, type Vehicle, type NewVehicle } from "@/lib/db"
 import { eq, desc, or, like, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { generateTicketNumber } from "@/lib/utils"
 
 /**
  * Get all vehicles with optional search and pagination
@@ -101,6 +102,7 @@ export async function createVehicle(data: {
     const result = await db
       .insert(vehicles)
       .values({
+        ticketNumber: generateTicketNumber("VEH"),
         title: data.title,
         description: data.description,
         category: data.category,

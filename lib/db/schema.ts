@@ -135,6 +135,7 @@ export const teamMembers = pgTable("team_members", {
 // People table (hospital staff, patients, dependents)
 export const people = pgTable("people", {
   id: uuid("id").primaryKey().defaultRandom(),
+  ticketNumber: varchar("ticket_number", { length: 50 }).unique(), // Unique Foreigner ID (e.g., FOR-001)
   firstName: varchar("first_name", { length: 255 }).notNull(),
   lastName: varchar("last_name", { length: 255 }).notNull(),
   nationality: varchar("nationality", { length: 100 }),
@@ -244,7 +245,7 @@ export const permitHistory = pgTable("permit_history", {
   changedAt: timestamp("changed_at").defaultNow().notNull(),
 })
 
-// Update Tasks to link to permits
+// Update Tasks to link to permits and entities
 export const tasksV2 = pgTable("tasks_v2", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title", { length: 500 }).notNull(),
@@ -253,7 +254,12 @@ export const tasksV2 = pgTable("tasks_v2", {
   priority: taskPriorityEnum("priority").default("medium").notNull(),
   dueDate: timestamp("due_date"),
   assigneeId: uuid("assignee_id").references(() => users.id),
-  permitId: uuid("permit_id").references(() => permits.id), // NEW: link to permit
+  permitId: uuid("permit_id").references(() => permits.id), // Link to permit (for foreigner workflows)
+
+  // NEW: Link to any entity (Foreigner/Vehicle/Import/Company)
+  entityType: varchar("entity_type", { length: 50 }), // 'person', 'vehicle', 'import', 'company'
+  entityId: uuid("entity_id"), // ID of the linked entity
+
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -290,6 +296,11 @@ export const calendarEvents = pgTable("calendar_events", {
   location: varchar("location", { length: 255 }),
   relatedPersonId: uuid("related_person_id").references(() => people.id), // optional link to person
   relatedPermitId: uuid("related_permit_id").references(() => permits.id), // optional link to permit
+
+  // Generic Entity Linking
+  entityType: varchar("entity_type", { length: 50 }), // 'task', 'vehicle', 'import', 'company'
+  entityId: uuid("entity_id"),
+
   createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -320,6 +331,7 @@ export const reports = pgTable("reports", {
 // Import Permits (PIP & Single Window)
 export const importPermits = pgTable("import_permits", {
   id: uuid("id").primaryKey().defaultRandom(),
+  ticketNumber: varchar("ticket_number", { length: 50 }).unique(), // Unique Import ID (e.g., IMP-001)
   title: varchar("title", { length: 500 }).notNull(),
   description: text("description"),
   category: varchar("category", { length: 50 }).notNull(), // "pip" | "single_window"
@@ -335,6 +347,7 @@ export const importPermits = pgTable("import_permits", {
 // Vehicles
 export const vehicles = pgTable("vehicles", {
   id: uuid("id").primaryKey().defaultRandom(),
+  ticketNumber: varchar("ticket_number", { length: 50 }).unique(), // Unique Vehicle ID (e.g., VEH-001)
   title: varchar("title", { length: 500 }).notNull(),
   description: text("description"),
   category: varchar("category", { length: 50 }).notNull(), // inspection/road_fund/insurance/road_transport
@@ -352,6 +365,7 @@ export const vehicles = pgTable("vehicles", {
 // Company Registrations
 export const companyRegistrations = pgTable("company_registrations", {
   id: uuid("id").primaryKey().defaultRandom(),
+  ticketNumber: varchar("ticket_number", { length: 50 }).unique(), // Unique Company ID (e.g., CMP-001)
   title: varchar("title", { length: 500 }).notNull(),
   description: text("description"),
   stage: varchar("stage", { length: 50 }).default("document_prep").notNull(),

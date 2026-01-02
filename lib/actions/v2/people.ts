@@ -3,6 +3,7 @@
 import { db, people, documentsV2, permits, tasksV2, permitChecklistItems, type Person, type NewPerson } from "@/lib/db"
 import { eq, desc, or, like, sql, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+import { generateTicketNumber } from "@/lib/utils"
 
 /**
  * Get all people with optional search and pagination
@@ -218,6 +219,7 @@ export async function createPerson(data: {
       .insert(people)
       .values({
         ...data,
+        ticketNumber: generateTicketNumber("FOR"),
         familyDetails: data.familyDetails || {},
         documentSections: data.documentSections || [],
       })

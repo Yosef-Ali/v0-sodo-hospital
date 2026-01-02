@@ -255,8 +255,43 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
             </Card>
           )}
 
-          {/* Related Permit */}
-          {permit && (
+          {/* Related Entity */}
+          {task.linkedEntity && (
+            <Card className="bg-gray-800 border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <Shield className="h-5 w-5 mr-2 text-green-500" />
+                Related {task.linkedEntity.type.charAt(0).toUpperCase() + task.linkedEntity.type.slice(1)}
+              </h3>
+
+              <Link
+                href={`/${task.linkedEntity.type === 'person' ? 'foreigners' : task.linkedEntity.type}/${task.linkedEntity.data.id}`}
+                className="block p-4 rounded-lg bg-gray-900/50 border border-gray-700 hover:border-green-500/50 transition-colors"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-white font-medium">
+                    {task.linkedEntity.type === 'vehicle' && (task.linkedEntity.data.plateNumber || task.linkedEntity.data.title)}
+                    {task.linkedEntity.type === 'import' && task.linkedEntity.data.title}
+                    {task.linkedEntity.type === 'company' && (task.linkedEntity.data.companyName || task.linkedEntity.data.title)}
+                    {task.linkedEntity.type === 'person' && `${task.linkedEntity.data.firstName} ${task.linkedEntity.data.lastName}`}
+                  </p>
+                  {task.linkedEntity.type === 'import' && (
+                    <Badge className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs">
+                       {task.linkedEntity.data.category}
+                    </Badge>
+                  )}
+                </div>
+                 <div className="text-sm text-gray-400">
+                    {task.linkedEntity.type === 'vehicle' && `Owner: ${task.linkedEntity.data.ownerName || 'Unknown'}`}
+                    {task.linkedEntity.type === 'import' && `Status: ${task.linkedEntity.data.status}`}
+                    {task.linkedEntity.type === 'company' && `TIN: ${task.linkedEntity.data.tinNumber || 'N/A'}`}
+                    {task.linkedEntity.type === 'person' && `Passport: ${task.linkedEntity.data.passportNumber || 'N/A'}`}
+                 </div>
+              </Link>
+            </Card>
+          )}
+
+          {/* Related Permit (Legacy Support) */}
+          {!task.linkedEntity && permit && (
             <Card className="bg-gray-800 border-gray-700 p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                 <Shield className="h-5 w-5 mr-2 text-green-500" />
