@@ -134,14 +134,27 @@ export async function PUT(req: Request) {
         query = "I want to check my permit status"
         break
       case "upload_document":
-        query = "How do I upload a document?"
-        break
-      case "view_timeline":
-        query = "Show me the processing timeline for my permit"
-        break
+        // Simple response - no complex upload guide
+        return NextResponse.json({
+          success: true,
+          response: {
+            text: "📄 To upload documents, please visit the **Permits** section in the dashboard and select your permit.",
+            widgets: []
+          },
+          sessionId,
+          verifiedTicket: verifiedTickets.get(sessionId)
+        })
       case "contact_support":
-        query = "I need help from customer support"
-        break
+        // Simple response
+        return NextResponse.json({
+          success: true,
+          response: {
+            text: "📞 **Contact Support**\n\nEmail: support@soddohospital.org\nPhone: +251-xxx-xxx-xxx\n\nOr visit the HR office during working hours.",
+            widgets: []
+          },
+          sessionId,
+          verifiedTicket: verifiedTickets.get(sessionId)
+        })
       case "view_timeline":
         // Show timeline for verified ticket
         const timelineTicket = verifiedTickets.get(sessionId)
