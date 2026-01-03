@@ -190,6 +190,9 @@ export function VehiclePage({ initialData }: VehiclePageProps) {
                 </div>
 
                 <h3 className="font-medium text-lg mb-1 text-white">{item.title}</h3>
+                {item.ticketNumber && (
+                  <p className="text-xs text-green-400 font-mono mb-1">{item.ticketNumber}</p>
+                )}
                 <p className="text-sm text-gray-400 mb-3">{item.description}</p>
 
                 <div className="flex items-center gap-2 mb-3">

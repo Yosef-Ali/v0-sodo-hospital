@@ -294,9 +294,12 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
                   )}
                 </div>
 
-                <h3 className="font-medium text-lg mb-2 text-white">
+                <h3 className="font-medium text-lg mb-1 text-white">
                   {person.firstName} {person.lastName}
                 </h3>
+                {person.ticketNumber && (
+                  <p className="text-xs text-green-400 font-mono mb-2">{person.ticketNumber}</p>
+                )}
                 {person.nationality && (
                   <p className="text-sm text-gray-400 mb-4">{person.nationality}</p>
                 )}

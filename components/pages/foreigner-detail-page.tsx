@@ -13,6 +13,8 @@ import {
   Calendar,
   UserCheck,
   FileText,
+  Copy,
+  Check,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -35,6 +37,15 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
   const router = useRouter()
   const { person, guardian, dependents, permits, documents } = initialData
   const [editSheetOpen, setEditSheetOpen] = useState(false)
+  const [ticketCopied, setTicketCopied] = useState(false)
+
+  const copyTicketNumber = async () => {
+    if (person.ticketNumber) {
+      await navigator.clipboard.writeText(person.ticketNumber)
+      setTicketCopied(true)
+      setTimeout(() => setTicketCopied(false), 2000)
+    }
+  }
 
   const handleEditSubmit = async (data: any) => {
     try {
@@ -73,9 +84,22 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
                   <User className="h-6 w-6" />
                 </div>
               )}
-              <div>
+            <div>
                 {person.firstName} {person.lastName}
-                <p className="text-sm font-normal text-gray-400 mt-0.5">Person Details</p>
+                {person.ticketNumber && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-sm font-mono text-green-400">{person.ticketNumber}</span>
+                    <button
+                      onClick={copyTicketNumber}
+                      className="p-1 text-gray-400 hover:text-green-400 hover:bg-green-500/10 rounded transition-colors"
+                    >
+                      {ticketCopied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                )}
+                {!person.ticketNumber && (
+                  <p className="text-sm font-normal text-gray-400 mt-0.5">Person Details</p>
+                )}
               </div>
             </h1>
           </div>

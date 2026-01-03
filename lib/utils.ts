@@ -6,8 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function generateTicketNumber(prefix: string) {
-  // Format: PREFIX-TIMESTAMP-RANDOM (e.g., FOR-1715-AB92)
-  const timestamp = Date.now().toString().slice(-4)
-  const random = Math.floor(Math.random() * 10000).toString().padStart(4, "0")
-  return `${prefix}-${timestamp}-${random}`
+  // Format: PREFIX-NNNNNN (e.g., FOR-001006, VEH-000123)
+  // Uses timestamp-based unique ID with padding for clean format
+  const sequence = Date.now() % 1000000 // Last 6 digits of timestamp
+  return `${prefix}-${sequence.toString().padStart(6, "0")}`
 }
