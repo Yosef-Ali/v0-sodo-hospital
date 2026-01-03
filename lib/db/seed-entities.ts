@@ -14,6 +14,11 @@ const VEHICLE_SEEDS = [
     status: "in-progress",
     vehicleInfo: "Toyota Hilux 2021 - White",
     plateNumber: "3-AA-12345",
+    documentSections: [
+      { id: "1", type: "libre", files: ["https://utfs.io/f/example-libre.pdf"] },
+      { id: "2", type: "previous_inspection", files: ["https://utfs.io/f/prev-inspection.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/example-libre.pdf", "https://utfs.io/f/prev-inspection.pdf"]
   },
   {
     title: "Land Cruiser Road Fund",
@@ -22,6 +27,11 @@ const VEHICLE_SEEDS = [
     status: "pending",
     vehicleInfo: "Toyota Land Cruiser 2020 - Silver",
     plateNumber: "3-AA-56789",
+    documentSections: [
+      { id: "1", type: "libre", files: ["https://utfs.io/f/libre-lc.pdf"] },
+      { id: "2", type: "bank_slip", files: [] }
+    ],
+    documents: ["https://utfs.io/f/libre-lc.pdf"]
   },
   {
     title: "Ambulance Insurance Renewal",
@@ -30,6 +40,11 @@ const VEHICLE_SEEDS = [
     status: "pending",
     vehicleInfo: "Toyota Hiace Ambulance 2022",
     plateNumber: "3-ER-11122",
+    documentSections: [
+      { id: "1", type: "libre", files: ["https://utfs.io/f/libre-ambo.pdf"] },
+      { id: "2", type: "insurance_form", files: ["https://utfs.io/f/ins-form.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/libre-ambo.pdf", "https://utfs.io/f/ins-form.pdf"]
   },
   {
     title: "Staff Bus Road Transport",
@@ -38,6 +53,13 @@ const VEHICLE_SEEDS = [
     status: "completed",
     vehicleInfo: "Coaster Bus 2019 - Yellow",
     plateNumber: "3-BU-33344",
+    documentSections: [
+      { id: "1", type: "libre", files: ["https://utfs.io/f/libre-bus.pdf"] },
+      { id: "2", type: "inspection_result", files: ["https://utfs.io/f/insp-res.pdf"] },
+      { id: "3", type: "road_fund_receipt", files: ["https://utfs.io/f/rf-receipt.pdf"] },
+      { id: "4", type: "insurance_cert", files: ["https://utfs.io/f/ins-cert.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/libre-bus.pdf", "https://utfs.io/f/insp-res.pdf", "https://utfs.io/f/rf-receipt.pdf", "https://utfs.io/f/ins-cert.pdf"]
   },
   {
     title: "Pickup Truck Inspection",
@@ -46,6 +68,10 @@ const VEHICLE_SEEDS = [
     status: "urgent",
     vehicleInfo: "Isuzu D-Max 2018 - Blue",
     plateNumber: "3-AA-55566",
+    documentSections: [
+      { id: "1", type: "libre", files: ["https://utfs.io/f/libre-truck.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/libre-truck.pdf"]
   },
 ]
 
@@ -55,36 +81,68 @@ const IMPORT_SEEDS = [
     description: "Importing X-Ray machine and ultrasound equipment from Germany",
     category: "pip",
     status: "in-progress",
+    documentSections: [
+      { id: "1", type: "proforma_invoice", files: ["https://utfs.io/f/proforma-xray.pdf"] },
+      { id: "2", type: "business_license", files: ["https://utfs.io/f/bus-license.pdf"] },
+      { id: "3", type: "support_letter", files: ["https://utfs.io/f/support-letter.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/proforma-xray.pdf", "https://utfs.io/f/bus-license.pdf", "https://utfs.io/f/support-letter.pdf"]
   },
   {
     title: "Hospital Beds Import",
     description: "100 hospital beds and mattresses from China Single Window",
     category: "single_window",
     status: "pending",
+    documentSections: [
+      { id: "1", type: "commercial_invoice", files: ["https://utfs.io/f/inv-beds.pdf"] },
+      { id: "2", type: "packing_list", files: ["https://utfs.io/f/packing-beds.pdf"] },
+      { id: "3", type: "bill_of_lading", files: [] }
+    ],
+    documents: ["https://utfs.io/f/inv-beds.pdf", "https://utfs.io/f/packing-beds.pdf"]
   },
   {
     title: "Surgical Instruments Import",
     description: "PIP certificate for surgical tools and operating room equipment",
     category: "pip",
     status: "completed",
+    documentSections: [
+      { id: "1", type: "pip_certificate", files: ["https://utfs.io/f/pip-cert-surg.pdf"] },
+      { id: "2", type: "proforma_invoice", files: ["https://utfs.io/f/proforma-surg.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/pip-cert-surg.pdf", "https://utfs.io/f/proforma-surg.pdf"]
   },
   {
     title: "Laboratory Reagents",
     description: "Import of laboratory chemicals and test reagents via Single Window",
     category: "single_window",
     status: "in-progress",
+    documentSections: [
+      { id: "1", type: "commercial_invoice", files: ["https://utfs.io/f/inv-lab.pdf"] },
+      { id: "2", type: "insurance_cert", files: ["https://utfs.io/f/ins-lab.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/inv-lab.pdf", "https://utfs.io/f/ins-lab.pdf"]
   },
   {
     title: "Ambulance Parts Import",
     description: "Spare parts and accessories for ambulance fleet",
     category: "pip",
     status: "pending",
+    documentSections: [
+      { id: "1", type: "proforma_invoice", files: ["https://utfs.io/f/proforma-parts.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/proforma-parts.pdf"]
   },
   {
     title: "Pharmaceutical Supplies",
     description: "Essential medicines and vaccines through Single Window customs",
     category: "single_window",
     status: "urgent",
+    documentSections: [
+      { id: "1", type: "commercial_invoice", files: ["https://utfs.io/f/inv-pharma.pdf"] },
+      { id: "2", type: "packing_list", files: ["https://utfs.io/f/pack-pharma.pdf"] },
+      { id: "3", type: "bill_of_lading", files: ["https://utfs.io/f/bol-pharma.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/inv-pharma.pdf", "https://utfs.io/f/pack-pharma.pdf", "https://utfs.io/f/bol-pharma.pdf"]
   },
 ]
 
@@ -96,6 +154,12 @@ const COMPANY_SEEDS = [
     status: "in-progress",
     companyName: "Soddo Medical Supplies PLC",
     registrationType: "new",
+    documentSections: [
+      { id: "1", type: "business_license", files: ["https://utfs.io/f/bus-lic-soddo.pdf"] },
+      { id: "2", type: "tin", files: ["https://utfs.io/f/tin-soddo.pdf"] },
+      { id: "3", type: "article_of_association", files: ["https://utfs.io/f/aoa-soddo.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/bus-lic-soddo.pdf", "https://utfs.io/f/tin-soddo.pdf", "https://utfs.io/f/aoa-soddo.pdf"]
   },
   {
     title: "Healthcare Partners Share Company",
@@ -104,6 +168,11 @@ const COMPANY_SEEDS = [
     status: "pending",
     companyName: "Healthcare Partners SC",
     registrationType: "renewal",
+    documentSections: [
+      { id: "1", type: "current_registration", files: ["https://utfs.io/f/curr-reg.pdf"] },
+      { id: "2", type: "business_license", files: ["https://utfs.io/f/bus-lic-old.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/curr-reg.pdf", "https://utfs.io/f/bus-lic-old.pdf"]
   },
   {
     title: "Ethiopian Diagnostics PLC",
@@ -112,6 +181,13 @@ const COMPANY_SEEDS = [
     status: "in-progress",
     companyName: "Ethiopian Diagnostics PLC",
     registrationType: "new",
+    documentSections: [
+      { id: "1", type: "official_letter", files: ["https://utfs.io/f/letter-eth-diag.pdf"] },
+      { id: "2", type: "business_registration", files: ["https://utfs.io/f/reg-eth-diag.pdf"] },
+      { id: "3", type: "tin", files: ["https://utfs.io/f/tin-eth-diag.pdf"] },
+      { id: "4", type: "coc", files: ["https://utfs.io/f/coc-eth-diag.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/letter-eth-diag.pdf", "https://utfs.io/f/reg-eth-diag.pdf", "https://utfs.io/f/tin-eth-diag.pdf", "https://utfs.io/f/coc-eth-diag.pdf"]
   },
   {
     title: "Alpha Pharmacy PLC",
@@ -120,6 +196,12 @@ const COMPANY_SEEDS = [
     status: "completed",
     companyName: "Alpha Pharmacy PLC",
     registrationType: "renewal",
+    documentSections: [
+      { id: "1", type: "official_letter", files: ["https://utfs.io/f/letter-alpha.pdf"] },
+      { id: "2", type: "coc", files: ["https://utfs.io/f/coc-alpha.pdf"] },
+      { id: "3", type: "business_license", files: ["https://utfs.io/f/lic-alpha.pdf"] }
+    ],
+    documents: ["https://utfs.io/f/letter-alpha.pdf", "https://utfs.io/f/coc-alpha.pdf", "https://utfs.io/f/lic-alpha.pdf"]
   },
   {
     title: "Med-Tech Solutions",
@@ -128,6 +210,11 @@ const COMPANY_SEEDS = [
     status: "pending",
     companyName: "Med-Tech Solutions",
     registrationType: "new",
+    documentSections: [
+      { id: "1", type: "official_letter", files: [] },
+      { id: "2", type: "business_license", files: [] }
+    ],
+    documents: []
   },
 ]
 
