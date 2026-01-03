@@ -707,8 +707,8 @@ export function PermitStatusWidget({
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col gap-2">
-        <Link href={`/permits/${ticketNumber}`} className="w-full">
+      <CardFooter className="flex flex-row gap-2">
+        <Link href={`/permits/${ticketNumber}`} className="flex-1">
           <Button
             variant="outline"
             size="sm"
@@ -718,7 +718,7 @@ export function PermitStatusWidget({
             View Details
           </Button>
         </Link>
-        <Button variant="outline" size="sm" className="w-full text-xs h-8 border-gray-700 hover:border-green-500">
+        <Button variant="outline" size="sm" className="flex-1 text-xs h-8 border-gray-700 hover:border-green-500">
           <Download className="w-3.5 h-3.5 mr-1.5" />
           Download
         </Button>
