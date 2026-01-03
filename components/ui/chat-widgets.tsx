@@ -434,16 +434,20 @@ export function TicketVerificationWidget({
   onSubmit,
   isVerifying = false,
   error,
-  placeholder = "e.g., PER-2024-1234 or WRK-2024-5678"
+  placeholder = "e.g., FOR-001006"
 }: TicketVerificationWidgetProps) {
   const [ticketNumber, setTicketNumber] = useState("")
   const [validationError, setValidationError] = useState("")
    const [showFormats, setShowFormats] = useState(false)
 
   const validateTicketNumber = (value: string): boolean => {
-    // Format: PER-2024-XXXX or WRK-2024-XXXX or similar patterns
-    const pattern = /^[A-Z]{3}-\d{4}-\d{4}$/
-    return pattern.test(value.trim().toUpperCase())
+    // Accept multiple formats:
+    // - New format: FOR-001006, VEH-001234, IMP-001234, CMP-001234
+    // - Legacy format: WRK-2024-1234, RES-2024-5678
+    const newPattern = /^[A-Z]{3}-\d{6}$/  // FOR-001006
+    const legacyPattern = /^[A-Z]{3}-\d{4}-\d{4}$/  // WRK-2024-1234
+    const cleanValue = value.trim().toUpperCase()
+    return newPattern.test(cleanValue) || legacyPattern.test(cleanValue)
   }
 
   const handleSubmit = () => {
@@ -455,7 +459,7 @@ export function TicketVerificationWidget({
     }
 
     if (!validateTicketNumber(cleanedValue)) {
-      setValidationError("Invalid format. Use: XXX-2024-1234")
+      setValidationError("Invalid format. Use: FOR-001006 or WRK-2024-1234")
       return
     }
 
@@ -507,7 +511,7 @@ export function TicketVerificationWidget({
           )}
         </div>
         <div className="flex items-center justify-between text-[11px] text-gray-500 flex-wrap gap-2">
-          <span>Format: XXX-YYYY-1234</span>
+          <span>Format: FOR-XXXXXX or XXX-YYYY-XXXX</span>
           <button
             type="button"
             onClick={() => setShowFormats(prev => !prev)}
@@ -518,11 +522,13 @@ export function TicketVerificationWidget({
         </div>
         {showFormats && (
           <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-            <p className="text-xs text-gray-400 mb-2">Accepted examples:</p>
+            <p className="text-xs text-gray-400 mb-2">Accepted formats:</p>
             <div className="space-y-1">
-              <div className="text-xs text-gray-500 font-mono">PER-2024-1234 (Permit)</div>
-              <div className="text-xs text-gray-500 font-mono">WRK-2024-5678 (Work Permit)</div>
-              <div className="text-xs text-gray-500 font-mono">RES-2024-9012 (Residence ID)</div>
+              <div className="text-xs text-gray-500 font-mono">FOR-001006 (Foreigner)</div>
+              <div className="text-xs text-gray-500 font-mono">VEH-001234 (Vehicle)</div>
+              <div className="text-xs text-gray-500 font-mono">IMP-001234 (Import)</div>
+              <div className="text-xs text-gray-500 font-mono">CMP-001234 (Company)</div>
+              <div className="text-xs text-gray-500 font-mono">WRK-2024-1234 (Work Permit)</div>
             </div>
           </div>
         )}
