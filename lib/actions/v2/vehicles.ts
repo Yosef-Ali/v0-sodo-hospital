@@ -81,11 +81,21 @@ export async function getVehicleById(vehicleId: string) {
  */
 export async function createVehicle(data: {
   title: string
+
   description?: string
   category: string // "inspection" | "road_fund" | "insurance" | "road_transport"
   status?: string
   vehicleInfo?: string
   plateNumber?: string
+  vehicleType?: string
+  vehicleModel?: string
+  vehicleYear?: string
+  ownerName?: string
+  currentMileage?: string
+  chassisNumber?: string
+  engineNumber?: string
+  serviceType?: string
+  currentStage?: string
   dueDate?: Date
   assigneeId?: string
   documents?: string[]
@@ -109,6 +119,15 @@ export async function createVehicle(data: {
         status: data.status || "pending",
         vehicleInfo: data.vehicleInfo,
         plateNumber: data.plateNumber,
+        vehicleType: data.vehicleType,
+        vehicleModel: data.vehicleModel,
+        vehicleYear: data.vehicleYear,
+        ownerName: data.ownerName,
+        currentMileage: data.currentMileage,
+        chassisNumber: data.chassisNumber,
+        engineNumber: data.engineNumber,
+        serviceType: data.serviceType,
+        currentStage: data.currentStage || "DOCUMENT_PREP",
         dueDate: data.dueDate,
         assigneeId: data.assigneeId,
         documents: data.documents || [],
@@ -136,8 +155,16 @@ export async function updateVehicle(
     description: string
     category: string
     status: string
-    vehicleInfo: string
-    plateNumber: string
+
+    vehicleType: string
+    vehicleModel: string
+    vehicleYear: string
+    ownerName: string
+    currentMileage: string
+    chassisNumber: string
+    engineNumber: string
+    serviceType: string
+    currentStage: string
     dueDate: Date
     assigneeId: string
     documents: string[]

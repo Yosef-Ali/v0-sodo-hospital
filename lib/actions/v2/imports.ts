@@ -85,6 +85,13 @@ export async function createImport(data: {
   status?: string
   dueDate?: Date
   assigneeId?: string
+  supplierName?: string
+  supplierCountry?: string
+  itemDescription?: string
+  estimatedValue?: string
+  currency?: string
+  importType?: string
+  currentStage?: string
   documents?: string[]
   documentSections?: any[]
 }) {
@@ -106,6 +113,14 @@ export async function createImport(data: {
         status: data.status || "pending",
         dueDate: data.dueDate,
         assigneeId: data.assigneeId,
+
+        supplierName: data.supplierName,
+        supplierCountry: data.supplierCountry,
+        itemDescription: data.itemDescription,
+        estimatedValue: data.estimatedValue,
+        currency: data.currency || "USD",
+        importType: data.importType,
+        currentStage: data.currentStage || "SUPPORT_LETTER",
         documents: data.documents || [],
         documentSections: data.documentSections || [],
       })
@@ -131,8 +146,15 @@ export async function updateImport(
     description: string
     category: string
     status: string
-    dueDate: Date
+
     assigneeId: string
+    supplierName: string
+    supplierCountry: string
+    itemDescription: string
+    estimatedValue: string
+    currency: string
+    importType: string
+    currentStage: string
     documents: string[]
     documentSections: any[]
   }>

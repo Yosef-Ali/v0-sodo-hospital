@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Search, Filter, Plus, Car, FileCheck, Fuel, Shield, Truck } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { VehicleSheet } from "@/components/sheets/vehicle-sheet"
-import { getVehicles, getVehicleStats, createVehicle, updateVehicle, deleteVehicle } from "@/lib/actions/v2/vehicles"
+import { getVehicles, getVehicleStats, createVehicle, updateVehicle, deleteVehicle, getVehicleById } from "@/lib/actions/v2/vehicles"
 
 interface VehiclePageProps {
   initialData: {
@@ -64,9 +64,16 @@ export function VehiclePage({ initialData }: VehiclePageProps) {
     setIsSheetOpen(true)
   }
 
-  const handleEditVehicle = (item: any) => {
+  const handleEditVehicle = async (item: any) => {
+    // Optimistically select item, but fetch fresh data
     setSelectedVehicle(item)
     setIsSheetOpen(true)
+    
+    // Fetch fresh data to ensure we have all fields (especially those missing from list view cache)
+    const freshData = await getVehicleById(item.id)
+    if (freshData.success && freshData.data) {
+      setSelectedVehicle(freshData.data)
+    }
   }
 
   const handleSubmit = async (data: any) => {

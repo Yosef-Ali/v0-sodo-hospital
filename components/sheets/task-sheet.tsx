@@ -40,6 +40,8 @@ interface Task {
   permitId?: string
   category?: string // Derived or matched
   subType?: string
+  entityType?: string
+  entityId?: string
   permit?: {
     category: string
     subType?: string
@@ -166,8 +168,8 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
         assignee: task.assigneeId || "",
         category: category,
         subType: subType,
-        entityType: (task as any).entityType || "",
-        entityId: (task as any).entityId || "",
+        entityType: task.entityType || "",
+        entityId: task.entityId || "",
         personId: personId
       })
     } else if (!task && open) {

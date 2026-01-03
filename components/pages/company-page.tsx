@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Search, Filter, Plus, Building2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { CompanySheet } from "@/components/sheets/company-sheet"
-import { getCompanies, getCompanyStats, createCompany, updateCompany, deleteCompany } from "@/lib/actions/v2/companies"
+import { getCompanies, getCompanyStats, createCompany, updateCompany, deleteCompany, getCompanyById } from "@/lib/actions/v2/companies"
 
 interface CompanyPageProps {
   initialData: {
@@ -63,9 +63,16 @@ export function CompanyPage({ initialData }: CompanyPageProps) {
     setIsSheetOpen(true)
   }
 
-  const handleEditCompany = (item: any) => {
+  const handleEditCompany = async (item: any) => {
+    // Optimistically select item, but fetch fresh data
     setSelectedCompany(item)
     setIsSheetOpen(true)
+    
+    // Fetch fresh data
+    const freshData = await getCompanyById(item.id)
+    if (freshData.success && freshData.data) {
+      setSelectedCompany(freshData.data)
+    }
   }
 
   const handleSubmit = async (data: any) => {

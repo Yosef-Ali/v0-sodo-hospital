@@ -340,6 +340,16 @@ export const importPermits = pgTable("import_permits", {
   assigneeId: uuid("assignee_id").references(() => users.id),
   documents: jsonb("documents").$type<string[]>().default([]), // flattened list for easy access
   documentSections: jsonb("document_sections").$type<any[]>().default([]), // detailed structure for UI
+
+  // Specific Fields
+  supplierName: varchar("supplier_name", { length: 255 }),
+  supplierCountry: varchar("supplier_country", { length: 100 }),
+  itemDescription: text("item_description"),
+  estimatedValue: varchar("estimated_value", { length: 100 }),
+  currency: varchar("currency", { length: 10 }).default("USD"),
+  importType: varchar("import_type", { length: 50 }), // Explicit type if different from category
+  currentStage: varchar("current_stage", { length: 50 }).default("SUPPORT_LETTER"),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -354,6 +364,18 @@ export const vehicles = pgTable("vehicles", {
   status: varchar("status", { length: 50 }).default("pending").notNull(),
   vehicleInfo: varchar("vehicle_info", { length: 255 }),
   plateNumber: varchar("plate_number", { length: 50 }),
+
+  // Specific Fields
+  vehicleType: varchar("vehicle_type", { length: 50 }), // Car, Truck, etc.
+  vehicleModel: varchar("vehicle_model", { length: 100 }),
+  vehicleYear: varchar("vehicle_year", { length: 10 }),
+  ownerName: varchar("owner_name", { length: 255 }),
+  currentMileage: varchar("current_mileage", { length: 50 }),
+  chassisNumber: varchar("chassis_number", { length: 100 }),
+  engineNumber: varchar("engine_number", { length: 100 }),
+  serviceType: varchar("service_type", { length: 50 }), // Explicit type if different from category
+  currentStage: varchar("current_stage", { length: 50 }).default("DOCUMENT_PREP"),
+
   dueDate: timestamp("due_date"),
   assigneeId: uuid("assignee_id").references(() => users.id),
   documents: jsonb("documents").$type<string[]>().default([]),

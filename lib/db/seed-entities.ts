@@ -14,6 +14,13 @@ const VEHICLE_SEEDS = [
     status: "in-progress",
     vehicleInfo: "Toyota Hilux 2021 - White",
     plateNumber: "3-AA-12345",
+    vehicleType: "Ambulance",
+    vehicleModel: "Hilux",
+    vehicleYear: "2021",
+    ownerName: "Soddo Christian Hospital",
+    currentMileage: "45,000 km",
+    serviceType: "inspection",
+    currentStage: "INSPECTION",
     documentSections: [
       { id: "1", type: "libre", files: ["https://utfs.io/f/example-libre.pdf"] },
       { id: "2", type: "previous_inspection", files: ["https://utfs.io/f/prev-inspection.pdf"] }
@@ -27,6 +34,13 @@ const VEHICLE_SEEDS = [
     status: "pending",
     vehicleInfo: "Toyota Land Cruiser 2020 - Silver",
     plateNumber: "3-AA-56789",
+    vehicleType: "Car",
+    vehicleModel: "Land Cruiser",
+    vehicleYear: "2020",
+    ownerName: "Dr. Anderson",
+    currentMileage: "62,000 km",
+    serviceType: "road_fund",
+    currentStage: "PAYMENT",
     documentSections: [
       { id: "1", type: "libre", files: ["https://utfs.io/f/libre-lc.pdf"] },
       { id: "2", type: "bank_slip", files: [] }
@@ -81,6 +95,11 @@ const IMPORT_SEEDS = [
     description: "Importing X-Ray machine and ultrasound equipment from Germany",
     category: "pip",
     status: "in-progress",
+    supplierName: "Siemens Healthineers",
+    supplierCountry: "Germany",
+    currency: "EUR",
+    importType: "pip",
+    currentStage: "PIP_APPLICATION",
     documentSections: [
       { id: "1", type: "proforma_invoice", files: ["https://utfs.io/f/proforma-xray.pdf"] },
       { id: "2", type: "business_license", files: ["https://utfs.io/f/bus-license.pdf"] },
@@ -137,6 +156,11 @@ const IMPORT_SEEDS = [
     description: "Essential medicines and vaccines through Single Window customs",
     category: "single_window",
     status: "urgent",
+    supplierName: "PharmaWorld Intl",
+    supplierCountry: "India",
+    currency: "USD",
+    importType: "single_window",
+    currentStage: "APPLY_ONLINE",
     documentSections: [
       { id: "1", type: "commercial_invoice", files: ["https://utfs.io/f/inv-pharma.pdf"] },
       { id: "2", type: "packing_list", files: ["https://utfs.io/f/pack-pharma.pdf"] },

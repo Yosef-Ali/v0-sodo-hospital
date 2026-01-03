@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Search, Filter, Plus, Package, FileText, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { ImportSheet } from "@/components/sheets/import-sheet"
-import { getImports, getImportStats, createImport, updateImport, deleteImport } from "@/lib/actions/v2/imports"
+import { getImports, getImportStats, createImport, updateImport, deleteImport, getImportById } from "@/lib/actions/v2/imports"
 
 interface ImportPageProps {
   initialData: {
@@ -63,9 +63,16 @@ export function ImportPage({ initialData }: ImportPageProps) {
     setIsSheetOpen(true)
   }
 
-  const handleEditImport = (item: any) => {
+  const handleEditImport = async (item: any) => {
+    // Optimistically select item, but fetch fresh data
     setSelectedImport(item)
     setIsSheetOpen(true)
+    
+    // Fetch fresh data
+    const freshData = await getImportById(item.id)
+    if (freshData.success && freshData.data) {
+      setSelectedImport(freshData.data)
+    }
   }
 
   const handleSubmit = async (data: any) => {

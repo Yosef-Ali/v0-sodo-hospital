@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { createTaskWithWorkflow } from "@/lib/actions/v2/tasks"
+import { createTaskWithWorkflow, getTaskById } from "@/lib/actions/v2/tasks"
 import { useRouter } from "next/navigation"
 
 // Task type definition
@@ -26,6 +26,12 @@ export interface Task {
   category: string
   priority: "low" | "medium" | "high"
   createdAt: string
+  // New fields for deep editing
+  entityType?: string
+  entityId?: string
+  subType?: string
+  permitId?: string
+  assigneeId?: string
 }
 
 interface TasksPageProps {
@@ -47,6 +53,12 @@ export function TasksPage({ initialData }: TasksPageProps) {
       category: item.permit?.category ? item.permit.category.replace(/_/g, " ") : "General",
       priority: item.task.priority,
       createdAt: new Date(item.task.createdAt).toISOString().split("T")[0],
+      // Map extra fields if available in initial data
+      entityType: item.task.entityType,
+      entityId: item.task.entityId,
+      subType: item.task.subType,
+      permitId: item.task.permitId,
+      assigneeId: item.task.assigneeId
     }))
   }, [initialData.tasks])
 
@@ -138,9 +150,33 @@ export function TasksPage({ initialData }: TasksPageProps) {
   }
 
   // Handle editing a task
-  const handleEditTask = (task: Task) => {
+  const handleEditTask = async (task: Task) => {
+    // Optimistically set selected task
     setSelectedTask(task)
     setIsSheetOpen(true)
+
+    // Fetch fresh details (especially for entity links and category)
+    const freshResult = await getTaskById(task.id)
+    if (freshResult.success && freshResult.data) {
+      const item = freshResult.data
+      const freshTask: Task = {
+        id: item.task.id,
+        title: item.task.title,
+        description: item.task.description || "",
+        status: item.task.status as any,
+        dueDate: item.task.dueDate ? new Date(item.task.dueDate).toISOString().split("T")[0] : "",
+        assignee: item.assignee?.name || "Unassigned",
+        category: (item.task as any).category || (item.permit?.category ? item.permit.category.toLowerCase() : ""),
+        priority: item.task.priority as any,
+        createdAt: new Date(item.task.createdAt).toISOString().split("T")[0],
+        entityType: item.task.entityType,
+        entityId: item.task.entityId,
+        subType: (item.task as any).subType,
+        permitId: item.task.permitId,
+        assigneeId: item.task.assigneeId
+      }
+      setSelectedTask(freshTask)
+    }
   }
 
   // Handle creating a new task
