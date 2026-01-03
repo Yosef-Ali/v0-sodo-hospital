@@ -6,7 +6,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { NextResponse } from "next/server"
 import { getHospitalPrompt } from "@/lib/a2ui/prompts"
-import { getTicketDetails } from "@/lib/actions/v2/tickets"
+import { getTicketDetails, getPermitWithDetails, getPersonPermits } from "@/lib/actions/v2/tickets"
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "")
@@ -142,20 +142,112 @@ export async function PUT(req: Request) {
       case "contact_support":
         query = "I need help from customer support"
         break
+      case "view_timeline":
+        // Show timeline for verified ticket
+        const timelineTicket = verifiedTickets.get(sessionId)
+        if (timelineTicket) {
+          // Check if it's a permit (WRK/RES) or person (FOR)
+          const prefix = timelineTicket.split("-")[0].toUpperCase()
+
+          if (prefix === "WRK" || prefix === "RES" || prefix === "LIC") {
+            const permitDetails = await getPermitWithDetails(timelineTicket)
+
+            if (permitDetails) {
+              const timelineStages = [
+                { name: "Application Received", status: "completed" as const, date: new Date(permitDetails.permit.createdAt).toLocaleDateString() },
+                { name: "Document Review", status: permitDetails.checklist.progress >= 50 ? "completed" as const : "current" as const },
+                { name: "Verification", status: permitDetails.checklist.progress >= 80 ? "completed" as const : "pending" as const },
+                { name: "Approval", status: permitDetails.permit.status === "APPROVED" ? "completed" as const : "pending" as const },
+                { name: "Ready for Pickup", status: permitDetails.permit.status === "APPROVED" ? "completed" as const : "pending" as const },
+              ]
+
+              return NextResponse.json({
+                success: true,
+                response: {
+                  text: `📋 **Processing Timeline**`,
+                  widgets: [
+                    {
+                      widget: "process-timeline",
+                      props: {
+                        estimatedTotal: permitDetails.permit.dueDate
+                          ? `Target: ${new Date(permitDetails.permit.dueDate).toLocaleDateString()}`
+                          : "Processing",
+                        stages: timelineStages
+                      }
+                    }
+                  ]
+                },
+                sessionId,
+                verifiedTicket: timelineTicket
+              })
+            }
+          } else if (prefix === "FOR") {
+            // Show permits for this person
+            const personData = await getPersonPermits(timelineTicket)
+
+            if (personData && personData.permits.length > 0) {
+              return NextResponse.json({
+                success: true,
+                response: {
+                  text: `📋 **${personData.person.name}** has ${personData.permits.length} permit(s) on record.`,
+                  widgets: []
+                },
+                sessionId,
+                verifiedTicket: timelineTicket
+              })
+            }
+          }
+        }
+        query = "Show me the processing timeline for my permit"
+        break
       case "verify_ticket":
         // Store verified ticket and directly return ticket data
         if (context?.ticketNumber) {
           verifiedTickets.set(sessionId, context.ticketNumber)
 
-          // Directly fetch ticket data and return it
+          const ticketPrefix = context.ticketNumber.split("-")[0].toUpperCase()
+
+          // For permits (WRK/RES), get detailed data with checklist
+          if (ticketPrefix === "WRK" || ticketPrefix === "RES" || ticketPrefix === "LIC") {
+            const permitDetails = await getPermitWithDetails(context.ticketNumber)
+
+            if (permitDetails) {
+              return NextResponse.json({
+                success: true,
+                response: {
+                  text: `✅ **Verified!** ${permitDetails.person.name}'s ${permitDetails.permit.category?.replace(/_/g, " ")} - ${permitDetails.checklist.progress}% complete`,
+                  widgets: [
+                    {
+                      widget: "permit-status",
+                      props: {
+                        ticketNumber: permitDetails.permit.ticketNumber,
+                        status: permitDetails.permit.status.toLowerCase(),
+                        type: permitDetails.permit.category?.replace(/_/g, " ") || "Permit",
+                        personName: permitDetails.person.name,
+                        submittedDate: new Date(permitDetails.permit.createdAt).toLocaleDateString(),
+                        lastUpdated: new Date(permitDetails.permit.updatedAt).toLocaleDateString(),
+                        currentStage: `${permitDetails.checklist.completed}/${permitDetails.checklist.total} documents`,
+                        estimatedCompletion: permitDetails.permit.dueDate
+                          ? new Date(permitDetails.permit.dueDate).toLocaleDateString()
+                          : "N/A"
+                      }
+                    }
+                  ]
+                },
+                sessionId,
+                verifiedTicket: context.ticketNumber
+              })
+            }
+          }
+
+          // For other types (FOR, VEH, IMP, CMP), use basic ticket details
           const ticketData = await getTicketDetails(context.ticketNumber)
 
           if (ticketData) {
-            // Return the data directly with appropriate widget
             return NextResponse.json({
               success: true,
               response: {
-                text: `✅ Ticket verified! Here's the status for **${ticketData.title}**:`,
+                text: `✅ **Verified!** ${ticketData.title} - ${ticketData.status}`,
                 widgets: [
                   {
                     widget: "permit-status",
@@ -167,18 +259,7 @@ export async function PUT(req: Request) {
                       submittedDate: new Date(ticketData.createdAt).toLocaleDateString(),
                       lastUpdated: new Date(ticketData.updatedAt).toLocaleDateString(),
                       currentStage: ticketData.stage || "Active",
-                      notes: ticketData.description,
                       estimatedCompletion: ticketData.dueDate ? new Date(ticketData.dueDate).toLocaleDateString() : "N/A"
-                    }
-                  },
-                  {
-                    widget: "quick-actions",
-                    props: {
-                      actions: [
-                        { label: "View Timeline", action: "view_timeline" },
-                        { label: "Upload Document", action: "upload_document" },
-                        { label: "Contact Support", action: "contact_support" }
-                      ]
                     }
                   }
                 ]
@@ -186,16 +267,14 @@ export async function PUT(req: Request) {
               sessionId,
               verifiedTicket: context.ticketNumber
             })
-          } else {
-            // Ticket not found
             return NextResponse.json({
               success: true,
               response: {
-                text: `❌ **Ticket not found:** The ticket number \`${context.ticketNumber}\` was not found in our system. Please check the number and try again.\n\nValid ticket formats:\n- **FOR-XXXXXX** - Foreigner Profile\n- **VEH-XXXXXX** - Vehicle Registration\n- **IMP-XXXXXX** - Import Permit\n- **CMP-XXXXXX** - Company Registration`,
+                text: `❌ **Ticket not found.** Please check #{context.ticketNumber} and try again.`,
                 widgets: [
                   {
                     widget: "ticket-verification",
-                    props: { placeholder: "e.g., FOR-001001" }
+                    props: { placeholder: "e.g., FOR-001006" }
                   }
                 ]
               },

@@ -107,7 +107,7 @@ export async function GET() {
       .insert(checklists)
       .values({
         name: "Professional License Checklist",
-        category: "LICENSE",
+        category: "MEDICAL_LICENSE",
         items: [
           {
             label: "Professional qualification certificates",
