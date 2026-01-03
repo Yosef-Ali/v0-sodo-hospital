@@ -143,10 +143,65 @@ export async function PUT(req: Request) {
         query = "I need help from customer support"
         break
       case "verify_ticket":
-        // Store verified ticket and fetch status
+        // Store verified ticket and directly return ticket data
         if (context?.ticketNumber) {
           verifiedTickets.set(sessionId, context.ticketNumber)
-          query = `Show me the status for ticket ${context.ticketNumber}`
+
+          // Directly fetch ticket data and return it
+          const ticketData = await getTicketDetails(context.ticketNumber)
+
+          if (ticketData) {
+            // Return the data directly with appropriate widget
+            return NextResponse.json({
+              success: true,
+              response: {
+                text: `✅ Ticket verified! Here's the status for **${ticketData.title}**:`,
+                widgets: [
+                  {
+                    widget: "permit-status",
+                    props: {
+                      ticketNumber: ticketData.ticketNumber,
+                      status: ticketData.status,
+                      type: ticketData.type,
+                      personName: ticketData.title,
+                      submittedDate: new Date(ticketData.createdAt).toLocaleDateString(),
+                      lastUpdated: new Date(ticketData.updatedAt).toLocaleDateString(),
+                      currentStage: ticketData.stage || "Active",
+                      notes: ticketData.description,
+                      estimatedCompletion: ticketData.dueDate ? new Date(ticketData.dueDate).toLocaleDateString() : "N/A"
+                    }
+                  },
+                  {
+                    widget: "quick-actions",
+                    props: {
+                      actions: [
+                        { label: "View Timeline", action: "view_timeline" },
+                        { label: "Upload Document", action: "upload_document" },
+                        { label: "Contact Support", action: "contact_support" }
+                      ]
+                    }
+                  }
+                ]
+              },
+              sessionId,
+              verifiedTicket: context.ticketNumber
+            })
+          } else {
+            // Ticket not found
+            return NextResponse.json({
+              success: true,
+              response: {
+                text: `❌ **Ticket not found:** The ticket number \`${context.ticketNumber}\` was not found in our system. Please check the number and try again.\n\nValid ticket formats:\n- **FOR-XXXXXX** - Foreigner Profile\n- **VEH-XXXXXX** - Vehicle Registration\n- **IMP-XXXXXX** - Import Permit\n- **CMP-XXXXXX** - Company Registration`,
+                widgets: [
+                  {
+                    widget: "ticket-verification",
+                    props: { placeholder: "e.g., FOR-001001" }
+                  }
+                ]
+              },
+              sessionId
+            })
+          }
         }
         break
       case "view_item":
