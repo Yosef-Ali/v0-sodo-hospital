@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Car, FileCheck, ClipboardList, Fuel, Shield, Truck } from "lucide-react"
+import { Car, FileCheck, ClipboardList, Fuel, Shield, Truck, Copy, Check } from "lucide-react"
 import { SmartDocumentChecklist, StageProgress, DocumentSection as DocSection } from "@/components/ui/smart-document-checklist"
 import { useOcrAutoFill, mapOcrToVehicleForm } from "@/lib/hooks/use-ocr-autofill"
 import { toast } from "sonner"
@@ -115,6 +115,10 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
   })
   
   const [documentSections, setDocumentSections] = useState<DocumentSection[]>([])
+  const [ticketCopied, setTicketCopied] = useState(false)
+
+  // Get ticket number from vehicle prop
+  const ticketNumber = vehicle?.ticketNumber || ""
 
   // OCR Auto-fill hook
   const { extractFromImage, isLoading: isOcrLoading } = useOcrAutoFill()
@@ -245,6 +249,24 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
           <SheetDescription className="text-gray-400">
             {isEditMode ? "Update vehicle details and documents." : "Enter vehicle details, select service type, and upload required documents."}
           </SheetDescription>
+          {/* Ticket Number Display in Edit Mode */}
+          {isEditMode && ticketNumber && (
+            <div className="flex items-center gap-2 mt-2 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
+              <span className="text-gray-400 text-xs">Ticket:</span>
+              <span className="text-green-300 font-mono text-sm">{ticketNumber}</span>
+              <button
+                type="button"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(ticketNumber)
+                  setTicketCopied(true)
+                  setTimeout(() => setTicketCopied(false), 2000)
+                }}
+                className="p-1 text-gray-400 hover:text-green-400 hover:bg-green-500/10 rounded transition-colors"
+              >
+                {ticketCopied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+          )}
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="mt-6">
