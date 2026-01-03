@@ -559,7 +559,7 @@ export function TicketVerificationWidget({
 // Permit Status Widget - Display full permit/document status inline
 interface PermitStatusWidgetProps {
   ticketNumber: string
-  status: string  // Accept any status string
+  status: "pending" | "submitted" | "processing" | "approved" | "rejected" | "expired"
   type: string
   submittedDate: string
   lastUpdated: string
@@ -587,29 +587,16 @@ export function PermitStatusWidget({
   documentLinks,
   personName
 }: PermitStatusWidgetProps) {
-  const statusConfig: Record<string, { color: string; bgColor: string; borderColor: string; icon: any; label: string }> = {
+  const statusConfig = {
     pending: { color: "text-amber-400", bgColor: "bg-amber-500/20", borderColor: "border-amber-500/50", icon: Clock, label: "Pending Review" },
     submitted: { color: "text-blue-400", bgColor: "bg-blue-500/20", borderColor: "border-blue-500/50", icon: CheckCircle, label: "Submitted" },
     processing: { color: "text-green-400", bgColor: "bg-green-500/20", borderColor: "border-green-500/50", icon: Clock, label: "Processing" },
     approved: { color: "text-green-400", bgColor: "bg-green-500/20", borderColor: "border-green-500/50", icon: CheckCircle, label: "Approved" },
     rejected: { color: "text-red-400", bgColor: "bg-red-500/20", borderColor: "border-red-500/50", icon: AlertCircle, label: "Rejected" },
-    expired: { color: "text-gray-400", bgColor: "bg-gray-500/20", borderColor: "border-gray-500/50", icon: AlertCircle, label: "Expired" },
-    active: { color: "text-green-400", bgColor: "bg-green-500/20", borderColor: "border-green-500/50", icon: CheckCircle, label: "Active" },
-    completed: { color: "text-green-400", bgColor: "bg-green-500/20", borderColor: "border-green-500/50", icon: CheckCircle, label: "Completed" },
-    "in-progress": { color: "text-blue-400", bgColor: "bg-blue-500/20", borderColor: "border-blue-500/50", icon: Clock, label: "In Progress" },
+    expired: { color: "text-gray-400", bgColor: "bg-gray-500/20", borderColor: "border-gray-500/50", icon: AlertCircle, label: "Expired" }
   }
 
-  // Normalize status to lowercase and get config with fallback
-  const normalizedStatus = status?.toLowerCase() || "pending"
-  const config = statusConfig[normalizedStatus] || {
-    color: "text-gray-400",
-    bgColor: "bg-gray-500/20",
-    borderColor: "border-gray-500/50",
-    icon: Clock,
-    label: status?.charAt(0).toUpperCase() + status?.slice(1) || "Unknown"
-  }
-  
-  const { color, bgColor, borderColor, icon: Icon, label } = config
+  const { color, bgColor, borderColor, icon: Icon, label } = statusConfig[status]
 
   const [showDetails, setShowDetails] = useState(false)
 
@@ -720,8 +707,8 @@ export function PermitStatusWidget({
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex flex-row gap-2">
-        <Link href={`/permits/${ticketNumber}`} className="flex-1">
+      <CardFooter className="flex flex-col gap-2">
+        <Link href={`/permits/${ticketNumber}`} className="w-full">
           <Button
             variant="outline"
             size="sm"
@@ -731,7 +718,7 @@ export function PermitStatusWidget({
             View Details
           </Button>
         </Link>
-        <Button variant="outline" size="sm" className="flex-1 text-xs h-8 border-gray-700 hover:border-green-500">
+        <Button variant="outline" size="sm" className="w-full text-xs h-8 border-gray-700 hover:border-green-500">
           <Download className="w-3.5 h-3.5 mr-1.5" />
           Download
         </Button>
