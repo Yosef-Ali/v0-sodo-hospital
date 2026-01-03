@@ -368,7 +368,7 @@ export function DocumentCardWidget({ title, status, type, date, progress, action
               variant="outline"
               size="sm"
               onClick={action.onClick || (() => console.log(`Action: ${action.label}`))}
-              className="border-gray-700 hover:border-green-500"
+              className="border-gray-700 hover:border-green-500 hover:bg-green-500/10 hover:text-green-400"
             >
               {action.label}
             </Button>
@@ -712,13 +712,13 @@ export function PermitStatusWidget({
           <Button
             variant="outline"
             size="sm"
-            className="w-full text-xs h-8 border-gray-700 hover:border-green-500"
+            className="w-full text-xs h-8 border-gray-700 hover:border-green-500 hover:bg-green-500/10 hover:text-green-400"
           >
             <FileText className="w-3.5 h-3.5 mr-1.5" />
             View Details
           </Button>
         </Link>
-        <Button variant="outline" size="sm" className="flex-1 text-xs h-8 border-gray-700 hover:border-green-500">
+        <Button variant="outline" size="sm" className="flex-1 text-xs h-8 border-gray-700 hover:border-green-500 hover:bg-green-500/10 hover:text-green-400">
           <Download className="w-3.5 h-3.5 mr-1.5" />
           Download
         </Button>
