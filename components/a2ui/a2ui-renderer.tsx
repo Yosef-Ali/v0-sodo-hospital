@@ -49,7 +49,7 @@ export function A2UIRenderer({ widgets, onAction, onVerify, className }: A2UIRen
   }
 
   return (
-    <div className={cn("a2ui-widgets space-y-4", className)}>
+    <div className={cn("a2ui-widgets", className)}>
       {widgets.map((widget, index) => (
         <A2UIWidgetComponent
           key={`widget-${index}`}

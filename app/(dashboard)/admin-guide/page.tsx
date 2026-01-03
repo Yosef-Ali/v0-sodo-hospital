@@ -65,8 +65,8 @@ export default function AdminGuidePage() {
               <div className="flex items-start gap-3">
                 <Sparkles className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-sm font-semibold text-white">AI-Powered Support</h3>
-                  <p className="text-xs text-gray-400">Inline chat with Quick Actions</p>
+                <h3 className="text-sm font-semibold text-white">Gemini AI Assistant</h3>
+                  <p className="text-xs text-gray-400">Google A2UI Powered Chat with Quick Actions</p>
                 </div>
               </div>
             </div>
@@ -123,15 +123,15 @@ export default function AdminGuidePage() {
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <Users className="w-5 h-5 text-blue-400" />
-                      <CardTitle className="text-base text-white">People</CardTitle>
+                      <CardTitle className="text-base text-white">Foreigners</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-gray-400 mb-3">Employee and applicant management</p>
+                    <p className="text-sm text-gray-400 mb-3">International staff & applicant management</p>
                     <ul className="space-y-1 text-xs text-gray-500">
-                      <li>• Create new people records</li>
-                      <li>• View all people in table/grid</li>
-                      <li>• Edit person details</li>
+                      <li>• Create new foreigner records</li>
+                      <li>• View all foreigners in table/grid</li>
+                      <li>• Edit foreigner details</li>
                       <li>• Delete records</li>
                       <li>• Search and filter</li>
                     </ul>
@@ -238,11 +238,11 @@ export default function AdminGuidePage() {
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <Sparkles className="w-5 h-5 text-green-400" />
-                      <CardTitle className="text-base text-white">AI Chat Widget</CardTitle>
+                      <CardTitle className="text-base text-white">Gemini AI Chat Widget</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-gray-400 mb-3">Intelligent support assistant</p>
+                    <p className="text-sm text-gray-400 mb-3">Google A2UI Powered intelligent assistant</p>
                     <ul className="space-y-1 text-xs text-gray-500">
                       <li>• Quick Actions (Check Status, Upload, Schedule)</li>
                       <li>• Natural language questions</li>
@@ -264,10 +264,10 @@ export default function AdminGuidePage() {
                   <CardContent className="pt-6">
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
-                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/50">People</Badge>
+                        <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/50">Foreigners</Badge>
                         <ArrowRight className="w-4 h-4 text-gray-500" />
                         <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">Permits</Badge>
-                        <span className="text-xs text-gray-500">Person can have multiple permits</span>
+                        <span className="text-xs text-gray-500">Foreigner can have multiple permits</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">Permits</Badge>
@@ -309,7 +309,7 @@ export default function AdminGuidePage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3 mb-4">
                   <Users className="w-6 h-6 text-blue-400" />
-                  <h3 className="text-xl font-bold text-white">People Module</h3>
+                  <h3 className="text-xl font-bold text-white">Foreigners Module</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -318,23 +318,23 @@ export default function AdminGuidePage() {
                     <CardHeader>
                       <div className="flex items-center gap-2">
                         <Plus className="w-4 h-4 text-green-400" />
-                        <CardTitle className="text-sm text-white">Create Person</CardTitle>
+                        <CardTitle className="text-sm text-white">Create Foreigner</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-gray-400 mb-3">Location: /people → "Add Person" button</p>
+                      <p className="text-xs text-gray-400 mb-3">Location: /foreigners → "Add Foreigner" button</p>
                       <div className="space-y-2 text-xs">
                         <div className="bg-gray-800 border border-gray-700 rounded p-2">
-                          <p className="text-gray-300 font-mono">1. Click "Add Person" button</p>
+                          <p className="text-gray-300 font-mono">1. Click "Add Foreigner" button</p>
                         </div>
                         <div className="bg-gray-800 border border-gray-700 rounded p-2">
-                          <p className="text-gray-300 font-mono">2. Fill form (name, email, phone, department)</p>
+                          <p className="text-gray-300 font-mono">2. Fill form (name, nationality, passport, documents)</p>
                         </div>
                         <div className="bg-gray-800 border border-gray-700 rounded p-2">
-                          <p className="text-gray-300 font-mono">3. Click "Create Person"</p>
+                          <p className="text-gray-300 font-mono">3. Click "Create Foreigner"</p>
                         </div>
                         <div className="bg-green-500/10 border border-green-500/30 rounded p-2">
-                          <p className="text-green-400">✓ Person created and added to database</p>
+                          <p className="text-green-400">✓ Foreigner created and added to database</p>
                         </div>
                       </div>
                     </CardContent>
@@ -345,14 +345,14 @@ export default function AdminGuidePage() {
                     <CardHeader>
                       <div className="flex items-center gap-2">
                         <Eye className="w-4 h-4 text-blue-400" />
-                        <CardTitle className="text-sm text-white">Read/View People</CardTitle>
+                        <CardTitle className="text-sm text-white">Read/View Foreigners</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-gray-400 mb-3">Location: /people</p>
+                      <p className="text-xs text-gray-400 mb-3">Location: /foreigners</p>
                       <div className="space-y-2 text-xs">
                         <div className="bg-gray-800 border border-gray-700 rounded p-2">
-                          <p className="text-gray-300">• Table view with all people</p>
+                          <p className="text-gray-300">• Table view with all foreigners</p>
                         </div>
                         <div className="bg-gray-800 border border-gray-700 rounded p-2">
                           <p className="text-gray-300">• Grid view option</p>
@@ -364,7 +364,7 @@ export default function AdminGuidePage() {
                           <p className="text-gray-300">• Filter by department</p>
                         </div>
                         <div className="bg-blue-500/10 border border-blue-500/30 rounded p-2">
-                          <p className="text-blue-400">📊 Real-time data from Supabase</p>
+                          <p className="text-blue-400">📊 Real-time data from Neon PostgreSQL</p>
                         </div>
                       </div>
                     </CardContent>
@@ -375,11 +375,11 @@ export default function AdminGuidePage() {
                     <CardHeader>
                       <div className="flex items-center gap-2">
                         <Edit className="w-4 h-4 text-amber-400" />
-                        <CardTitle className="text-sm text-white">Update Person</CardTitle>
+                        <CardTitle className="text-sm text-white">Update Foreigner</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-gray-400 mb-3">Location: /people → Row actions</p>
+                      <p className="text-xs text-gray-400 mb-3">Location: /foreigners → Row actions</p>
                       <div className="space-y-2 text-xs">
                         <div className="bg-gray-800 border border-gray-700 rounded p-2">
                           <p className="text-gray-300 font-mono">1. Click "Edit" icon in row</p>
@@ -391,7 +391,7 @@ export default function AdminGuidePage() {
                           <p className="text-gray-300 font-mono">3. Click "Save Changes"</p>
                         </div>
                         <div className="bg-amber-500/10 border border-amber-500/30 rounded p-2">
-                          <p className="text-amber-400">✓ Person updated in database</p>
+                          <p className="text-amber-400">✓ Foreigner updated in database</p>
                         </div>
                       </div>
                     </CardContent>
@@ -402,11 +402,11 @@ export default function AdminGuidePage() {
                     <CardHeader>
                       <div className="flex items-center gap-2">
                         <Trash2 className="w-4 h-4 text-red-400" />
-                        <CardTitle className="text-sm text-white">Delete Person</CardTitle>
+                        <CardTitle className="text-sm text-white">Delete Foreigner</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-gray-400 mb-3">Location: /people → Row actions</p>
+                      <p className="text-xs text-gray-400 mb-3">Location: /foreigners → Row actions</p>
                       <div className="space-y-2 text-xs">
                         <div className="bg-gray-800 border border-gray-700 rounded p-2">
                           <p className="text-gray-300 font-mono">1. Click "Delete" icon in row</p>
@@ -415,7 +415,7 @@ export default function AdminGuidePage() {
                           <p className="text-gray-300 font-mono">2. Confirm deletion in dialog</p>
                         </div>
                         <div className="bg-red-500/10 border border-red-500/30 rounded p-2">
-                          <p className="text-red-400">⚠️ Person permanently deleted</p>
+                          <p className="text-red-400">⚠️ Foreigner permanently deleted</p>
                         </div>
                         <div className="bg-amber-500/10 border border-amber-500/30 rounded p-2">
                           <p className="text-amber-400 text-[10px]">Note: Related permits are also deleted (cascade)</p>
@@ -559,8 +559,8 @@ export default function AdminGuidePage() {
                 </h3>
                 <div className="space-y-3">
                   {[
-                    { step: 1, module: "People", action: "Create new person record", icon: Plus, color: "blue" },
-                    { step: 2, module: "Permits", action: "Create work permit for employee", icon: ClipboardCheck, color: "purple" },
+                    { step: 1, module: "Foreigners", action: "Create new foreigner record", icon: Plus, color: "blue" },
+                    { step: 2, module: "Permits", action: "Create work permit for foreigner", icon: ClipboardCheck, color: "purple" },
                     { step: 3, module: "Tasks", action: "Create onboarding checklist tasks", icon: CheckSquare, color: "amber" },
                     { step: 4, module: "Calendar", action: "Click any day to schedule orientation meeting", icon: Calendar, color: "cyan" },
                     { step: 5, module: "Dashboard", action: "Monitor onboarding progress", icon: BarChart, color: "green" },
@@ -663,10 +663,10 @@ export default function AdminGuidePage() {
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Sparkles className="w-6 h-6 text-green-400" />
-                AI Chat Widget - Intelligent Support Assistant
+                AI Chat Widget - Google A2UI Gemini-Powered Assistant
               </CardTitle>
               <CardDescription className="text-gray-400">
-                Powerful AI-powered chatbot with Quick Actions and inline assistance
+                Google A2UI chatbot with Gemini AI - Quick Actions and inline assistance
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-8">
@@ -865,8 +865,8 @@ export default function AdminGuidePage() {
                   <div>
                     <h4 className="text-sm font-semibold text-cyan-400 mb-2">Powered By</h4>
                     <ul className="space-y-1 text-xs text-gray-400">
-                      <li>• OpenAI GPT models</li>
-                      <li>• Custom hospital workflow training</li>
+                      <li>• Google Gemini 2.0 Flash AI</li>
+                      <li>• Google A2UI Components</li>
                       <li>• Real-time database integration</li>
                       <li>• WebSocket connections</li>
                     </ul>
@@ -944,7 +944,7 @@ export default function AdminGuidePage() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm text-gray-300">
-                    <p>✓ Supabase PostgreSQL backend</p>
+                    <p>✓ Neon PostgreSQL backend</p>
                     <p>✓ Instant updates across all pages</p>
                     <p>✓ Row-level security</p>
                     <p>✓ Optimistic UI updates</p>

@@ -89,7 +89,7 @@ export function LoginForm() {
           </div>
           <CardTitle className="text-2xl font-bold text-center text-white">Welcome Back</CardTitle>
           <CardDescription className="text-center text-gray-400">
-            Sign in to your SODDO Hospital account
+            Sign in to your SODO Hospital account
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -2,13 +2,51 @@
 
 import Link from "next/link"
 import { useSession } from "next-auth/react"
-import { Activity, Sparkles, Users, Briefcase, FileText, Clock, Star, TrendingDown, CheckCircle } from "lucide-react"
+import { Activity, Sparkles, Users, Briefcase, FileText, Clock, Star, TrendingDown, CheckCircle, ArrowRight } from "lucide-react"
 import { A2UIChatWidget } from "@/components/a2ui"
 import { Button } from "@/components/ui/button"
 import { UserButton } from "@/components/auth/user-button"
+import { Badge } from "@/components/ui/badge"
 
-export function LandingPage() {
+interface LandingPageProps {
+  initialPeople?: any[]
+  notifications?: any[]
+  taskStats?: {
+    total: number
+    byStatus: {
+      pending: number
+      "in-progress": number
+      completed: number
+      urgent: number
+    }
+    byPriority: {
+      low: number
+      medium: number
+      high: number
+    }
+  } | null
+}
+
+export function LandingPage({ 
+  initialPeople = [], 
+  notifications = [],
+  taskStats
+}: LandingPageProps) {
   const { data: session } = useSession()
+  
+  // Get foreigners with photos first, then fill with placeholders
+  const foreignersWithPhotos = initialPeople.filter(p => p.photoUrl).slice(0, 3)
+  const placeholders = [
+    "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=60&h=60&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=60&h=60&fit=crop&crop=face",
+    "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=60&h=60&fit=crop&crop=face"
+  ]
+  
+  const displayAvatars = [...foreignersWithPhotos]
+  while (displayAvatars.length < 3) {
+    displayAvatars.push({ photoUrl: placeholders[displayAvatars.length], firstName: "Placeholder" })
+  }
+
   return (
     <div className="min-h-screen antialiased overflow-x-hidden text-slate-100 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Background Effects */}
@@ -22,12 +60,9 @@ export function LandingPage() {
             <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
               <Activity className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-semibold tracking-tight">SODDO Hospital</span>
+            <span className="text-xl font-semibold tracking-tight">Soddo Christian General Hospital</span>
           </div>
           <div className="hidden md:flex items-center space-x-4 text-sm">
-            <Link href="/admin-guide" className="text-slate-400 hover:text-white transition-colors">
-              Admin guide
-            </Link>
             {session?.user ? (
               <UserButton user={session.user} />
             ) : (
@@ -53,14 +88,14 @@ export function LandingPage() {
             <div className="mb-6">
               <div className="inline-flex items-center space-x-2 bg-green-500/10 border border-green-500/20 px-3 py-1 rounded-full text-xs font-medium text-green-400 mb-6">
                 <Sparkles className="w-3 h-3" />
-                <span>SODDO Hospital Management System</span>
+                <span>Hospital Administration Workspace v2.0</span>
               </div>
-              <h1 className="sm:text-5xl lg:text-6xl leading-tight text-4xl font-bold tracking-tight mb-4">
-                Streamline <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">permits</span>
-                {" "}and hospital documents
+              <h1 className="sm:text-5xl lg:text-6xl leading-tight text-4xl font-bold tracking-tight mb-4 text-white">
+                Empowering <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">International</span>
+                {" "}Medical Teams
               </h1>
               <p className="leading-relaxed max-w-lg text-lg text-slate-400">
-                Manage work permits, residence IDs, hospital licenses, and support letters in one administrative workspace.
+                A specialized administrative platform for Soddo Christian General Hospital to track Work Permits, Medical Licenses, and Residence IDs for our global healthcare professionals.
               </p>
             </div>
             <div className="flex items-center space-x-4 mb-8">
@@ -72,15 +107,6 @@ export function LandingPage() {
                   Access dashboard
                 </Link>
               </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="border border-slate-600 text-slate-300 px-6 py-3 rounded-lg font-medium hover:border-slate-500 hover:text-white transition-all duration-200"
-              >
-                <Link href="/admin-guide">
-                  See admin guide
-                </Link>
-              </Button>
             </div>
           </div>
 
@@ -89,40 +115,47 @@ export function LandingPage() {
             <div>
               <div className="flex items-center space-x-2 mb-3">
                 <Users className="w-5 h-5 text-green-400" />
-                <h3 className="text-lg font-semibold">Our Teams</h3>
+                <h3 className="text-lg font-semibold">Our Team</h3>
               </div>
               <p className="text-sm text-slate-400 mb-4">
-                HR, Logistics, Finance, and Administration collaborating in one workspace.
+                Coordinating specialized medical professionals from across the globe to serve our community.
               </p>
             </div>
             <div className="flex -space-x-3">
-              <img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 object-cover border-slate-700 border-2 rounded-full" alt="Department Lead" />
-              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full border-2 border-slate-700" alt="Team Member" />
-              <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full border-2 border-slate-700" alt="Administrator" />
+              {displayAvatars.map((person, i) => (
+                <div key={i} className="relative">
+                  <img 
+                    src={person.photoUrl} 
+                    className="w-12 h-12 object-cover border-slate-700 border-2 rounded-full bg-slate-800" 
+                    alt={person.firstName || "Foreigner"} 
+                  />
+                  {person.photoUrl && !person.photoUrl.includes("unsplash.com") && (
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-slate-800 rounded-full" title="Verified Profile"></div>
+                  )}
+                </div>
+              ))}
               <div className="w-12 h-12 rounded-full border-2 border-slate-700 bg-slate-800 flex items-center justify-center text-xs font-medium">
-                +45
+                +{initialPeople.length > 3 ? initialPeople.length - 3 + 45 : 45}
               </div>
             </div>
           </div>
 
-          {/* Documents Processed */}
-          <div className="gradient-border fade-in fade-in-delay-2 hover:scale-105 transition-transform duration-300">
-            <div className="gradient-border-inner flex flex-col h-full glow-card pt-5 pr-5 pb-5 pl-5 justify-between">
+          {/* Active Records */}
+          <div className="glass-card rounded-2xl p-5 flex flex-col justify-between fade-in fade-in-delay-2 hover:scale-105 transition-transform duration-300">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-slate-400 mb-1">
-                  Permits processed
+                  Active Records
                 </p>
                 <p className="text-xs text-slate-500 leading-snug">
-                  Work permits, residence IDs, and licenses
+                  International staff & documentation
                 </p>
               </div>
               <div className="text-right mt-4">
-                <span className="text-xl font-semibold text-green-400">1,247</span>
+                <span className="text-xl font-semibold text-green-400">842</span>
                 <p className="text-[11px] text-slate-500 leading-snug">
-                  completed this year (demo)
+                  verified professionals
                 </p>
               </div>
-            </div>
           </div>
 
           {/* Staff Portal */}
@@ -135,14 +168,14 @@ export function LandingPage() {
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">Staff Portal</h3>
               <p className="text-sm text-slate-400 mb-4">
-                Open your dashboard to manage permits, tasks, and documents.
+                Log in to handle renewals, track applications, and manage hospital documents.
               </p>
               <Button
                 asChild
                 className="w-full bg-slate-800 border border-slate-700 text-white text-sm font-medium hover:bg-slate-700 transition-colors"
               >
                 <Link href="/dashboard">
-                  Access dashboard
+                  Admin Login
                 </Link>
               </Button>
             </div>
@@ -153,60 +186,107 @@ export function LandingPage() {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-orange-400" />
-                <h3 className="text-sm font-semibold tracking-tight">Document types</h3>
+                <h3 className="text-sm font-semibold tracking-tight">Core Services</h3>
               </div>
-              <span className="text-2xl font-semibold text-orange-400">4</span>
+              <span className="text-2xl font-semibold text-orange-400">5</span>
             </div>
             <p className="text-xs text-slate-400 leading-snug">
-              Work permits, residence IDs, licenses &amp; PIP docs.
+              Work Permits, Medical Licenses, Residence IDs, Customs Clearance & Support Letters.
             </p>
           </div>
 
-          {/* Pending Approvals */}
+          {/* Live Task Status (Restored Layout) */}
           <div className="glass-card flex flex-col fade-in fade-in-delay-4 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
             <div>
-              <span className="text-3xl font-semibold text-amber-400">32</span>
-              <p className="text-sm text-slate-400">Permits awaiting review (demo)</p>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-3xl font-semibold text-amber-400">{taskStats?.byStatus.urgent || 0}</span>
+                <Badge variant="outline" className="text-[9px] bg-red-500/10 text-red-400 border-red-500/20 px-1.5 py-0 animate-pulse">URGENT</Badge>
+              </div>
+              <p className="text-sm text-slate-400 leading-tight">Tasks requiring immediate attention</p>
             </div>
             <div className="flex mb-3 space-x-2 items-center">
-              <h3 className="text-lg font-semibold">Approvals</h3>
-              <Clock className="w-5 h-5 text-amber-400" />
+              <h3 className="text-lg font-semibold">Live Status</h3>
+              <Activity className="w-5 h-5 text-green-400" />
             </div>
           </div>
 
-          {/* Staff Testimonial */}
+          {/* Urgent Notifications & Expiring Permits */}
           <div className="glass-card flex flex-col col-span-1 sm:col-span-2 lg:col-span-3 fade-in fade-in-delay-5 hover:scale-105 transition-transform duration-300 rounded-2xl pt-6 pr-6 pb-6 pl-6 justify-between">
-            <div className="flex mb-4 space-x-4 items-center">
-              <img src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=60&h=60&fit=crop&crop=face" className="w-12 h-12 rounded-full" alt="Dr. Ahmed Hassan" />
-              <div>
-                <p className="font-semibold">Dr. Ahmed Hassan</p>
-                <p className="text-xs text-slate-400">Director of Administration, SODDO Hospital</p>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-400" />
+                <h3 className="text-lg font-bold text-white">Staff Notifications</h3>
               </div>
-              <div className="flex text-yellow-400 ml-auto">
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-                <Star className="w-4 h-4 fill-current" />
-              </div>
+              <Badge variant="outline" className="text-[9px] bg-amber-500/10 text-amber-400 border-amber-500/20">
+                {notifications.length} Alert{notifications.length !== 1 ? 's' : ''}
+              </Badge>
             </div>
-            <div className="text-base font-normal text-white mt-4">&quot;The system reduced our document processing time from 7 days to 4.2 days, significantly improving our workflow efficiency and staff productivity.&quot;</div>
+            {notifications.length > 0 ? (
+              <div className="space-y-2">
+                {notifications.slice(0, 4).map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700/50">
+                    {/* Foreigner Avatar */}
+                    {item.person?.photoUrl ? (
+                      <img 
+                        src={item.person.photoUrl} 
+                        className="w-10 h-10 rounded-full object-cover border-2 border-slate-600 flex-shrink-0" 
+                        alt={item.person.firstName || "Staff"} 
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center border-2 border-slate-600 flex-shrink-0">
+                        <Users className="w-5 h-5 text-slate-400" />
+                      </div>
+                    )}
+                    {/* Notification Content */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">
+                        {item.task?.title || "Notification"}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {item.person ? `${item.person.firstName} ${item.person.lastName}` : "Unassigned"}
+                        {item.task?.dueDate && (
+                          <span className="ml-2 text-amber-400">
+                            Due: {new Date(item.task.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    {/* Status Indicator */}
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                      item.notificationType === "urgent" ? "bg-red-500 animate-pulse" : "bg-amber-400"
+                    }`} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                <p className="text-sm text-slate-400">All tasks are on track. No urgent notifications.</p>
+              </div>
+            )}
+            {notifications.length > 4 && (
+              <Link href="/tasks" className="mt-4 text-xs text-green-400 hover:text-green-300 text-center block">
+                View all {notifications.length} notifications →
+              </Link>
+            )}
           </div>
 
-          {/* Processing Time */}
+          {/* Processing/Completed Status */}
           <div className="glass-card rounded-2xl p-6 flex flex-col justify-center items-center text-center fade-in fade-in-delay-6 hover:scale-105 transition-transform duration-300">
             <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mb-3">
-              <TrendingDown className="w-6 h-6 text-white" />
-            </div>
-            <h3 className="text-sm font-semibold mb-1">Avg. Processing</h3>
-            <p className="text-xs text-slate-400">4.2 days</p>
-          </div>
-
-          {/* Success Rate */}
-          <div className="glass-card flex flex-col fade-in fade-in-delay-7 hover:scale-105 transition-transform duration-300 text-center rounded-2xl pt-6 pr-6 pb-6 pl-6 items-center justify-center">
-            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mb-3">
               <CheckCircle className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-sm font-semibold mb-1">Success Rate</h3>
-            <p className="text-xs text-slate-400">98% approved</p>
+            <h3 className="text-sm font-semibold mb-1">Total Completed</h3>
+            <p className="text-xs text-slate-400">{taskStats?.byStatus.completed || 0} tasks</p>
+          </div>
+
+          {/* Success Rate/Total Board */}
+          <div className="glass-card flex flex-col fade-in fade-in-delay-7 hover:scale-105 transition-transform duration-300 text-center rounded-2xl pt-6 pr-6 pb-6 pl-6 items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mb-3">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-sm font-semibold mb-1">Efficiency</h3>
+            <p className="text-xs text-slate-400">{taskStats?.total || 0} total records</p>
           </div>
 
         </div>
@@ -214,8 +294,11 @@ export function LandingPage() {
 
       {/* Footer */}
       <footer className="max-w-7xl mx-auto px-6 py-16 border-t border-slate-800">
-        <div className="pt-8 flex flex-col md:flex-row justify-between items-center fade-in fade-in-delay-1">
-          <p className="text-slate-400 text-sm">© 2024 SODDO Hospital. All rights reserved.</p>
+        <div className="pt-8 flex flex-col md:flex-row justify-between items-center fade-in fade-in-delay-1 gap-2">
+          <p className="text-slate-400 text-sm">© {new Date().getFullYear()} Soddo Christian General Hospital. All rights reserved.</p>
+          <p className="text-slate-500 text-xs">
+            Developed by <a href="mailto:dev.yosefali@gmail.com" className="text-green-400 hover:text-green-300 transition-colors">Yosef Ali</a>
+          </p>
         </div>
       </footer>
 

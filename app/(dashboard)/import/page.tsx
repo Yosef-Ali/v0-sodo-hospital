@@ -4,15 +4,18 @@ import { unstable_cache } from "next/cache"
 
 // Cache import data for 60 seconds
 const getCachedImportData = unstable_cache(
-  async () => {
+  async (): Promise<{
+    imports: any[]
+    stats: { total: number; pip: number; singleWindow: number; pending: number; completed: number }
+  }> => {
     const [importsResult, statsResult] = await Promise.all([
       getImports({ limit: 100 }),
       getImportStats()
     ])
 
     return {
-      imports: importsResult.success ? importsResult.data : [],
-      stats: statsResult.success ? statsResult.data : { total: 0, pip: 0, singleWindow: 0, pending: 0, completed: 0 }
+      imports: importsResult.success ? importsResult.data ?? [] : [],
+      stats: statsResult.success && statsResult.data ? statsResult.data : { total: 0, pip: 0, singleWindow: 0, pending: 0, completed: 0 }
     }
   },
   ['import-data'],

@@ -4,15 +4,18 @@ import { unstable_cache } from "next/cache"
 
 // Cache company data for 60 seconds
 const getCachedCompanyData = unstable_cache(
-  async () => {
+  async (): Promise<{
+    companies: any[]
+    stats: { total: number; documentPrep: number; applyOnline: number; approval: number; completed: number }
+  }> => {
     const [companiesResult, statsResult] = await Promise.all([
       getCompanies({ limit: 100 }),
       getCompanyStats()
     ])
 
     return {
-      companies: companiesResult.success ? companiesResult.data : [],
-      stats: statsResult.success ? statsResult.data : { total: 0, documentPrep: 0, applyOnline: 0, approval: 0, completed: 0 }
+      companies: companiesResult.success ? companiesResult.data ?? [] : [],
+      stats: statsResult.success && statsResult.data ? statsResult.data : { total: 0, documentPrep: 0, applyOnline: 0, approval: 0, completed: 0 }
     }
   },
   ['company-data'],

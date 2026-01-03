@@ -280,8 +280,12 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
             >
               <div className="p-5 flex-1">
                 <div className="flex justify-between items-start mb-3">
-                  <div className="bg-gray-700 p-2 rounded-md">
-                    <User className="h-5 w-5 text-gray-400" />
+                  <div className="bg-gray-700 rounded-md overflow-hidden h-9 w-9 flex items-center justify-center">
+                    {person.photoUrl ? (
+                      <img src={person.photoUrl} alt="Profile" className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-5 w-5 text-gray-400" />
+                    )}
                   </div>
                   {person.guardianId && (
                     <Badge className="bg-blue-900 text-blue-300 text-xs">

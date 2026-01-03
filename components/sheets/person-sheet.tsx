@@ -728,6 +728,46 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
 
             {/* ===================== PERSONAL TAB ===================== */}
             <TabsContent value="personal" className="space-y-4">
+              {/* Profile Photo Upload */}
+              <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-700 mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-medium text-green-400 uppercase tracking-wider">Profile Photo</h4>
+                  {formData.photoUrl && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setFormData(prev => ({ ...prev, photoUrl: "" }))}
+                      className="text-red-400 hover:text-red-300 h-7 text-[10px]">
+                      Remove
+                    </Button>
+                  )}
+                </div>
+                
+                {formData.photoUrl ? (
+                  <div className="flex justify-center">
+                    <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-green-500/50 shadow-lg glow-icon">
+                      <img src={formData.photoUrl} alt="Profile" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                ) : (
+                  <UploadDropzone
+                    endpoint="permitDocumentUploader"
+                    onClientUploadComplete={(res) => {
+                      if (res?.[0]?.url) {
+                        setFormData(prev => ({ ...prev, photoUrl: res[0].url }))
+                        toast.success("Profile photo uploaded")
+                      }
+                    }}
+                    onUploadError={(error: Error) => {
+                      toast.error(`Upload failed: ${error.message}`)
+                    }}
+                    appearance={{
+                      container: "border-gray-600 bg-gray-700/30 h-32 py-2",
+                      button: "bg-green-600 hover:bg-green-700 text-[10px] h-8 px-3",
+                      label: "text-gray-400 text-xs",
+                      allowedContent: "text-gray-500 text-[10px]",
+                    }}
+                  />
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-gray-300">First Name *</Label>

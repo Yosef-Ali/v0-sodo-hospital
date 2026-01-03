@@ -5,7 +5,7 @@ import { StatusCard } from "@/components/ui/status-card"
 import { MetricCard } from "@/components/ui/metric-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FileText, AlertCircle, ArrowRight } from "lucide-react"
+import { FileText, AlertCircle, ArrowRight, User } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -208,6 +208,15 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
+                      {item.person?.photoUrl ? (
+                        <div className="h-8 w-8 rounded-full overflow-hidden border border-gray-600 flex-shrink-0">
+                          <img src={item.person.photoUrl} alt="Avatar" className="h-full w-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-500 border border-gray-600 flex-shrink-0">
+                          <User className="h-4 w-4" />
+                        </div>
+                      )}
                       <Badge variant="outline" className="bg-gray-700/60 text-gray-200 border-gray-600">
                         {item.permit.status}
                       </Badge>

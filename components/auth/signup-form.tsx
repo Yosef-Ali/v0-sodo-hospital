@@ -95,7 +95,7 @@ export function SignupForm() {
           </div>
           <CardTitle className="text-2xl font-bold text-center text-white">Create Account</CardTitle>
           <CardDescription className="text-center text-gray-400">
-            Join SODDO Hospital's document management system
+            Join SODO Hospital's document management system
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

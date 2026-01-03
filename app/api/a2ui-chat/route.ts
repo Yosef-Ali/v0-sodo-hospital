@@ -156,11 +156,14 @@ export async function PUT(req: Request) {
         query = `User triggered action: ${action} with context: ${JSON.stringify(context)}`
     }
 
-    // Forward to POST handler
+    // Get verified ticket for this session
+    const verifiedTicket = verifiedTickets.get(sessionId)
+
+    // Forward to POST handler with verified ticket
     const response = await POST(
       new Request(req.url, {
         method: "POST",
-        body: JSON.stringify({ message: query, sessionId }),
+        body: JSON.stringify({ message: query, sessionId, verifiedTicket }),
       })
     )
 

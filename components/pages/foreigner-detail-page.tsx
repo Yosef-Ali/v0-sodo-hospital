@@ -17,7 +17,6 @@ import {
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { PersonActionsCard } from "@/components/foreigners/person-actions-card"
-import { PersonPermitsCard } from "@/components/foreigners/person-permits-card"
 import { updatePerson } from "@/lib/actions/v2/foreigners"
 import { toast } from "sonner"
 import { PersonSheet } from "@/components/sheets/person-sheet"
@@ -64,11 +63,21 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <User className="h-6 w-6 text-green-500" />
-              {person.firstName} {person.lastName}
+            <h1 className="text-2xl font-bold text-white flex items-center gap-4">
+              {person.photoUrl ? (
+                <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-green-500/50 shadow-lg glow-icon flex-shrink-0">
+                  <img src={person.photoUrl} alt="Profile" className="h-full w-full object-cover" />
+                </div>
+              ) : (
+                <div className="h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center text-gray-500 border-2 border-gray-600 flex-shrink-0">
+                  <User className="h-6 w-6" />
+                </div>
+              )}
+              <div>
+                {person.firstName} {person.lastName}
+                <p className="text-sm font-normal text-gray-400 mt-0.5">Person Details</p>
+              </div>
             </h1>
-            <p className="text-sm text-gray-400 mt-1">Person Details</p>
           </div>
         </div>
       </div>
@@ -291,7 +300,7 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
           {/* Actions Card */}
           <PersonActionsCard 
             personId={person.id} 
-            hasRelatedData={(permits && permits.length > 0) || (dependents && dependents.length > 0) || (documents && documents.length > 0)}
+            hasRelatedData={Boolean((permits && permits.length > 0) || (dependents && dependents.length > 0) || (documents && documents.length > 0))}
             onEdit={() => setEditSheetOpen(true)}
           />
         </div>

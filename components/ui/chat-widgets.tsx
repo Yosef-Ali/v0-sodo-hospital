@@ -79,46 +79,48 @@ interface ActionCardWidgetProps {
 
 export function ActionCardWidget({ title, description, actions, icon, status }: ActionCardWidgetProps) {
   return (
-    <Card className="bg-gray-800 border-gray-700 max-w-md">
-      <CardHeader>
-        <div className="flex items-start gap-3">
+    <Card className="bg-gray-800 border-gray-700 w-full overflow-hidden">
+      <CardHeader className="pb-3">
+        <div className="flex items-start gap-2 min-w-0">
           {icon && (
-            <div className="p-2 rounded-lg bg-green-500/10 text-green-400">
+            <div className="p-1.5 rounded-lg bg-green-500/10 text-green-400 flex-shrink-0">
               {icon}
             </div>
           )}
-          <div className="flex-1">
-            <CardTitle className="text-white text-base">{title}</CardTitle>
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-white text-sm font-semibold truncate">{title}</CardTitle>
             {description && (
-              <CardDescription className="text-gray-400 mt-1">
+              <CardDescription className="text-gray-400 text-xs mt-1 line-clamp-2">
                 {description}
               </CardDescription>
             )}
           </div>
-          {status && (
+        </div>
+        {status && (
+          <div className="mt-2">
             <StatusBadgeWidget
               status={status}
               label={status.charAt(0).toUpperCase() + status.slice(1)}
             />
-          )}
-        </div>
+          </div>
+        )}
       </CardHeader>
       {actions.length > 0 && (
-        <CardFooter className="flex gap-2 pt-0">
+        <CardFooter className="flex flex-col gap-2 pt-0">
           {actions.map((action, idx) => (
             action.href ? (
-              <Link key={idx} href={action.href}>
-                <Button variant={action.variant || "default"} size="sm">
+              <Link key={idx} href={action.href} className="w-full">
+                <Button variant={action.variant || "outline"} size="sm" className="w-full text-xs h-8">
                   {action.label}
-                  <ExternalLink className="w-3 h-3 ml-1" />
                 </Button>
               </Link>
             ) : (
               <Button
                 key={idx}
-                variant={action.variant || "default"}
+                variant={action.variant || "outline"}
                 size="sm"
                 onClick={action.onClick || (() => console.log(`Action: ${action.label}`))}
+                className="w-full text-xs h-8"
               >
                 {action.label}
               </Button>
@@ -179,7 +181,7 @@ interface ListWidgetProps {
 
 export function ListWidget({ items, title }: ListWidgetProps) {
   return (
-    <Card className="bg-gray-800 border-gray-700 max-w-md">
+    <Card className="bg-gray-800 border-gray-700 w-full overflow-hidden">
       {title && (
         <CardHeader>
           <CardTitle className="text-white text-base">{title}</CardTitle>
@@ -247,14 +249,14 @@ interface QuickActionButtonsProps {
 
 export function QuickActionButtonsWidget({ actions }: QuickActionButtonsProps) {
   return (
-    <div className="flex flex-wrap gap-2 max-w-md">
+    <div className="flex flex-wrap gap-2">
       {actions.map((action, idx) => (
         <Button
           key={idx}
           variant={action.variant || "outline"}
           size="sm"
           onClick={action.onClick || (() => console.log(`Action: ${action.label}`))}
-          className="border-gray-700 hover:border-green-500 hover:bg-gray-800"
+          className="text-xs border-gray-700 hover:border-green-500 hover:bg-green-500/10 hover:text-green-400"
         >
           {action.icon}
           {action.label}
@@ -333,7 +335,7 @@ export function DocumentCardWidget({ title, status, type, date, progress, action
   const { color, icon: Icon, label } = statusConfig[status]
 
   return (
-    <Card className="bg-gray-800 border-gray-700 max-w-md">
+    <Card className="bg-gray-800 border-gray-700 w-full overflow-hidden">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3 flex-1">
@@ -468,7 +470,7 @@ export function TicketVerificationWidget({
   }
 
   return (
-    <Card className="bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-500/30 max-w-md">
+    <Card className="bg-gradient-to-br from-green-900/20 to-emerald-900/20 border-green-500/30 w-full">
       <CardHeader>
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-lg bg-green-500/20 text-green-400">
@@ -504,7 +506,7 @@ export function TicketVerificationWidget({
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between text-[11px] text-gray-500">
+        <div className="flex items-center justify-between text-[11px] text-gray-500 flex-wrap gap-2">
           <span>Format: XXX-YYYY-1234</span>
           <button
             type="button"
@@ -593,36 +595,35 @@ export function PermitStatusWidget({
   const [showDetails, setShowDetails] = useState(false)
 
   return (
-    <Card className="bg-gray-800 border-gray-700 max-w-md">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3 flex-1">
-            {personName && (
-              <div className="w-9 h-9 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-semibold text-green-300">
-                {personName
-                  .split(" ")
-                  .filter(Boolean)
-                  .map(part => part[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </div>
-            )}
-            <div className="flex-1">
-              <div className="mb-1">
-                <CardTitle className="text-white text-base">{type}</CardTitle>
-              </div>
-              {personName && (
-                <p className="text-xs text-gray-400">
-                  Applicant: <span className="text-gray-200">{personName}</span>
-                </p>
-              )}
-              <div className="text-xs text-gray-500 font-mono mt-1">{ticketNumber}</div>
+    <Card className="bg-gray-800 border-gray-700 w-full overflow-hidden">
+      <CardHeader className="pb-3">
+        <div className="flex items-start gap-3">
+          {personName && (
+            <div className="w-9 h-9 rounded-full bg-green-500/20 flex items-center justify-center text-xs font-semibold text-green-300 flex-shrink-0">
+              {personName
+                .split(" ")
+                .filter(Boolean)
+                .map(part => part[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()}
             </div>
-          </div>
-          <div className={cn("flex items-center gap-2 px-3 py-1.5 rounded-full border", bgColor, borderColor)}>
-            <Icon className={cn("w-4 h-4", color)} />
-            <span className={cn("text-sm font-medium", color)}>{label}</span>
+          )}
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-white text-sm font-semibold">{type}</CardTitle>
+            {personName && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                {personName}
+              </p>
+            )}
+            {/* Ticket + Status Badge Row */}
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <span className="text-xs text-gray-500 font-mono">{ticketNumber}</span>
+              <div className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs", bgColor, borderColor)}>
+                <Icon className={cn("w-3 h-3", color)} />
+                <span className={cn("font-medium", color)}>{label}</span>
+              </div>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -700,20 +701,20 @@ export function PermitStatusWidget({
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex gap-2">
-        <Link href={`/permits/${ticketNumber}`} className="flex-1">
+      <CardFooter className="flex flex-col gap-2">
+        <Link href={`/permits/${ticketNumber}`} className="w-full">
           <Button
             variant="outline"
             size="sm"
-            className="w-full border-gray-700 hover:border-green-500"
+            className="w-full text-xs h-8 border-gray-700 hover:border-green-500"
           >
-            <FileText className="w-4 h-4 mr-2" />
-            View Full Details
+            <FileText className="w-3.5 h-3.5 mr-1.5" />
+            View Details
           </Button>
         </Link>
-        <Button variant="outline" size="sm" className="flex-1 border-gray-700 hover:border-green-500">
-          <Download className="w-4 h-4 mr-2" />
-          Download Receipt
+        <Button variant="outline" size="sm" className="w-full text-xs h-8 border-gray-700 hover:border-green-500">
+          <Download className="w-3.5 h-3.5 mr-1.5" />
+          Download
         </Button>
       </CardFooter>
     </Card>
@@ -769,7 +770,6 @@ export function UploadGuideWidget({
         title: file.name,
         number: ticketNumber || undefined,
         fileUrl: file.url,
-        fileName: file.name,
       })
 
       if (result.success) {
@@ -791,7 +791,7 @@ export function UploadGuideWidget({
   }
 
   return (
-    <Card className="bg-gray-800 border-gray-700 max-w-md">
+    <Card className="bg-gray-800 border-gray-700 w-full overflow-hidden">
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 flex-1">
@@ -979,7 +979,7 @@ export function ProcessTimelineWidget({ stages, estimatedTotal }: ProcessTimelin
   const [expanded, setExpanded] = useState(false)
 
   return (
-    <Card className="bg-gray-800 border-gray-700 max-w-md">
+    <Card className="bg-gray-800 border-gray-700 w-full overflow-hidden">
       <CardHeader>
         <div className="flex items-start gap-3">
           <div className="p-2 rounded-lg bg-green-500/20 text-green-400">
