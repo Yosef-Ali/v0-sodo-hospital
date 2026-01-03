@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { vehicles, importPermits, companyRegistrations } from "@/lib/db/schema"
+import { vehicles, importPermits, companyRegistrations, tasksV2 } from "@/lib/db/schema"
 import { generateTicketNumber } from "@/lib/utils"
 
 // Sample Ethiopian-focused seed data
@@ -272,15 +272,90 @@ export async function seedCompanies() {
   }
 }
 
+export async function seedTasks(vehicles: any[], imports: any[], companies: any[]) {
+  try {
+    const tasks = []
+
+    const mapStatus = (s: string) => {
+      if (s === 'urgent') return 'in-progress'
+      if (s === 'completed') return 'completed'
+      if (s === 'in-progress') return 'in-progress'
+      return 'pending'
+    }
+
+    const mapPriority = (s: string) => {
+      return s === 'urgent' ? 'high' : 'medium'
+    }
+
+    // Seed Vehicle Tasks
+    for (const v of vehicles) {
+      tasks.push({
+        title: `Process ${v.title}`,
+        description: `Vehicle task for ${v.plateNumber}. ${v.description}`,
+        status: mapStatus(v.status),
+        priority: mapPriority(v.status), // 'urgent' status maps to high priority
+        dueDate: v.dueDate ? new Date(v.dueDate) : null,
+        entityType: 'vehicle',
+        entityId: v.id,
+      })
+    }
+
+    // Seed Import Tasks
+    for (const i of imports) {
+      tasks.push({
+        title: `Process ${i.title}`,
+        description: `Import permit task. ${i.description}`,
+        status: mapStatus(i.status),
+        priority: mapPriority(i.status),
+        dueDate: i.dueDate ? new Date(i.dueDate) : null,
+        entityType: 'import',
+        entityId: i.id,
+      })
+    }
+
+    // Seed Company Tasks
+    for (const c of companies) {
+      tasks.push({
+        title: `Process ${c.title}`,
+        description: `Company registration task for ${c.companyName}. Renewal/New registration.`,
+        status: mapStatus(c.status),
+        priority: 'medium',
+        dueDate: c.dueDate ? new Date(c.dueDate) : null,
+        entityType: 'company',
+        entityId: c.id,
+      })
+    }
+
+    if (tasks.length > 0) {
+      // @ts-ignore - Drizzle insert types are sometimes strict with mapped arrays
+      const result = await db.insert(tasksV2).values(tasks).returning()
+      return { success: true, count: result.length, data: result }
+    }
+
+    return { success: true, count: 0, data: [] }
+
+  } catch (error) {
+    console.error("Error seeding tasks:", error)
+    return { success: false, error: String(error) }
+  }
+}
+
 export async function seedAll() {
   const vehicleResult = await seedVehicles()
   const importResult = await seedImports()
   const companyResult = await seedCompanies()
 
+  const taskResult = await seedTasks(
+    vehicleResult.data || [],
+    importResult.data || [],
+    companyResult.data || []
+  )
+
   return {
-    success: vehicleResult.success && importResult.success && companyResult.success,
+    success: vehicleResult.success && importResult.success && companyResult.success && taskResult.success,
     vehicles: vehicleResult,
     imports: importResult,
     companies: companyResult,
+    tasks: taskResult,
   }
 }
