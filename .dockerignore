@@ -1,0 +1,29 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Development
+.git
+.gitignore
+*.md
+.env*.local
+.env.local
+.vercel
+.vscode
+
+# Testing
+e2e
+test-results
+playwright-report
+playwright.config.ts
+
+# Misc
+.DS_Store
+*.log
+npm-debug.log*
