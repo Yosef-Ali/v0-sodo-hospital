@@ -1,14 +1,11 @@
-import { db, systemSettings } from "@/lib/db"
+import { db } from "@/lib/db"
+import { systemSettings } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 
 // Simple decryption (matches the one in settings actions)
-function simpleDecrypt(encoded: string): string {
+function decryptValue(encoded: string): string {
   try {
-    const decoded = Buffer.from(encoded, "base64").toString("utf-8")
-    if (decoded.startsWith("ENC:")) {
-      return decoded.slice(4)
-    }
-    return encoded
+    return Buffer.from(encoded, "base64").toString("utf-8")
   } catch {
     return encoded
   }
@@ -38,7 +35,7 @@ export async function getApiKey(key: string): Promise<string | null> {
     let value: string | null = null
 
     if (setting?.value) {
-      value = setting.isSecret ? simpleDecrypt(setting.value) : setting.value
+      value = decryptValue(setting.value)
     }
 
     // Fallback to environment variable
@@ -60,10 +57,27 @@ export async function getApiKey(key: string): Promise<string | null> {
 }
 
 /**
- * Get Google AI API Key
+ * Get Google AI API Key (for Gemini)
  */
 export async function getGoogleApiKey(): Promise<string | null> {
+  // Try new key name first, then fallback to old name
+  const key = await getApiKey("GOOGLE_AI_API_KEY")
+  if (key) return key
   return getApiKey("GOOGLE_API_KEY")
+}
+
+/**
+ * Get OpenAI API Key
+ */
+export async function getOpenAIApiKey(): Promise<string | null> {
+  return getApiKey("OPENAI_API_KEY")
+}
+
+/**
+ * Get Anthropic API Key
+ */
+export async function getAnthropicApiKey(): Promise<string | null> {
+  return getApiKey("ANTHROPIC_API_KEY")
 }
 
 /**
