@@ -1,22 +1,25 @@
+"use client"
+
 import { useState } from "react"
 
 interface UploadResult {
-  key: string
   url: string
+  key: string
+  name: string
   size: number
-  contentType: string
+  type: string
 }
 
 interface UseFileUploadOptions {
   folder?: string
   onSuccess?: (result: UploadResult) => void
-  onError?: (error: string) => void
+  onError?: (error: Error) => void
 }
 
 export function useFileUpload(options: UseFileUploadOptions = {}) {
   const [isUploading, setIsUploading] = useState(false)
   const [progress, setProgress] = useState(0)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<Error | null>(null)
 
   const upload = async (file: File): Promise<UploadResult | null> => {
     setIsUploading(true)
@@ -30,7 +33,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
         formData.append("folder", options.folder)
       }
 
-      const response = await fetch("/api/files/upload", {
+      const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
       })
@@ -40,19 +43,34 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
         throw new Error(data.error || "Upload failed")
       }
 
-      const result: UploadResult = await response.json()
+      const result = await response.json()
       setProgress(100)
       options.onSuccess?.(result)
       return result
-    } catch (err: any) {
-      const errorMsg = err.message || "Upload failed"
-      setError(errorMsg)
-      options.onError?.(errorMsg)
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Upload failed")
+      setError(error)
+      options.onError?.(error)
       return null
     } finally {
       setIsUploading(false)
     }
   }
 
-  return { upload, isUploading, progress, error }
+  const uploadMultiple = async (files: File[]): Promise<UploadResult[]> => {
+    const results: UploadResult[] = []
+    for (const file of files) {
+      const result = await upload(file)
+      if (result) results.push(result)
+    }
+    return results
+  }
+
+  return {
+    upload,
+    uploadMultiple,
+    isUploading,
+    progress,
+    error,
+  }
 }
