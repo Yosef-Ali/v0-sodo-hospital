@@ -40,18 +40,18 @@ services:
     build: .
     restart: always
     ports:
-      - "80:3000"
+      - "127.0.0.1:3000:3000"
     environment:
       DATABASE_URL: postgresql://postgres:sodo2024secure@db:5432/sodo_hospital
       REDIS_URL: redis://redis:6379
-      NEXTAUTH_URL: http://72.62.170.70
+      NEXTAUTH_URL: https://sch-addis.org
       NEXTAUTH_SECRET: sodo-hospital-secret-2024-production
       AUTH_SECRET: sodo-hospital-auth-2024-production
       AUTH_TRUST_HOST: "true"
       NODE_ENV: production
       # MinIO S3 Storage
       S3_ENDPOINT: http://minio:9000
-      S3_PUBLIC_URL: http://72.62.170.70:9000
+      S3_PUBLIC_URL: https://sch-addis.org/storage
       S3_ACCESS_KEY: minioadmin
       S3_SECRET_KEY: minioadmin123
       S3_BUCKET: documents
