@@ -108,7 +108,7 @@ const menuItems: MenuItem[] = [
   },
   {
     title: "Settings",
-    url: "/dashboard/settings",
+    url: "/settings",
     icon: Settings,
     roles: ["ADMIN"],
   },
