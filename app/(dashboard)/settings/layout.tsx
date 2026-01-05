@@ -19,12 +19,6 @@ const settingsNavItems = [
     icon: Users,
   },
   {
-    title: "API Keys",
-    href: "/settings/api-keys",
-    icon: Key,
-    adminOnly: true,
-  },
-  {
     title: "Checklists",
     href: "/settings/checklists",
     icon: ClipboardList,
@@ -34,6 +28,12 @@ const settingsNavItems = [
     title: "Templates",
     href: "/settings/templates",
     icon: FileText,
+  },
+  {
+    title: "API Keys",
+    href: "/settings/api-keys",
+    icon: Key,
+    adminOnly: true,
   },
 ]
 

@@ -1,329 +1,241 @@
-"use client"
-
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageHeader } from "@/components/ui/page-header"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  Settings, Key, Bot, Building2, Shield, Save, Eye, EyeOff, 
-  CheckCircle, XCircle, Loader2, RefreshCw, Trash2, Plus
-} from "lucide-react"
-import { saveSetting, deleteSetting, testGoogleApiKey } from "@/lib/actions/settings"
-import { toast } from "sonner"
+import { Switch } from "@/components/ui/switch"
+import { Separator } from "@/components/ui/separator"
 
-interface Setting {
-  id: string
-  key: string
-  value: string | null
-  description: string | null
-  category: string
-  isSecret: boolean
-  hasValue: boolean
-  updatedAt: Date
-}
-
-interface SettingsPageProps {
-  initialSettings: Setting[]
-}
-
-export function SettingsPage({ initialSettings }: SettingsPageProps) {
-  const [settings, setSettings] = useState<Setting[]>(initialSettings)
-  const [loading, setLoading] = useState<string | null>(null)
-  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({})
-  const [editValues, setEditValues] = useState<Record<string, string>>({})
-  const [testingKey, setTestingKey] = useState(false)
-
-  // Group settings by category
-  const aiSettings = settings.filter(s => s.category === "ai")
-  const generalSettings = settings.filter(s => s.category === "general")
-  const storageSettings = settings.filter(s => s.category === "storage")
-
-  const handleSave = async (key: string, isSecret: boolean, category: string, description?: string) => {
-    const value = editValues[key]
-    if (!value) {
-      toast.error("Please enter a value")
-      return
-    }
-
-    setLoading(key)
-    try {
-      const result = await saveSetting({ key, value, isSecret, category, description })
-      if (result.success) {
-        toast.success(`${key} saved successfully`)
-        // Update local state
-        setSettings(prev => prev.map(s => 
-          s.key === key ? { ...s, hasValue: true, value: isSecret ? "••••••••" : value } : s
-        ))
-        setEditValues(prev => ({ ...prev, [key]: "" }))
-      } else {
-        toast.error(result.error || "Failed to save")
-      }
-    } catch (error) {
-      toast.error("Failed to save setting")
-    } finally {
-      setLoading(null)
-    }
-  }
-
-  const handleDelete = async (key: string) => {
-    if (!confirm(`Are you sure you want to delete ${key}?`)) return
-
-    setLoading(key)
-    try {
-      const result = await deleteSetting(key)
-      if (result.success) {
-        toast.success(`${key} deleted`)
-        setSettings(prev => prev.map(s => 
-          s.key === key ? { ...s, hasValue: false, value: null } : s
-        ))
-      } else {
-        toast.error(result.error || "Failed to delete")
-      }
-    } catch (error) {
-      toast.error("Failed to delete setting")
-    } finally {
-      setLoading(null)
-    }
-  }
-
-  const handleTestGoogleKey = async () => {
-    const apiKey = editValues["GOOGLE_API_KEY"]
-    if (!apiKey) {
-      toast.error("Please enter an API key first")
-      return
-    }
-
-    setTestingKey(true)
-    try {
-      const result = await testGoogleApiKey(apiKey)
-      if (result.success) {
-        toast.success(result.message)
-      } else {
-        toast.error(result.error || "API key test failed")
-      }
-    } catch (error) {
-      toast.error("Failed to test API key")
-    } finally {
-      setTestingKey(false)
-    }
-  }
-
-  const renderSettingCard = (setting: Setting) => {
-    const isLoading = loading === setting.key
-    const showSecret = showSecrets[setting.key]
-    const editValue = editValues[setting.key] || ""
-
-    return (
-      <Card key={setting.key} className="bg-gray-800 border-gray-700">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              {setting.isSecret ? (
-                <Key className="h-4 w-4 text-amber-500" />
-              ) : (
-                <Settings className="h-4 w-4 text-gray-400" />
-              )}
-              <CardTitle className="text-sm font-medium text-white">{setting.key}</CardTitle>
-            </div>
-            <div className="flex items-center gap-2">
-              {setting.hasValue ? (
-                <Badge className="bg-green-600/20 text-green-400 border-green-600/30">
-                  <CheckCircle className="h-3 w-3 mr-1" /> Configured
-                </Badge>
-              ) : (
-                <Badge className="bg-amber-600/20 text-amber-400 border-amber-600/30">
-                  <XCircle className="h-3 w-3 mr-1" /> Not Set
-                </Badge>
-              )}
-            </div>
-          </div>
-          {setting.description && (
-            <CardDescription className="text-gray-400 text-xs mt-1">
-              {setting.description}
-            </CardDescription>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {setting.hasValue && setting.isSecret && (
-            <div className="flex items-center gap-2 p-2 bg-gray-900/50 rounded-lg">
-              <span className="text-gray-400 text-sm font-mono flex-1">
-                {showSecret ? setting.value : "••••••••••••••••"}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowSecrets(prev => ({ ...prev, [setting.key]: !showSecret }))}
-                className="h-7 text-gray-400"
-              >
-                {showSecret ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-              </Button>
-            </div>
-          )}
-
-          {setting.hasValue && !setting.isSecret && (
-            <div className="p-2 bg-gray-900/50 rounded-lg">
-              <span className="text-gray-300 text-sm">{setting.value}</span>
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <Input
-              type={setting.isSecret ? "password" : "text"}
-              placeholder={setting.hasValue ? "Enter new value..." : "Enter value..."}
-              value={editValue}
-              onChange={(e) => setEditValues(prev => ({ ...prev, [setting.key]: e.target.value }))}
-              className="bg-gray-700 border-gray-600 text-white flex-1"
-            />
-            
-            {setting.key === "GOOGLE_API_KEY" && editValue && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleTestGoogleKey}
-                disabled={testingKey}
-                className="border-blue-600/50 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400"
-              >
-                {testingKey ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                <span className="ml-1 hidden sm:inline">Test</span>
-              </Button>
-            )}
-            
-            <Button
-              onClick={() => handleSave(setting.key, setting.isSecret, setting.category, setting.description || undefined)}
-              disabled={isLoading || !editValue}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              <span className="ml-1 hidden sm:inline">Save</span>
-            </Button>
-
-            {setting.hasValue && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDelete(setting.key)}
-                disabled={isLoading}
-                className="border-red-600/50 bg-red-600/10 hover:bg-red-600/20 text-red-400"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
+export function SettingsPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Settings className="h-6 w-6 text-green-500" />
-              System Settings
-            </h1>
-            <p className="text-gray-400 mt-1">
-              Manage API keys and system configuration
-            </p>
+    <div className="p-8">
+      <PageHeader title="Settings" description="Manage your account settings and system preferences." />
+
+      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+        <Tabs defaultValue="profile" className="w-full">
+          <div className="border-b border-gray-700">
+            <TabsList className="bg-transparent h-auto p-0">
+              <TabsTrigger
+                value="profile"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
+              >
+                Profile
+              </TabsTrigger>
+              <TabsTrigger
+                value="account"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
+              >
+                Account
+              </TabsTrigger>
+              <TabsTrigger
+                value="notifications"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
+              >
+                Notifications
+              </TabsTrigger>
+              <TabsTrigger
+                value="security"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-green-500 data-[state=active]:rounded-none data-[state=active]:shadow-none px-6 py-3 rounded-none text-sm"
+              >
+                Security
+              </TabsTrigger>
+            </TabsList>
           </div>
-        </div>
 
-        {/* Settings Tabs */}
-        <Tabs defaultValue="ai" className="w-full">
-          <TabsList className="bg-gray-800 border-gray-700">
-            <TabsTrigger value="ai" className="data-[state=active]:bg-green-600">
-              <Bot className="h-4 w-4 mr-2" /> AI Services
-            </TabsTrigger>
-            <TabsTrigger value="general" className="data-[state=active]:bg-green-600">
-              <Building2 className="h-4 w-4 mr-2" /> General
-            </TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-green-600">
-              <Shield className="h-4 w-4 mr-2" /> Security
-            </TabsTrigger>
-          </TabsList>
-
-          {/* AI Services Tab */}
-          <TabsContent value="ai" className="space-y-4 mt-4">
-            <Card className="bg-gray-800/50 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Bot className="h-5 w-5 text-green-500" />
-                  AI Configuration
-                </CardTitle>
-                <CardDescription className="text-gray-400">
-                  Configure AI services for OCR, chatbot, and report generation
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Google API Key Info */}
-                <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4 mb-4">
-                  <h4 className="text-blue-400 font-medium mb-2">Getting a Google API Key</h4>
-                  <ol className="text-sm text-gray-300 space-y-1 list-decimal list-inside">
-                    <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank" className="text-blue-400 hover:underline">Google AI Studio</a></li>
-                    <li>Sign in with your Google account</li>
-                    <li>Click "Create API Key"</li>
-                    <li>Copy the key and paste it below</li>
-                  </ol>
+          <TabsContent value="profile" className="p-6">
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input id="name" defaultValue="Dr. Samuel" className="bg-gray-700 border-gray-600" />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" defaultValue="dr.samuel@soddohospital.com" className="bg-gray-700 border-gray-600" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="title">Job Title</Label>
+                  <Input id="title" defaultValue="Chief Medical Officer" className="bg-gray-700 border-gray-600" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department</Label>
+                  <Input id="department" defaultValue="Administration" className="bg-gray-700 border-gray-600" />
+                </div>
+              </div>
 
-                {aiSettings.map(renderSettingCard)}
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <textarea
+                  id="bio"
+                  rows={4}
+                  className="w-full rounded-md bg-gray-700 border border-gray-600 p-3 text-sm"
+                  defaultValue="Board-certified physician with over 15 years of experience in hospital administration and clinical practice."
+                />
+              </div>
 
-                {aiSettings.length === 0 && (
-                  <p className="text-gray-500 text-center py-4">No AI settings found</p>
-                )}
-              </CardContent>
-            </Card>
+              <div className="flex justify-end">
+                <Button>Save Changes</Button>
+              </div>
+            </div>
           </TabsContent>
 
-          {/* General Tab */}
-          <TabsContent value="general" className="space-y-4 mt-4">
-            <Card className="bg-gray-800/50 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Building2 className="h-5 w-5 text-green-500" />
-                  General Settings
-                </CardTitle>
-                <CardDescription className="text-gray-400">
-                  Configure general application settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {generalSettings.map(renderSettingCard)}
+          <TabsContent value="account" className="p-6">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Account Preferences</h3>
+                <p className="text-sm text-gray-400">Manage your account settings and preferences</p>
+              </div>
 
-                {generalSettings.length === 0 && (
-                  <p className="text-gray-500 text-center py-4">No general settings found</p>
-                )}
-              </CardContent>
-            </Card>
+              <Separator className="bg-gray-700" />
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Language</h4>
+                    <p className="text-sm text-gray-400">Select your preferred language</p>
+                  </div>
+                  <select className="bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
+                    <option>English</option>
+                    <option>Spanish</option>
+                    <option>French</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Time Zone</h4>
+                    <p className="text-sm text-gray-400">Set your local time zone</p>
+                  </div>
+                  <select className="bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
+                    <option>UTC-8 (Pacific Time)</option>
+                    <option>UTC-5 (Eastern Time)</option>
+                    <option>UTC+0 (GMT)</option>
+                    <option>UTC+1 (Central European Time)</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Theme</h4>
+                    <p className="text-sm text-gray-400">Choose your interface theme</p>
+                  </div>
+                  <select className="bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
+                    <option>Dark</option>
+                    <option>Light</option>
+                    <option>System</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button>Save Preferences</Button>
+              </div>
+            </div>
           </TabsContent>
 
-          {/* Security Tab */}
-          <TabsContent value="security" className="space-y-4 mt-4">
-            <Card className="bg-gray-800/50 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-green-500" />
-                  Security Settings
-                </CardTitle>
-                <CardDescription className="text-gray-400">
-                  Manage security and authentication settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-gray-900/50 rounded-lg p-4 text-center">
-                  <Shield className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-                  <p className="text-gray-400 text-sm">
-                    Security settings are managed via environment variables for enhanced security.
-                  </p>
+          <TabsContent value="notifications" className="p-6">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Notification Settings</h3>
+                <p className="text-sm text-gray-400">Manage how you receive notifications</p>
+              </div>
+
+              <Separator className="bg-gray-700" />
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Email Notifications</h4>
+                    <p className="text-sm text-gray-400">Receive notifications via email</p>
+                  </div>
+                  <Switch defaultChecked />
                 </div>
-              </CardContent>
-            </Card>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Task Reminders</h4>
+                    <p className="text-sm text-gray-400">Get reminders for upcoming tasks</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Document Updates</h4>
+                    <p className="text-sm text-gray-400">Notifications when documents are updated</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">System Announcements</h4>
+                    <p className="text-sm text-gray-400">Important system-wide announcements</p>
+                  </div>
+                  <Switch defaultChecked />
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button>Save Notification Settings</Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="security" className="p-6">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Security Settings</h3>
+                <p className="text-sm text-gray-400">Manage your account security</p>
+              </div>
+
+              <Separator className="bg-gray-700" />
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Change Password</h4>
+                  <div className="grid gap-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="current-password">Current Password</Label>
+                      <Input id="current-password" type="password" className="bg-gray-700 border-gray-600" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input id="new-password" type="password" className="bg-gray-700 border-gray-600" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm New Password</Label>
+                      <Input id="confirm-password" type="password" className="bg-gray-700 border-gray-600" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Two-Factor Authentication</h4>
+                    <p className="text-sm text-gray-400">Add an extra layer of security</p>
+                  </div>
+                  <Switch />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-medium">Session Timeout</h4>
+                    <p className="text-sm text-gray-400">Automatically log out after inactivity</p>
+                  </div>
+                  <select className="bg-gray-700 border border-gray-600 rounded-md p-2 text-sm">
+                    <option>15 minutes</option>
+                    <option>30 minutes</option>
+                    <option>1 hour</option>
+                    <option>4 hours</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button>Update Security Settings</Button>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
