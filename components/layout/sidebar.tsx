@@ -68,7 +68,7 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
           <NavItem href="/company" icon={<Building2 size={20} />} label="Company Reg." active={pathname === "/company"} />
           <NavItem href="/calendar" icon={<Calendar size={20} />} label="Calendar" active={pathname === "/calendar"} />
           <NavItem href="/reports" icon={<BarChart size={20} />} label="Reports" active={pathname === "/reports"} />
-          <NavItem href="/settings" icon={<Settings size={20} />} label="Settings" active={pathname === "/settings"} />
+          <NavItem href="/dashboard/settings" icon={<Settings size={20} />} label="Settings" active={pathname === "/dashboard/settings"} />
         </ul>
       </nav>
 

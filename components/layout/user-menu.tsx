@@ -81,7 +81,7 @@ export function UserMenu() {
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-xs cursor-pointer"
-          onClick={() => router.push("/settings")}
+          onClick={() => router.push("/dashboard/settings")}
         >
           <Settings className="mr-2 h-3 w-3" />
           Settings
