@@ -1,14 +1,22 @@
 # Sodo Hospital - VPS Deployment Guide
 
+## Live URLs
+
+| Service | URL |
+|---------|-----|
+| **Main App** | https://sch-addis.org |
+| **MinIO Console** | http://72.62.170.70:9001 |
+
 ## Server Details
 
 | Item | Value |
 |------|-------|
 | **IP Address** | 72.62.170.70 |
-| **Live URL** | http://72.62.170.70 |
+| **Domain** | sch-addis.org |
 | **Provider** | Hostinger KVM 2 |
 | **OS** | Ubuntu 24.04 |
 | **Specs** | 2 vCPU, 8GB RAM, 100GB NVMe |
+| **SSL** | Let's Encrypt (auto-renews) |
 
 ---
 
@@ -25,10 +33,11 @@ ssh root@72.62.170.70
 
 | Service | Image | Port | Purpose |
 |---------|-------|------|---------|
-| app | sodo-hospital-app | 80 → 3000 | Next.js App |
+| app | sodo-hospital-app | 127.0.0.1:3000 | Next.js App |
 | db | postgres:16-alpine | 5432 | Database |
 | redis | redis:7-alpine | 6379 | Cache |
 | minio | minio/minio | 9000, 9001 | Document Storage |
+| nginx | system | 80, 443 | Reverse Proxy + SSL |
 
 ### Database Credentials
 ```
@@ -42,7 +51,7 @@ Password: sodo2024secure
 ### MinIO (Document Storage)
 ```
 Console URL: http://72.62.170.70:9001
-API URL: http://72.62.170.70:9000
+Storage URL: https://sch-addis.org/storage/documents/
 Username: minioadmin
 Password: minioadmin123
 Bucket: documents
