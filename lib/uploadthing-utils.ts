@@ -1,14 +1,6 @@
 /**
- * UploadThing Client Utilities
- * Client-side hooks for file uploads
+ * File Upload Utilities
+ * Drop-in replacement for UploadThing using MinIO/S3
  */
 
-import {
-  generateUploadButton,
-  generateUploadDropzone,
-} from "@uploadthing/react"
-
-import type { OurFileRouter } from "@/lib/uploadthing"
-
-export const UploadButton = generateUploadButton<OurFileRouter>()
-export const UploadDropzone = generateUploadDropzone<OurFileRouter>()
+export { UploadButton, UploadDropzone } from "@/components/ui/upload-dropzone"
