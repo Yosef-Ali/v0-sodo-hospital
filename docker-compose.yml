@@ -29,6 +29,7 @@ services:
       NEXTAUTH_URL: http://72.62.170.70
       NEXTAUTH_SECRET: sodo-hospital-secret-2024-production
       AUTH_SECRET: sodo-hospital-auth-2024-production
+      AUTH_TRUST_HOST: "true"
       NODE_ENV: production
     depends_on:
       db:
