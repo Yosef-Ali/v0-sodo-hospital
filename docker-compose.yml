@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: sodo2024secure
+      POSTGRES_DB: sodo_hospital
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - "80:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:sodo2024secure@db:5432/sodo_hospital
+      REDIS_URL: redis://redis:6379
+      NEXTAUTH_URL: http://72.62.170.70
+      NEXTAUTH_SECRET: sodo-hospital-secret-2024-production
+      AUTH_SECRET: sodo-hospital-auth-2024-production
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+volumes:
+  postgres_data:
