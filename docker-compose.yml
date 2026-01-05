@@ -18,6 +18,24 @@ services:
     image: redis:7-alpine
     restart: always
 
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
   app:
     build: .
     restart: always
@@ -31,11 +49,20 @@ services:
       AUTH_SECRET: sodo-hospital-auth-2024-production
       AUTH_TRUST_HOST: "true"
       NODE_ENV: production
+      # MinIO S3 Storage
+      S3_ENDPOINT: http://minio:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin123
+      S3_BUCKET: documents
+      S3_REGION: us-east-1
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
+      minio:
+        condition: service_healthy
 
 volumes:
   postgres_data:
+  minio_data:
