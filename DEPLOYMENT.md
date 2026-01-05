@@ -200,4 +200,22 @@ scp root@72.62.170.70:/root/backup-*.sql ./
 
 ---
 
+## Login Credentials
+
+### Admin Account
+| Field | Value |
+|-------|-------|
+| Email | admin@sodohospital.com |
+| Password | Admin@123 |
+| Role | ADMIN |
+
+### Other Test Accounts (same password: Admin@123)
+| Email | Role |
+|-------|------|
+| hr.manager@sodohospital.com | HR_MANAGER |
+| hr.staff@sodohospital.com | HR |
+| logistics@sodohospital.com | LOGISTICS |
+
+---
+
 *Last updated: January 5, 2026*
