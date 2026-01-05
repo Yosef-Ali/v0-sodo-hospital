@@ -7,9 +7,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 import { NextResponse } from "next/server"
 import { getHospitalPrompt } from "@/lib/a2ui/prompts"
 import { getTicketDetails } from "@/lib/actions/v2/tickets"
-
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "")
+import { getGoogleApiKey } from "@/lib/api-keys"
 
 // Chat history storage (in production, use a database)
 const chatSessions = new Map<string, { role: string; parts: { text: string }[] }[]>()
@@ -28,12 +26,17 @@ export async function POST(req: Request) {
       )
     }
 
-    if (!process.env.GOOGLE_API_KEY) {
+    // Get API key from settings or env
+    const apiKey = await getGoogleApiKey()
+    if (!apiKey) {
       return NextResponse.json(
-        { success: false, error: "GOOGLE_API_KEY not configured" },
+        { success: false, error: "Google API Key not configured. Please add it in Dashboard > Settings > AI Services" },
         { status: 500 }
       )
     }
+
+    // Initialize Gemini with the API key
+    const genAI = new GoogleGenerativeAI(apiKey)
 
     // Store verified ticket if provided
     if (verifiedTicket) {
@@ -43,9 +46,9 @@ export async function POST(req: Request) {
     // Get or create chat history
     let history = chatSessions.get(sessionId) || []
 
-    // Use Gemini 2.5 Flash for chat
+    // Use Gemini 2.0 Flash for chat
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash",
       systemInstruction: getHospitalPrompt(),
     })
 

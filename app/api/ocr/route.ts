@@ -1,8 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { NextResponse } from "next/server"
-
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "")
+import { getGoogleApiKey } from "@/lib/api-keys"
 
 // Document-specific extraction prompts
 const EXTRACTION_PROMPTS: Record<string, string> = {
@@ -94,9 +92,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Image URL is required" }, { status: 400 })
     }
 
-    if (!process.env.GOOGLE_API_KEY) {
-      return NextResponse.json({ success: false, error: "GOOGLE_API_KEY not configured" }, { status: 500 })
+    // Get API key from settings or env
+    const apiKey = await getGoogleApiKey()
+    if (!apiKey) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Google API Key not configured. Please add it in Settings > AI Services" 
+      }, { status: 500 })
     }
+
+    // Initialize Gemini with the API key
+    const genAI = new GoogleGenerativeAI(apiKey)
 
     // Get the appropriate prompt
     const prompt = EXTRACTION_PROMPTS[documentType] || EXTRACTION_PROMPTS.general

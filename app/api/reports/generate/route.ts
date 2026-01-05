@@ -1,7 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { NextResponse } from "next/server"
-
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || "")
+import { getGoogleApiKey } from "@/lib/api-keys"
 
 const REPORT_SYSTEM_PROMPT = `You are an AI Expert Report and Letter Writer for SODDO Christian Hospital.
 Your task is to generate professional, accurate, and compassionate reports and letters in both English and Amharic.
@@ -30,12 +29,20 @@ export async function POST(req: Request) {
   try {
     const { prompt, ocrData, type = "report", context = {} } = await req.json()
 
-    if (!process.env.GOOGLE_API_KEY) {
-      return NextResponse.json({ success: false, error: "GOOGLE_API_KEY not configured" }, { status: 500 })
+    // Get API key from settings or env
+    const apiKey = await getGoogleApiKey()
+    if (!apiKey) {
+      return NextResponse.json({ 
+        success: false, 
+        error: "Google API Key not configured. Please add it in Dashboard > Settings > AI Services" 
+      }, { status: 500 })
     }
 
+    // Initialize Gemini with the API key
+    const genAI = new GoogleGenerativeAI(apiKey)
+
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash",
       systemInstruction: REPORT_SYSTEM_PROMPT,
     })
 

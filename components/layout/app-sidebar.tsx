@@ -101,9 +101,16 @@ const menuItems: MenuItem[] = [
     roles: ["ADMIN"],
   },
   {
+    title: "Users",
+    url: "/users",
+    icon: UserCircle,
+    roles: ["ADMIN"],
+  },
+  {
     title: "Settings",
-    url: "/settings",
+    url: "/dashboard/settings",
     icon: Settings,
+    roles: ["ADMIN"],
   },
 ]
 

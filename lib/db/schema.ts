@@ -663,6 +663,19 @@ export const complaintUpdates = pgTable("complaint_updates", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 
+// System Settings (API Keys, Configuration)
+export const systemSettings = pgTable("system_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  value: text("value"), // encrypted for sensitive data
+  description: text("description"),
+  category: varchar("category", { length: 50 }).default("general").notNull(),
+  isSecret: boolean("is_secret").default(false).notNull(), // if true, value should be masked in UI
+  updatedBy: uuid("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
 // Type exports
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -718,3 +731,7 @@ export type Vehicle = typeof vehicles.$inferSelect
 export type NewVehicle = typeof vehicles.$inferInsert
 export type CompanyRegistration = typeof companyRegistrations.$inferSelect
 export type NewCompanyRegistration = typeof companyRegistrations.$inferInsert
+
+// Settings Type exports
+export type SystemSetting = typeof systemSettings.$inferSelect
+export type NewSystemSetting = typeof systemSettings.$inferInsert
