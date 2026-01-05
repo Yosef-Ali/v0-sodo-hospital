@@ -23,11 +23,12 @@ ssh root@72.62.170.70
 
 ## Docker Services
 
-| Service | Image | Port |
-|---------|-------|------|
-| app | sodo-hospital-app | 80 → 3000 |
-| db | postgres:16-alpine | 5432 |
-| redis | redis:7-alpine | 6379 |
+| Service | Image | Port | Purpose |
+|---------|-------|------|---------|
+| app | sodo-hospital-app | 80 → 3000 | Next.js App |
+| db | postgres:16-alpine | 5432 | Database |
+| redis | redis:7-alpine | 6379 | Cache |
+| minio | minio/minio | 9000, 9001 | Document Storage |
 
 ### Database Credentials
 ```
@@ -36,6 +37,15 @@ Port: 5432
 Database: sodo_hospital
 User: postgres
 Password: sodo2024secure
+```
+
+### MinIO (Document Storage)
+```
+Console URL: http://72.62.170.70:9001
+API URL: http://72.62.170.70:9000
+Username: minioadmin
+Password: minioadmin123
+Bucket: documents
 ```
 
 ---
