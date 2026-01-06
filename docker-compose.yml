@@ -37,7 +37,8 @@ services:
       retries: 3
 
   app:
-    build: .
+    # build: .  <-- Removed to stop local building
+    image: ghcr.io/yosef-ali/v0-sodo-hospital:latest
     restart: always
     ports:
       - "127.0.0.1:3000:3000"
