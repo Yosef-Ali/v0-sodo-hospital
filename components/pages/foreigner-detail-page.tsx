@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
@@ -15,6 +15,7 @@ import {
   FileText,
   Copy,
   Check,
+  Loader2,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -35,32 +36,54 @@ interface ForeignerDetailPageProps {
 
 export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
   const router = useRouter()
-  const { person, guardian, dependents, permits, documents } = initialData
+  const [isPending, startTransition] = useTransition()
+  
+  // Use local state for person data so we can update it after edit
+  const [personData, setPersonData] = useState(initialData.person)
+  const { guardian, dependents, permits, documents } = initialData
+  
   const [editSheetOpen, setEditSheetOpen] = useState(false)
   const [ticketCopied, setTicketCopied] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   const copyTicketNumber = async () => {
-    if (person.ticketNumber) {
-      await navigator.clipboard.writeText(person.ticketNumber)
+    if (personData.ticketNumber) {
+      await navigator.clipboard.writeText(personData.ticketNumber)
       setTicketCopied(true)
       setTimeout(() => setTicketCopied(false), 2000)
     }
   }
 
   const handleEditSubmit = async (data: any) => {
+    setIsSaving(true)
     try {
-      const result = await updatePerson(person.id, data)
-      if (result.success) {
+      console.log("Submitting update for person:", personData.id, data)
+      const result = await updatePerson(personData.id, data)
+      console.log("Update result:", result)
+      
+      if (result.success && result.data) {
+        // Update local state immediately with the returned data
+        setPersonData(result.data)
         toast.success("Person updated successfully")
-        router.refresh()
         setEditSheetOpen(false)
+        
+        // Also refresh the page data in background
+        startTransition(() => {
+          router.refresh()
+        })
       } else {
-        toast.error("Failed to update", { description: result.error })
+        toast.error("Failed to update", { description: result.error || "Unknown error" })
       }
     } catch (error) {
-      toast.error("An error occurred")
+      console.error("Update error:", error)
+      toast.error("An error occurred while saving")
+    } finally {
+      setIsSaving(false)
     }
   }
+  
+  // Use personData for rendering
+  const person = personData
 
   return (
     <div className="p-8">

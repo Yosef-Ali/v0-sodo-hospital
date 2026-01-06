@@ -215,6 +215,7 @@ export async function createPerson(data: {
       }
     }
 
+    console.log("Updating person:", personId, "with data:", JSON.stringify(data, null, 2))
     const result = await db
       .insert(people)
       .values({
@@ -225,7 +226,7 @@ export async function createPerson(data: {
       })
       .returning()
 
-    revalidatePath("/people")
+    revalidatePath("/foreigners")
     revalidatePath("/dashboard")
 
     return { success: true, data: result[0] }
@@ -319,14 +320,15 @@ export async function updatePerson(
       }
     }
 
+    console.log("Updating person:", personId, "with data:", JSON.stringify(data, null, 2))
     const result = await db
       .update(people)
       .set({ ...data, updatedAt: new Date() })
       .where(eq(people.id, personId))
       .returning()
 
-    revalidatePath("/people")
-    revalidatePath(`/people/${personId}`)
+    revalidatePath("/foreigners")
+    revalidatePath(`/foreigners/${personId}`)
     revalidatePath("/dashboard")
 
     return { success: true, data: result[0] }
@@ -413,6 +415,7 @@ export async function deletePerson(personId: string, options?: { cascade?: boole
       await db.delete(tasksV2).where(sql`${tasksV2.entityType} = 'person' AND ${tasksV2.entityId} = ${personId}`)
     }
 
+    console.log("Updating person:", personId, "with data:", JSON.stringify(data, null, 2))
     const result = await db
       .delete(people)
       .where(eq(people.id, personId))
@@ -440,6 +443,7 @@ export async function deletePerson(personId: string, options?: { cascade?: boole
  */
 export async function getDependents(guardianId: string) {
   try {
+    console.log("Updating person:", personId, "with data:", JSON.stringify(data, null, 2))
     const result = await db
       .select()
       .from(people)
