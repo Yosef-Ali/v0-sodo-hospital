@@ -174,7 +174,6 @@ export async function createPerson(data: {
   residenceIdDocuments?: string[]
   phone?: string
   email?: string
-  email?: string
   familyDetails?: any
   guardianId?: string
   documentSections?: any[]
@@ -215,7 +214,7 @@ export async function createPerson(data: {
       }
     }
 
-    console.log("Updating person:", personId, "with data:", JSON.stringify(data, null, 2))
+    console.log("Creating person with data:", JSON.stringify(data, null, 2))
     const result = await db
       .insert(people)
       .values({
@@ -401,7 +400,7 @@ export async function deletePerson(personId: string, options?: { cascade?: boole
     if (cascade) {
       // Documents
       await db.delete(documentsV2).where(eq(documentsV2.personId, personId))
-      
+
       // Calendar Events
       await db.delete(calendarEvents).where(eq(calendarEvents.relatedPersonId, personId))
 
@@ -432,7 +431,7 @@ export async function deletePerson(personId: string, options?: { cascade?: boole
   } catch (error) {
     console.error("Error deleting person:", error)
     if ((error as any).code === '23503') {
-       return { success: false, error: "Cannot delete person due to existing related records (e.g. complaints, events). Please try 'Delete all related data' option." }
+      return { success: false, error: "Cannot delete person due to existing related records (e.g. complaints, events). Please try 'Delete all related data' option." }
     }
     return { success: false, error: "Failed to delete person" }
   }
