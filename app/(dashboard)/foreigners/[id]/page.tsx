@@ -17,10 +17,10 @@ export default async function PersonPage({ params }: PersonPageProps) {
       const result = await getPersonById(personId)
       return result.success ? result.data : null
     },
-    [`person-v2-${id}`],
+    [`person-v3-${id}`],
     {
       revalidate: 60,
-      tags: [`person-v2-${id}`]
+      tags: [`person-v3-${id}`]
     }
   )
 
