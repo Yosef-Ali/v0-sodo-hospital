@@ -161,6 +161,7 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
   const sheetTask = {
     ...taskData,
     permit: permit,
+    linkedEntity: task.linkedEntity,
     // Ensure we pass necessary fields for pre-filling
     assigneeId: taskData.assigneeId,
     entityType: taskData.entityType,

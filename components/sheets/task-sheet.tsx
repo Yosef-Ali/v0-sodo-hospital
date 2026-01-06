@@ -47,6 +47,10 @@ interface Task {
     subType?: string
     personId?: string
   }
+  linkedEntity?: {
+    type: string
+    data: any
+  }
 }
 
 interface TaskFormData {
@@ -156,6 +160,15 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
         if (!category) category = task.permit.category
         if (task.permit.subType) subType = task.permit.subType
         if (task.permit.personId) personId = task.permit.personId
+      }
+      
+      // If no subType from permit, try to derive from linkedEntity
+      if (!subType && task.linkedEntity) {
+        const ent = task.linkedEntity
+        if (ent.type === 'vehicle') subType = ent.data.serviceType || ""
+        else if (ent.type === 'import') subType = ent.data.importType || ""
+        else if (ent.type === 'company') subType = ent.data.registrationType || ""
+        else if (ent.type === 'person') subType = ent.data.workPermitSubType || ""
       }
       
       // If no category from permit, try to derive from entityType
