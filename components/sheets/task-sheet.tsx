@@ -198,6 +198,25 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
       }
       
       category = normalizeCategory(category)
+      
+      // Normalize subType to match select options (uppercase)
+      const normalizeSubType = (st: string): string => {
+        if (!st) return ""
+        const upper = st.toUpperCase()
+        // Map known variations
+        const subTypeMap: Record<string, string> = {
+          "NEW": "NEW",
+          "RENEWAL": "RENEWAL",
+          "OTHER": "OTHER",
+          "TEMPORARY": "TEMPORARY",
+          "RETURN": "RETURN",
+          "PIP": "PIP",
+          "ESW": "ESW",
+        }
+        return subTypeMap[upper] || upper
+      }
+      
+      subType = normalizeSubType(subType)
 
       setFormData({
         id: task.id,
