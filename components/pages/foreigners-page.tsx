@@ -15,6 +15,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { PersonSheet } from "@/components/sheets/person-sheet"
 
+import { toast } from "sonner"
+
 interface ForeignersPageProps {
   initialData: {
     people: any[]
@@ -80,9 +82,12 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
         const { updatePerson } = await import("@/lib/actions/v2/foreigners")
         const result = await updatePerson(personData.id, personData)
         if (result.success) {
-          console.log("Person updated successfully")
+          toast.success("Person updated successfully")
+          setSheetOpen(false)
         } else {
+          toast.error("Failed to update person", { description: result.error })
           console.error("Failed to update person:", result.error)
+          return // Don't close sheet on error
         }
       } else {
         // Create mode - call createPerson
@@ -90,9 +95,12 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
         const result = await createPerson(personData)
 
         if (result.success) {
-          console.log("Person created successfully")
+          toast.success("Person created successfully")
+          setSheetOpen(false)
         } else {
+          toast.error("Failed to create person", { description: result.error })
           console.error("Failed to create person:", result.error)
+          return // Don't close sheet on error
         }
       }
       // After successful operation, reload the list
@@ -101,6 +109,7 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
       setSelectedPerson(null)
     } catch (error) {
       console.error("Error saving person:", error)
+      toast.error("An error occurred while saving")
     }
   }
 

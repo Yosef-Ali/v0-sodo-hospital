@@ -185,7 +185,7 @@ interface DocumentSection {
 interface PersonSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: any) => void
+  onSubmit: (data: any) => Promise<void> | void
   person?: any | null
 }
 
@@ -485,6 +485,7 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
 
   const [documentSections, setDocumentSections] = useState<DocumentSection[]>([])
   const [ticketCopied, setTicketCopied] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Get ticket number from person prop
   const ticketNumber = person?.ticketNumber || ""
@@ -676,8 +677,10 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    setIsSubmitting(true)
     
     const submissionData = {
       ...formData,
@@ -693,8 +696,13 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
       documentSections,
     }
     
-    onSubmit(submissionData)
-    onOpenChange(false)
+    try {
+      // Await the onSubmit - let parent control when to close the sheet
+      await onSubmit(submissionData)
+    } finally {
+      setIsSubmitting(false)
+    }
+    // Don't close here - parent will close after successful save
   }
 
   const isEditMode = !!person
@@ -1029,12 +1037,17 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
           {/* Actions */}
           <div className="flex gap-3 pt-6 border-t border-gray-700 mt-6">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}
-              className="flex-1 bg-gray-700 border-gray-600 hover:bg-gray-600">
+              className="flex-1 bg-gray-700 border-gray-600 hover:bg-gray-600"
+              disabled={isSubmitting}>
               Cancel
             </Button>
             <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!formData.firstName || !formData.lastName}>
-              {isEditMode ? "Update Record" : "Add Foreigner"}
+              disabled={!formData.firstName || !formData.lastName || isSubmitting}>
+              {isSubmitting ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
+              ) : (
+                isEditMode ? "Update Record" : "Add Foreigner"
+              )}
             </Button>
           </div>
         </form>
