@@ -97,8 +97,31 @@ test.describe('Production Health Check', () => {
     await expect(page.getByText(testName)).toBeVisible();
     console.log('Creation Verified');
 
-    // Test Complete - Foreigner Creation Works!
-    console.log('Production Health Check PASSED ✅');
+    // 4. Navigate to Detail Page via View Profile button
+    const card = page.locator('.rounded-lg.bg-gray-800').filter({ hasText: testName });
+    await card.getByRole('button', { name: 'View Profile' }).click();
+    await page.waitForURL(/\/foreigners\/.+/, { timeout: 15000 });
+    console.log('Detail Page Navigated');
+
+    // 5. Verify Detail Page Content
+    await expect(page.getByText(testName, { exact: true })).toBeVisible();
+    console.log('Detail Page Verified');
+
+    // 6. Delete Test Record
+    await page.getByRole('button', { name: /delete/i }).click();
+
+    // Confirm deletion in dialog
+    await page.getByRole('alertdialog').getByRole('button', { name: /delete/i }).click();
+
+    // Wait for delete to complete and navigate to list
+    await page.waitForTimeout(2000); // Give time for delete action
+    await page.goto('/foreigners'); // Explicitly navigate back
+
+    // Verify record is gone
+    await expect(page.getByText(testName, { exact: true })).not.toBeVisible({ timeout: 5000 });
+    console.log('Cleanup Successful');
+
+    console.log('Full CRUD Test PASSED ✅');
   });
 
 });
