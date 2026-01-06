@@ -76,8 +76,9 @@ export function CompanyPage({ initialData }: CompanyPageProps) {
   }
 
   const handleSubmit = async (data: any) => {
-    if (data.id) {
-      const result = await updateCompany(data.id, data)
+    if (selectedCompany?.id) {
+      // Update existing - use selectedCompany.id since form doesn't include it
+      const result = await updateCompany(selectedCompany.id, data)
       if (result.success) {
         loadCompanies()
       }
@@ -88,6 +89,7 @@ export function CompanyPage({ initialData }: CompanyPageProps) {
       }
     }
     setIsSheetOpen(false)
+    setSelectedCompany(null)
   }
 
   const getStatusColor = (status: string) => {

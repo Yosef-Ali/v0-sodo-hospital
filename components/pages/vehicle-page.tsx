@@ -77,8 +77,9 @@ export function VehiclePage({ initialData }: VehiclePageProps) {
   }
 
   const handleSubmit = async (data: any) => {
-    if (data.id) {
-      const result = await updateVehicle(data.id, data)
+    if (selectedVehicle?.id) {
+      // Update existing - use selectedVehicle.id since form doesn't include it
+      const result = await updateVehicle(selectedVehicle.id, data)
       if (result.success) {
         loadVehicles()
       }
@@ -89,6 +90,7 @@ export function VehiclePage({ initialData }: VehiclePageProps) {
       }
     }
     setIsSheetOpen(false)
+    setSelectedVehicle(null)
   }
 
   const getStatusColor = (status: string) => {

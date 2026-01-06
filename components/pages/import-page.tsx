@@ -76,20 +76,24 @@ export function ImportPage({ initialData }: ImportPageProps) {
   }
 
   const handleSubmit = async (data: any) => {
-    if (data.id) {
-      // Update existing
-      const result = await updateImport(data.id, data)
+    if (selectedImport?.id) {
+      // Update existing - use selectedImport.id since form doesn't include it
+      const result = await updateImport(selectedImport.id, data)
       if (result.success) {
         loadImports()
       }
     } else {
       // Create new
-      const result = await createImport(data)
+      const result = await createImport({
+        ...data,
+        category: data.importType || "pip", // Map importType to category
+      })
       if (result.success) {
         loadImports()
       }
     }
     setIsSheetOpen(false)
+    setSelectedImport(null)
   }
 
   const getStatusColor = (status: string) => {
