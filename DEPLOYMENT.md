@@ -195,6 +195,60 @@ ssh root@72.62.170.70 "df -h && docker system prune -af"
 ssh root@72.62.170.70 "free -h && docker stats --no-stream"
 ```
 
+### Ethiopian Network / TLS Timeout Issue
+
+**Symptom:** Website works locally on VPS but TLS handshake times out from Ethiopian networks.
+
+**Cause:** Ethiopian ISPs have routing issues that drop large TLS packets (MTU problem).
+
+**Solution:** Set VPS network MTU to 1200.
+
+```bash
+# Check current MTU
+ssh root@72.62.170.70 "ip link show eth0 | grep mtu"
+
+# Temporarily set MTU (lost on reboot)
+ssh root@72.62.170.70 "ip link set eth0 mtu 1200"
+
+# Make MTU permanent via netplan
+ssh root@72.62.170.70 "cat /etc/netplan/99-custom-mtu.yaml"
+# Should show: mtu: 1200
+```
+
+**Permanent MTU Config Files:**
+- `/etc/netplan/99-custom-mtu.yaml` - MTU setting
+- `/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg` - Prevents cloud-init from overriding
+
+### SSH Not Working
+
+**Symptom:** SSH connection times out or hangs at banner exchange.
+
+**Fix:**
+```bash
+# Via Hostinger Browser Terminal:
+sudo systemctl start ssh
+sudo systemctl enable ssh
+
+# Disable DNS lookups for faster connections
+echo "UseDNS no" >> /etc/ssh/sshd_config
+sudo systemctl restart ssh
+```
+
+### Firewall Issues
+
+If external access fails but internal works:
+```bash
+# Check Hostinger VPS Panel → Firewall rules
+# Ensure these ports are ALLOWED:
+# - TCP 22 (SSH)
+# - TCP 80 (HTTP)
+# - TCP 443 (HTTPS)
+
+# Check internal firewall (should be disabled)
+sudo ufw status
+# Should show: inactive
+```
+
 ---
 
 ## Backup Database
@@ -237,4 +291,4 @@ scp root@72.62.170.70:/root/backup-*.sql ./
 
 ---
 
-*Last updated: January 5, 2026*
+*Last updated: January 6, 2026*
