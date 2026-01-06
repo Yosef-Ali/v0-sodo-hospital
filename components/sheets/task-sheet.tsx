@@ -153,10 +153,38 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
       let personId = ""
       
       if (task.permit) {
-        if (!category) category = task.permit.category.toLowerCase()
+        if (!category) category = task.permit.category
         if (task.permit.subType) subType = task.permit.subType
         if (task.permit.personId) personId = task.permit.personId
       }
+      
+      // Normalize category to match select options (e.g., "work_permit" or "WORK_PERMIT" -> "work-permit")
+      const normalizeCategory = (cat: string): string => {
+        if (!cat) return ""
+        const normalized = cat.toLowerCase().replace(/_/g, "-")
+        // Map known variations
+        const categoryMap: Record<string, string> = {
+          "work-permit": "work-permit",
+          "workpermit": "work-permit",
+          "residence-id": "residence-id",
+          "residenceid": "residence-id",
+          "moh-licensing": "moh-licensing",
+          "mohlicensing": "moh-licensing",
+          "customs": "customs",
+          "pip": "customs",
+          "esw": "customs",
+          "single-window": "customs",
+          "bolo-insurance": "bolo-insurance",
+          "boloinsurance": "bolo-insurance",
+          "company-registration": "company-registration",
+          "companyregistration": "company-registration",
+          "govt-affairs": "govt-affairs",
+          "govtaffairs": "govt-affairs",
+        }
+        return categoryMap[normalized] || normalized
+      }
+      
+      category = normalizeCategory(category)
 
       setFormData({
         id: task.id,

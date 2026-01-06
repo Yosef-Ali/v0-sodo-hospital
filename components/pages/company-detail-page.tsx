@@ -32,10 +32,11 @@ import {
   BadgeCheck,
   RefreshCw,
 } from "lucide-react"
-import { deleteCompany } from "@/lib/actions/v2/companies"
+import { deleteCompany, updateCompany } from "@/lib/actions/v2/companies"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { CompanySheet } from "@/components/sheets/company-sheet"
+import { toast } from "sonner"
 
 interface CompanyDetailPageProps {
   initialData: any
@@ -57,7 +58,7 @@ const STAGES: Record<string, { value: string; label: string }[]> = {
 
 export function CompanyDetailPage({ initialData }: CompanyDetailPageProps) {
   const router = useRouter()
-  const [company] = useState(initialData)
+  const [company, setCompany] = useState(initialData)
   const [actionLoading, setActionLoading] = useState(false)
   const [editSheetOpen, setEditSheetOpen] = useState(false)
 
@@ -70,8 +71,15 @@ export function CompanyDetailPage({ initialData }: CompanyDetailPageProps) {
     setActionLoading(false)
   }
 
-  const handleEditSubmit = () => {
-    router.refresh()
+  const handleEditSubmit = async (data: any) => {
+    const result = await updateCompany(company.id, data)
+    if (result.success && result.data) {
+      setCompany(result.data)
+      toast.success("Company updated successfully")
+      router.refresh()
+    } else {
+      toast.error("Failed to update company")
+    }
     setEditSheetOpen(false)
   }
 

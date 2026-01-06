@@ -29,10 +29,11 @@ import {
   Circle,
   DollarSign,
 } from "lucide-react"
-import { deleteImport } from "@/lib/actions/v2/imports"
+import { deleteImport, updateImport } from "@/lib/actions/v2/imports"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { ImportSheet } from "@/components/sheets/import-sheet"
+import { toast } from "sonner"
 
 interface ImportDetailPageProps {
   initialData: any
@@ -56,7 +57,7 @@ const STAGES: Record<string, { value: string; label: string }[]> = {
 
 export function ImportDetailPage({ initialData }: ImportDetailPageProps) {
   const router = useRouter()
-  const [permit] = useState(initialData)
+  const [permit, setPermit] = useState(initialData)
   const [actionLoading, setActionLoading] = useState(false)
   const [editSheetOpen, setEditSheetOpen] = useState(false)
 
@@ -69,8 +70,15 @@ export function ImportDetailPage({ initialData }: ImportDetailPageProps) {
     setActionLoading(false)
   }
 
-  const handleEditSubmit = () => {
-    router.refresh()
+  const handleEditSubmit = async (data: any) => {
+    const result = await updateImport(permit.id, data)
+    if (result.success && result.data) {
+      setPermit(result.data)
+      toast.success("Import updated successfully")
+      router.refresh()
+    } else {
+      toast.error("Failed to update import")
+    }
     setEditSheetOpen(false)
   }
 

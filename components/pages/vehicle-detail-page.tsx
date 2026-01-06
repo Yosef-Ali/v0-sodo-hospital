@@ -28,10 +28,11 @@ import {
   CheckCircle,
   Circle,
 } from "lucide-react"
-import { deleteVehicle } from "@/lib/actions/v2/vehicles"
+import { deleteVehicle, updateVehicle } from "@/lib/actions/v2/vehicles"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { VehicleSheet } from "@/components/sheets/vehicle-sheet"
+import { toast } from "sonner"
 
 interface VehicleDetailPageProps {
   initialData: any
@@ -65,7 +66,7 @@ const STAGES: Record<string, { value: string; label: string }[]> = {
 
 export function VehicleDetailPage({ initialData }: VehicleDetailPageProps) {
   const router = useRouter()
-  const [vehicle] = useState(initialData)
+  const [vehicle, setVehicle] = useState(initialData)
   const [actionLoading, setActionLoading] = useState(false)
   const [editSheetOpen, setEditSheetOpen] = useState(false)
 
@@ -78,8 +79,15 @@ export function VehicleDetailPage({ initialData }: VehicleDetailPageProps) {
     setActionLoading(false)
   }
 
-  const handleEditSubmit = () => {
-    router.refresh()
+  const handleEditSubmit = async (data: any) => {
+    const result = await updateVehicle(vehicle.id, data)
+    if (result.success && result.data) {
+      setVehicle(result.data)
+      toast.success("Vehicle updated successfully")
+      router.refresh()
+    } else {
+      toast.error("Failed to update vehicle")
+    }
     setEditSheetOpen(false)
   }
 
