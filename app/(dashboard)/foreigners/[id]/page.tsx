@@ -11,24 +11,16 @@ interface PersonPageProps {
 
 export default async function PersonPage({ params }: PersonPageProps) {
   const { id } = await params
+  console.log(`Fetching person detail for id: ${id}`)
 
-  const getCachedPerson = unstable_cache(
-    async (personId: string) => {
-      const result = await getPersonById(personId)
-      return result.success ? result.data : null
-    },
-    [`person-v3-${id}`],
-    {
-      revalidate: 60,
-      tags: [`person-v3-${id}`]
-    }
-  )
-
-  const data = await getCachedPerson(id)
-
-  if (!data) {
+  const result = await getPersonById(id)
+  
+  if (!result.success || !result.data) {
+    console.error(`Person fetch failed for ${id}:`, result.error)
     notFound()
   }
+
+  const data = result.data
 
   return <ForeignerDetailPage initialData={data} />
 }
