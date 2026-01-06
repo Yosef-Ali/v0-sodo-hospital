@@ -22,6 +22,18 @@ export default async function PersonPage({ params }: PersonPageProps) {
 
   const data = result.data
 
-  return <ForeignerDetailPage initialData={data} />
+  /* DEBUG: Temporary simplified render */
+  return (
+    <div className="p-8 text-white">
+      <h1 className="text-2xl font-bold">Debug Page</h1>
+      <pre className="mt-4 bg-gray-900 p-4 rounded">
+        {JSON.stringify(data.person, null, 2)}
+      </pre>
+      <div className="mt-4">
+        Permissions: {data.permits?.length || 0}
+      </div>
+    </div>
+  )
+  // return <ForeignerDetailPage initialData={data} />
 }
 
