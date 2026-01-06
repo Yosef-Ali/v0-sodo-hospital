@@ -158,6 +158,17 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
         if (task.permit.personId) personId = task.permit.personId
       }
       
+      // If no category from permit, try to derive from entityType
+      if (!category && task.entityType) {
+        const entityTypeToCategory: Record<string, string> = {
+          "person": "work-permit", // Default for person entities
+          "vehicle": "bolo-insurance",
+          "import": "customs",
+          "company": "company-registration",
+        }
+        category = entityTypeToCategory[task.entityType] || ""
+      }
+      
       // Normalize category to match select options (e.g., "work_permit" or "WORK_PERMIT" -> "work-permit")
       const normalizeCategory = (cat: string): string => {
         if (!cat) return ""
@@ -170,12 +181,14 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
           "residenceid": "residence-id",
           "moh-licensing": "moh-licensing",
           "mohlicensing": "moh-licensing",
+          "medical-license": "moh-licensing",
           "customs": "customs",
           "pip": "customs",
           "esw": "customs",
           "single-window": "customs",
           "bolo-insurance": "bolo-insurance",
           "boloinsurance": "bolo-insurance",
+          "car-bolo-insurance": "bolo-insurance",
           "company-registration": "company-registration",
           "companyregistration": "company-registration",
           "govt-affairs": "govt-affairs",
