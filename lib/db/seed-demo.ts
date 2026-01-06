@@ -30,23 +30,11 @@ export async function seedDemoData() {
       phone: "+1-555-123-4567",
       email: "sarah.mitchell@example.com",
       workPermitNo: "WP-2024-00123",
-      workPermitSubType: "NEW",
       workPermitIssueDate: new Date("2024-06-01"),
       workPermitExpiryDate: new Date("2026-05-31"),
       residenceIdNo: "RES-ET-2024-456",
       residenceIdIssueDate: new Date("2024-07-01"),
       residenceIdExpiryDate: new Date("2025-07-01"),
-      permitType: "WORK_PERMIT",
-      applicationType: "NEW",
-      currentStage: "DOCUMENT_ARRANGEMENT",
-      familyDetails: {
-        spouseName: "John Mitchell",
-        spousePhone: "+1-555-987-6543",
-        children: [
-          { name: "Emma Mitchell", age: "8", gender: "FEMALE" },
-          { name: "Lucas Mitchell", age: "5", gender: "MALE" }
-        ]
-      }
     }).returning()
     results.foreigner = foreigner
 
