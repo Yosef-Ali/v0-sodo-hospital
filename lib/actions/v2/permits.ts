@@ -181,10 +181,10 @@ export async function getPermitById(permitIdOrTicket: string) {
     const ticketNumber = permitResult[0].permit.ticketNumber
     const documents = ticketNumber
       ? await db
-          .select()
-          .from(documentsV2)
-          .where(eq(documentsV2.number, ticketNumber))
-          .orderBy(desc(documentsV2.createdAt))
+        .select()
+        .from(documentsV2)
+        .where(eq(documentsV2.number, ticketNumber))
+        .orderBy(desc(documentsV2.createdAt))
       : []
 
     return {
@@ -507,32 +507,75 @@ export async function getExpiringPermits(daysAhead: number = 30) {
 }
 
 /**
- * Get permit statistics
+ * Get permit statistics (including Vehicles and Import Permits)
  */
 export async function getPermitStats() {
   try {
-    const stats = await db
-      .select({
-        status: permits.status,
-        category: permits.category,
-        count: sql<number>`cast(count(*) as integer)`,
-      })
-      .from(permits)
-      .groupBy(permits.status, permits.category)
+    const [permitStats, vehicleStats, importStats] = await Promise.all([
+      db
+        .select({
+          status: permits.status,
+          category: permits.category,
+          count: sql<number>`cast(count(*) as integer)`,
+        })
+        .from(permits)
+        .groupBy(permits.status, permits.category),
+
+      db
+        .select({
+          status: vehicles.status,
+          count: sql<number>`cast(count(*) as integer)`,
+        })
+        .from(vehicles)
+        .groupBy(vehicles.status),
+
+      db
+        .select({
+          status: importPermits.status,
+          count: sql<number>`cast(count(*) as integer)`,
+        })
+        .from(importPermits)
+        .groupBy(importPermits.status)
+    ])
 
     // Aggregate by status
-    const byStatus = stats.reduce((acc, stat) => {
-      acc[stat.status] = (acc[stat.status] || 0) + stat.count
-      return acc
-    }, {} as Record<string, number>)
+    const byStatus: Record<string, number> = {}
+
+    // Permits
+    permitStats.forEach(stat => {
+      byStatus[stat.status] = (byStatus[stat.status] || 0) + stat.count
+    })
+
+    // Vehicles (map various vehicle statuses to standard ones if needed)
+    vehicleStats.forEach(stat => {
+      // Normalize statuses to UPPERCASE matches if schema differs
+      const status = stat.status.toUpperCase()
+      // Map common mismatches
+      const normalizedQuery = status === "IN-PROGRESS" ? "PENDING" : status
+      byStatus[normalizedQuery] = (byStatus[normalizedQuery] || 0) + stat.count
+    })
+
+    // Imports
+    importStats.forEach(stat => {
+      const status = stat.status.toUpperCase()
+      byStatus[status] = (byStatus[status] || 0) + stat.count
+    })
 
     // Aggregate by category
-    const byCategory = stats.reduce((acc, stat) => {
-      acc[stat.category] = (acc[stat.category] || 0) + stat.count
-      return acc
-    }, {} as Record<string, number>)
+    const byCategory: Record<string, number> = {}
 
-    const total = stats.reduce((sum, stat) => sum + stat.count, 0)
+    permitStats.forEach(stat => {
+      byCategory[stat.category] = (byCategory[stat.category] || 0) + stat.count
+    })
+
+    // Sum vehicles and imports
+    const totalVehicles = vehicleStats.reduce((sum, stat) => sum + stat.count, 0)
+    const totalImports = importStats.reduce((sum, stat) => sum + stat.count, 0)
+
+    byCategory["VEHICLE"] = totalVehicles
+    byCategory["IMPORT"] = totalImports
+
+    const total = Object.values(byCategory).reduce((sum, n) => sum + n, 0)
 
     return {
       success: true,
@@ -544,12 +587,16 @@ export async function getPermitStats() {
           APPROVED: byStatus.APPROVED || 0,
           REJECTED: byStatus.REJECTED || 0,
           EXPIRED: byStatus.EXPIRED || 0,
+          // Add lowercase fallbacks just in case UI uses them
+          pending: byStatus.PENDING || 0,
+          "in-progress": byStatus["IN-PROGRESS"] || 0,
         },
         byCategory: {
           WORK_PERMIT: byCategory.WORK_PERMIT || 0,
           RESIDENCE_ID: byCategory.RESIDENCE_ID || 0,
           LICENSE: byCategory.LICENSE || 0,
-          PIP: byCategory.PIP || 0,
+          PIP: byCategory.PIP || totalImports, // Use totalImports if PIP is 0 (assuming PIP = Import)
+          VEHICLE: totalVehicles,
         },
       },
     }

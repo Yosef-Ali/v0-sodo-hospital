@@ -107,25 +107,25 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               subtext="Across all categories"
               change={`${pendingPermits} pending review`}
               changeType={pendingPermits > 0 ? "negative" : "positive"}
-              items={[
-                {
-                  label: "Work Permits",
-                  value: String(permitStats.byCategory?.WORK_PERMIT || 0),
-                  action: { text: "View", link: "/permits?category=WORK_PERMIT" },
-                },
-                {
-                  label: "Residence IDs",
-                  value: String(permitStats.byCategory?.RESIDENCE_ID || 0),
-                  action: { text: "View", link: "/permits?category=RESIDENCE_ID" },
-                },
-                {
-                  label: "Licenses",
-                  value: String(permitStats.byCategory?.LICENSE || 0),
-                  action: { text: "View", link: "/permits?category=LICENSE" },
-                },
-              ]}
-              footer={`${submittedPermits} submitted, ${approvedPermits} approved`}
-              buttonText="Open permits workspace"
+                items={[
+                  {
+                    label: "Work Permits",
+                    value: String(permitStats.byCategory?.WORK_PERMIT || 0),
+                    action: { text: "View", link: "/permits?category=WORK_PERMIT" },
+                  },
+                  {
+                    label: "Vehicles",
+                    value: String(permitStats.byCategory?.VEHICLE || 0),
+                    action: { text: "View", link: "/vehicle" },
+                  },
+                  {
+                    label: "Imports",
+                    value: String(permitStats.byCategory?.IMPORT || 0), // Fallback to PIP if merged
+                    action: { text: "View", link: "/import" },
+                  },
+                ]}
+                footer={`${submittedPermits} submitted, ${approvedPermits} approved`}
+                buttonText="Open permits workspace"
               buttonLink="/permits"
               onChartClick={() => {
                 toast({
