@@ -1,6 +1,6 @@
 "use server"
 
-import { db, permits, people, checklists, permitHistory, tasksV2, users, documentsV2, type Permit, type NewPermit, type PermitHistory } from "@/lib/db"
+import { db, permits, people, checklists, permitHistory, tasksV2, users, documentsV2, vehicles, importPermits, type Permit, type NewPermit, type PermitHistory } from "@/lib/db"
 import { eq, desc, and, gte, lte, sql, or, like } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { gregorianToEC, formatEC } from "@/lib/dates/ethiopian"
@@ -511,6 +511,7 @@ export async function getExpiringPermits(daysAhead: number = 30) {
  */
 export async function getPermitStats() {
   try {
+    // Query permits table
     const permitStats = await db
       .select({
         status: permits.status,
@@ -519,6 +520,16 @@ export async function getPermitStats() {
       })
       .from(permits)
       .groupBy(permits.status, permits.category)
+
+    // Query vehicles table
+    const vehicleCount = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(vehicles)
+    
+    // Query import_permits table
+    const importCount = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(importPermits)
 
     // Aggregate by status
     const byStatus: Record<string, number> = {}
@@ -534,7 +545,10 @@ export async function getPermitStats() {
       byCategory[stat.category] = (byCategory[stat.category] || 0) + stat.count
     })
 
-    const total = Object.values(byCategory).reduce((sum, n) => sum + n, 0)
+    const vehicleTotal = vehicleCount[0]?.count || 0
+    const importTotal = importCount[0]?.count || 0
+    const permitTotal = Object.values(byCategory).reduce((sum, n) => sum + n, 0)
+    const total = permitTotal + vehicleTotal + importTotal
 
     return {
       success: true,
@@ -554,8 +568,8 @@ export async function getPermitStats() {
           RESIDENCE_ID: byCategory.RESIDENCE_ID || 0,
           LICENSE: byCategory.LICENSE || 0,
           PIP: byCategory.PIP || 0,
-          VEHICLE: 0,
-          IMPORT: 0,
+          VEHICLE: vehicleTotal,
+          IMPORT: importTotal,
         },
       },
     }
