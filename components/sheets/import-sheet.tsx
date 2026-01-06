@@ -208,11 +208,12 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
     e.preventDefault()
     const submissionData = {
       ...formData,
+      category: formData.importType, // Map importType to category for the action
       documentSections,
       documents: documentSections.flatMap(s => s.files),
     }
     onSubmit(submissionData)
-    onOpenChange(false)
+    // Don't close here - parent handles closing after async operation completes
   }
 
   const isEditMode = !!permit

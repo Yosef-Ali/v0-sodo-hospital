@@ -228,11 +228,12 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
     e.preventDefault()
     const submissionData = {
       ...formData,
+      category: formData.vehicleType, // Map vehicleType to category for the action
       documentSections,
       documents: documentSections.flatMap(s => s.files),
     }
     onSubmit(submissionData)
-    onOpenChange(false)
+    // Don't close here - parent handles closing after async operation completes
   }
 
   const isEditMode = !!vehicle

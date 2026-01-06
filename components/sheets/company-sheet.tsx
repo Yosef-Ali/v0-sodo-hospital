@@ -181,7 +181,7 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
       documents: documentSections.flatMap(s => s.files),
     }
     onSubmit(submissionData)
-    onOpenChange(false)
+    // Don't close here - parent handles closing after async operation completes
   }
 
   const isEditMode = !!company
