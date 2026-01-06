@@ -1,23 +1,21 @@
 import { DashboardPage } from "@/components/pages/dashboard-page"
 import { getTaskStats, getOverdueTasks, getTasks } from "@/lib/actions/v2/tasks"
-import { getPermitStats, getPermits } from "@/lib/actions/v2/permits"
+// Permits removed as duplicated workflow
 import { unstable_cache } from "next/cache"
 import { getCurrentUser } from "@/lib/auth/permissions"
 
 // Cache dashboard data for 60 seconds
 const getCachedDashboardData = unstable_cache(
   async () => {
-    const [taskStatsResult, permitStatsResult, permitsResult, overdueResult] = await Promise.all([
+    const [taskStatsResult, overdueResult] = await Promise.all([
       getTaskStats(),
-      getPermitStats(),
-      getPermits({ limit: 5 }),
       getOverdueTasks(),
     ])
 
     return {
       taskStats: taskStatsResult.success ? taskStatsResult.data : { byStatus: {}, total: 0 },
-      permitStats: permitStatsResult.success ? permitStatsResult.data : { byStatus: {}, byCategory: {}, total: 0 },
-      permits: permitsResult.success ? permitsResult.data : [],
+      permitStats: { byStatus: {}, byCategory: {}, total: 0 },
+      permits: [],
       overdueCount: overdueResult.success ? overdueResult.data.length : 0,
     }
   },

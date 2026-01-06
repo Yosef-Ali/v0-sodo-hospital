@@ -16,7 +16,7 @@
     "db:seed-docs": "tsx lib/db/seed-documents.ts",
     "db:seed-tasks": "tsx lib/db/seed-tasks.ts",
     "db:seed-reports": "tsx lib/db/seed-reports.ts",
-    "test:e2e": "playwright test"
+    "test": "playwright test e2e/production.spec.ts --config=playwright.prod.config.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.1",
