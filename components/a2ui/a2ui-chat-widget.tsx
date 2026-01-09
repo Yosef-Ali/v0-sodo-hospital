@@ -58,7 +58,7 @@ export function A2UIChatWidget() {
         <Button
           onClick={toggleChat}
           size="lg"
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white z-50 group transition-all duration-300 hover:scale-110"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white z-50 group transition-all duration-300 hover:scale-110"
         >
           <Sparkles className="w-6 h-6 group-hover:scale-110 transition-transform" />
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-gray-900 animate-pulse" />
@@ -71,27 +71,27 @@ export function A2UIChatWidget() {
           className={cn(
             "fixed z-50 bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl transition-all duration-500 ease-out border border-gray-700/50",
             isExpanded
-              ? "inset-4 lg:inset-12"
+              ? "inset-2 sm:inset-4 lg:inset-12"
               : isMinimized
-                ? "bottom-6 right-6 w-80 h-16"
-                : "bottom-6 right-6 w-[420px] h-[650px]",
+                ? "bottom-4 right-4 w-72 h-16 sm:bottom-6 sm:right-6 sm:w-80"
+                : "bottom-0 right-0 left-0 h-[85vh] sm:bottom-6 sm:right-6 sm:left-auto sm:w-[420px] sm:h-[650px] sm:rounded-2xl rounded-t-2xl rounded-b-none",
             "flex flex-col overflow-hidden"
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-700/50 bg-gray-800/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
-                <Sparkles className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-700/50 bg-gray-800/50">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-white flex items-center gap-2">
+                <h3 className="font-semibold text-white text-sm sm:text-base flex items-center gap-2">
                   AI Assistant
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                  <span className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
                     A2UI
                   </span>
                 </h3>
-                <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                <p className="text-[10px] sm:text-xs text-gray-400 flex items-center gap-1.5">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -99,7 +99,7 @@ export function A2UIChatWidget() {
                   {verifiedTicket ? (
                     <span className="flex items-center gap-1">
                       <Shield className="w-3 h-3 text-green-400" />
-                      Verified: {verifiedTicket}
+                      <span className="truncate max-w-[120px] sm:max-w-none">{verifiedTicket}</span>
                     </span>
                   ) : (
                     "Powered by Gemini"
@@ -215,19 +215,19 @@ export function A2UIChatWidget() {
               </ScrollArea>
 
               {/* Input Area */}
-              <form onSubmit={handleSubmit} className="p-4 border-t border-gray-700/50">
+              <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t border-gray-700/50 safe-area-bottom">
                 <div className="flex gap-2">
                   <Input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder="Ask about permits, documents..."
                     disabled={isTyping}
-                    className="flex-1 bg-gray-800 border-gray-700 focus:border-green-500 focus:ring-green-500/20"
+                    className="flex-1 bg-gray-800 border-gray-700 focus:border-green-500 focus:ring-green-500/20 text-sm sm:text-base"
                   />
                   <Button
                     type="submit"
                     disabled={isTyping || !input.trim()}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700 px-3 sm:px-4"
                   >
                     <Send className="w-4 h-4" />
                   </Button>
