@@ -5,10 +5,22 @@ import { StatusCard } from "@/components/ui/status-card"
 import { MetricCard } from "@/components/ui/metric-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FileText, AlertCircle, ArrowRight, User } from "lucide-react"
+import { FileText, AlertCircle, ArrowRight, User, Clock, Calendar } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+
+interface ExpiringItem {
+  id: string
+  type: "permit" | "passport" | "work_permit" | "residence_id" | "medical_license" | "vehicle" | "import" | "company"
+  title: string
+  entityName: string
+  expiryDate: Date
+  daysRemaining: number
+  status: "expired" | "urgent" | "warning" | "upcoming"
+  entityId?: string
+  personId?: string
+}
 
 interface DashboardPageProps {
   initialData: {
@@ -17,12 +29,19 @@ interface DashboardPageProps {
     permits: any[]
     overdueCount: number
     myTasks: any[]
+    expiringItems: ExpiringItem[]
     currentUser: { id: string; name: string | null } | null
   }
 }
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
-  const { taskStats, permitStats, permits, overdueCount, myTasks, currentUser } = initialData
+  const { taskStats, permitStats, permits, overdueCount, myTasks, expiringItems, currentUser } = initialData
+
+  // Count expiring items by status
+  const expiredCount = expiringItems?.filter(i => i.status === "expired").length || 0
+  const urgentExpiryCount = expiringItems?.filter(i => i.status === "urgent").length || 0
+  const warningExpiryCount = expiringItems?.filter(i => i.status === "warning").length || 0
+  const totalExpiringCount = expiringItems?.length || 0
 
   const pendingTasks = taskStats.byStatus?.pending || 0
   const inProgressTasks = taskStats.byStatus?.["in-progress"] || 0
@@ -53,7 +72,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
       />
 
       {/* Overdue tasks strip */}
-      <div className="mt-4 mb-6 flex items-center justify-between rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+      <div className="mt-4 mb-4 flex items-center justify-between rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
         <div className="flex items-center gap-2 text-sm text-amber-100">
           <AlertCircle className="h-4 w-4" />
           <span>
@@ -73,6 +92,68 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           </Button>
         )}
       </div>
+
+      {/* Expiring items notification */}
+      {totalExpiringCount > 0 && (
+        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-red-100">
+              <Clock className="h-4 w-4" />
+              <span>
+                {expiredCount > 0 && (
+                  <span className="font-semibold text-red-400">{expiredCount} expired</span>
+                )}
+                {expiredCount > 0 && urgentExpiryCount > 0 && ", "}
+                {urgentExpiryCount > 0 && (
+                  <span className="font-semibold text-orange-400">{urgentExpiryCount} urgent (within 7 days)</span>
+                )}
+                {(expiredCount > 0 || urgentExpiryCount > 0) && warningExpiryCount > 0 && ", "}
+                {warningExpiryCount > 0 && (
+                  <span className="text-yellow-400">{warningExpiryCount} expiring soon</span>
+                )}
+                <span className="ml-1">- documents/permits need attention</span>
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs font-normal border-red-500/60 text-red-100 hover:bg-red-500/20 hover:text-white"
+              onClick={() => router.push("/calendar")}
+            >
+              <Calendar className="h-3 w-3 mr-1" />
+              View in Calendar
+            </Button>
+          </div>
+
+          {/* Quick list of most urgent items */}
+          {(expiredCount > 0 || urgentExpiryCount > 0) && expiringItems && (
+            <div className="mt-3 pt-3 border-t border-red-500/20">
+              <p className="text-xs text-red-200 mb-2">Most urgent:</p>
+              <ul className="space-y-1">
+                {expiringItems
+                  .filter(i => i.status === "expired" || i.status === "urgent")
+                  .slice(0, 5)
+                  .map((item) => (
+                    <li key={item.id} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-300">
+                        <span className={item.status === "expired" ? "text-red-400" : "text-orange-400"}>
+                          {item.status === "expired" ? "EXPIRED" : `${item.daysRemaining}d left`}
+                        </span>
+                        {" "}- {item.title} ({item.entityName})
+                      </span>
+                      <Link
+                        href={item.personId ? `/foreigners/${item.personId}` : item.entityId ? `/${item.type}/${item.entityId}` : "#"}
+                        className="text-blue-400 hover:text-blue-300"
+                      >
+                        View
+                      </Link>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* High-level task snapshot */}
       <div className="mt-8 md:mt-10 lg:mt-12 mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">

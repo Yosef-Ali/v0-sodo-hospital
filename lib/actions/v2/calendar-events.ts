@@ -1,7 +1,7 @@
 "use server"
 
 import { db } from "@/lib/db"
-import { calendarEvents, permits, people, tasksV2, type NewCalendarEvent, type CalendarEvent } from "@/lib/db/schema"
+import { calendarEvents, permits, people, tasksV2, vehicles, importPermits, companyRegistrations, type NewCalendarEvent, type CalendarEvent } from "@/lib/db/schema"
 import { eq, and, gte, lte, isNotNull, ne } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -303,6 +303,279 @@ export async function generateExpiryCalendarEvents() {
   } catch (error) {
     console.error("Error generating expiry events:", error)
     return { success: false, error: "Failed to generate events" }
+  }
+}
+
+/**
+ * Get all items expiring within specified days
+ * Returns permits, person documents, vehicles, imports, companies with upcoming expirations
+ */
+export async function getExpiringItems(daysAhead: number = 30) {
+  try {
+    const today = new Date()
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + daysAhead)
+
+    const expiringItems: Array<{
+      id: string
+      type: "permit" | "passport" | "work_permit" | "residence_id" | "medical_license" | "vehicle" | "import" | "company"
+      title: string
+      entityName: string
+      expiryDate: Date
+      daysRemaining: number
+      status: "expired" | "urgent" | "warning" | "upcoming"
+      entityId?: string
+      personId?: string
+    }> = []
+
+    // 1. Get expiring permits
+    const expiringPermits = await db
+      .select({
+        permit: permits,
+        person: people
+      })
+      .from(permits)
+      .leftJoin(people, eq(permits.personId, people.id))
+      .where(
+        and(
+          isNotNull(permits.dueDate),
+          lte(permits.dueDate, futureDate),
+          ne(permits.status, "EXPIRED")
+        )
+      )
+
+    for (const { permit, person } of expiringPermits) {
+      if (!permit.dueDate) continue
+      const dueDate = new Date(permit.dueDate)
+      const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+      expiringItems.push({
+        id: permit.id,
+        type: "permit",
+        title: permit.category.replace(/_/g, " "),
+        entityName: person ? `${person.firstName} ${person.lastName}` : "Unknown",
+        expiryDate: dueDate,
+        daysRemaining: diffDays,
+        status: diffDays < 0 ? "expired" : diffDays <= 7 ? "urgent" : diffDays <= 14 ? "warning" : "upcoming",
+        personId: permit.personId || undefined
+      })
+    }
+
+    // 2. Get people with expiring documents (passport, work permit, residence ID, medical license)
+    const peopleWithExpiry = await db
+      .select()
+      .from(people)
+      .where(
+        and(
+          isNotNull(people.id),
+          // At least one expiry date exists and is within range
+        )
+      )
+
+    for (const person of peopleWithExpiry) {
+      const personName = `${person.firstName} ${person.lastName}`
+
+      // Check passport expiry
+      if (person.passportExpiryDate) {
+        const expiryDate = new Date(person.passportExpiryDate)
+        if (expiryDate <= futureDate) {
+          const diffDays = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+          expiringItems.push({
+            id: `passport-${person.id}`,
+            type: "passport",
+            title: "Passport",
+            entityName: personName,
+            expiryDate,
+            daysRemaining: diffDays,
+            status: diffDays < 0 ? "expired" : diffDays <= 7 ? "urgent" : diffDays <= 14 ? "warning" : "upcoming",
+            personId: person.id
+          })
+        }
+      }
+
+      // Check work permit expiry
+      if (person.workPermitExpiryDate) {
+        const expiryDate = new Date(person.workPermitExpiryDate)
+        if (expiryDate <= futureDate) {
+          const diffDays = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+          expiringItems.push({
+            id: `workpermit-${person.id}`,
+            type: "work_permit",
+            title: "Work Permit",
+            entityName: personName,
+            expiryDate,
+            daysRemaining: diffDays,
+            status: diffDays < 0 ? "expired" : diffDays <= 7 ? "urgent" : diffDays <= 14 ? "warning" : "upcoming",
+            personId: person.id
+          })
+        }
+      }
+
+      // Check residence ID expiry
+      if (person.residenceIdExpiryDate) {
+        const expiryDate = new Date(person.residenceIdExpiryDate)
+        if (expiryDate <= futureDate) {
+          const diffDays = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+          expiringItems.push({
+            id: `residenceid-${person.id}`,
+            type: "residence_id",
+            title: "Residence ID",
+            entityName: personName,
+            expiryDate,
+            daysRemaining: diffDays,
+            status: diffDays < 0 ? "expired" : diffDays <= 7 ? "urgent" : diffDays <= 14 ? "warning" : "upcoming",
+            personId: person.id
+          })
+        }
+      }
+
+      // Check medical license expiry
+      if (person.medicalLicenseExpiryDate) {
+        const expiryDate = new Date(person.medicalLicenseExpiryDate)
+        if (expiryDate <= futureDate) {
+          const diffDays = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+          expiringItems.push({
+            id: `medicallicense-${person.id}`,
+            type: "medical_license",
+            title: "Medical License",
+            entityName: personName,
+            expiryDate,
+            daysRemaining: diffDays,
+            status: diffDays < 0 ? "expired" : diffDays <= 7 ? "urgent" : diffDays <= 14 ? "warning" : "upcoming",
+            personId: person.id
+          })
+        }
+      }
+    }
+
+    // 3. Get expiring vehicles
+    const expiringVehicles = await db.query.vehicles.findMany({
+      where: and(
+        isNotNull(vehicles.dueDate),
+        lte(vehicles.dueDate, futureDate)
+      )
+    })
+
+    for (const vehicle of expiringVehicles) {
+      if (!vehicle.dueDate) continue
+      const dueDate = new Date(vehicle.dueDate)
+      const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+      expiringItems.push({
+        id: vehicle.id,
+        type: "vehicle",
+        title: vehicle.category || "Vehicle Service",
+        entityName: vehicle.plateNumber || vehicle.title || "Unknown Vehicle",
+        expiryDate: dueDate,
+        daysRemaining: diffDays,
+        status: diffDays < 0 ? "expired" : diffDays <= 7 ? "urgent" : diffDays <= 14 ? "warning" : "upcoming",
+        entityId: vehicle.id
+      })
+    }
+
+    // 4. Get expiring imports
+    const expiringImports = await db.query.importPermits.findMany({
+      where: and(
+        isNotNull(importPermits.dueDate),
+        lte(importPermits.dueDate, futureDate)
+      )
+    })
+
+    for (const imp of expiringImports) {
+      if (!imp.dueDate) continue
+      const dueDate = new Date(imp.dueDate)
+      const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+      expiringItems.push({
+        id: imp.id,
+        type: "import",
+        title: imp.category || "Import Permit",
+        entityName: imp.title || "Unknown Import",
+        expiryDate: dueDate,
+        daysRemaining: diffDays,
+        status: diffDays < 0 ? "expired" : diffDays <= 7 ? "urgent" : diffDays <= 14 ? "warning" : "upcoming",
+        entityId: imp.id
+      })
+    }
+
+    // 5. Get expiring company registrations
+    const expiringCompanies = await db.query.companyRegistrations.findMany({
+      where: and(
+        isNotNull(companyRegistrations.dueDate),
+        lte(companyRegistrations.dueDate, futureDate)
+      )
+    })
+
+    for (const company of expiringCompanies) {
+      if (!company.dueDate) continue
+      const dueDate = new Date(company.dueDate)
+      const diffDays = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+      expiringItems.push({
+        id: company.id,
+        type: "company",
+        title: "Company Registration",
+        entityName: company.companyName || company.title || "Unknown Company",
+        expiryDate: dueDate,
+        daysRemaining: diffDays,
+        status: diffDays < 0 ? "expired" : diffDays <= 7 ? "urgent" : diffDays <= 14 ? "warning" : "upcoming",
+        entityId: company.id
+      })
+    }
+
+    // Sort by days remaining (most urgent first)
+    expiringItems.sort((a, b) => a.daysRemaining - b.daysRemaining)
+
+    return { success: true, data: expiringItems }
+  } catch (error) {
+    console.error("Error fetching expiring items:", error)
+    return { success: false, error: "Failed to fetch expiring items", data: [] }
+  }
+}
+
+/**
+ * Generate calendar events for ALL expiring items (permits, documents, vehicles, imports, companies)
+ * Run this via Cron or periodically to keep calendar in sync
+ */
+export async function syncAllExpirationsToCalendar() {
+  try {
+    const result = await getExpiringItems(30)
+    if (!result.success || !result.data) {
+      return { success: false, error: "Failed to fetch expiring items" }
+    }
+
+    let count = 0
+
+    for (const item of result.data) {
+      let title = ""
+      const type: "permit" | "deadline" = item.status === "expired" ? "deadline" : "permit"
+
+      if (item.status === "expired") {
+        title = `EXPIRED: ${item.title} - ${item.entityName}`
+      } else if (item.status === "urgent") {
+        title = `URGENT: ${item.title} expires in ${item.daysRemaining} days - ${item.entityName}`
+      } else {
+        title = `Expiry: ${item.title} - ${item.entityName}`
+      }
+
+      await syncEntityToCalendar(
+        `expiry_${item.type}`,
+        item.id,
+        {
+          title,
+          description: `${item.title} for ${item.entityName}\nExpiry Date: ${item.expiryDate.toLocaleDateString()}\nDays Remaining: ${item.daysRemaining}`,
+          date: item.expiryDate,
+          type,
+          relatedPersonId: item.personId
+        }
+      )
+      count++
+    }
+
+    return { success: true, count }
+  } catch (error) {
+    console.error("Error syncing expirations to calendar:", error)
+    return { success: false, error: "Failed to sync expirations" }
   }
 }
 

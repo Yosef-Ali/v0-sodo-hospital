@@ -7,9 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { AIReportAssistant } from "@/components/reports/ai-report-assistant"
-import { Sparkles, Loader2 } from "lucide-react"
+import { Sparkles, Loader2, Check, ChevronsUpDown, Plus } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 
 export interface ReportFormData {
   id?: string
@@ -41,6 +44,7 @@ export function ReportForm({ initialData, onSubmit, onCancel, isLoading = false,
     category: "",
   })
   const [activeModeTab, setActiveModeTab] = useState("manual")
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false)
 
   // Populate form when editing
   useEffect(() => {
@@ -131,22 +135,81 @@ export function ReportForm({ initialData, onSubmit, onCancel, isLoading = false,
             {/* Category */}
             <div className="space-y-2">
               <Label htmlFor="category">Category *</Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
-                required
-              >
-                <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-800 border-gray-700">
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value} className="text-white">
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={isCategoryOpen}
+                    className="w-full justify-between bg-gray-800 border-gray-700 text-white hover:bg-gray-700 hover:text-white"
+                  >
+                    {formData.category
+                      ? (categories.find((cat) => cat.value === formData.category)?.label || formData.category)
+                      : "Select or type category..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 bg-gray-800 border-gray-700">
+                  <Command className="bg-gray-800 text-white">
+                    <CommandInput placeholder="Search or type category..." className="text-white placeholder:text-gray-400" />
+                    <CommandList>
+                      <CommandEmpty className="py-2 px-4 text-sm text-gray-400">
+                        No preset found.
+                      </CommandEmpty>
+                      <CommandGroup heading="Suggestions">
+                        {categories.map((cat) => (
+                          <CommandItem
+                            key={cat.value}
+                            value={cat.label} // Use label for searching
+                            onSelect={() => {
+                              setFormData({ ...formData, category: cat.value })
+                              setIsCategoryOpen(false)
+                            }}
+                            className="text-white hover:bg-gray-700 aria-selected:bg-gray-700 aria-selected:text-white"
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.category === cat.value ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {cat.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                        <CommandGroup heading="Custom">
+                            <CommandItem
+                                value="custom-category-option"
+                                onSelect={() => {
+                                    setFormData({ ...formData, category: "" }) // Clear to show input
+                                    setIsCategoryOpen(false)
+                                }}
+                                className="text-green-400 hover:bg-gray-700 aria-selected:bg-gray-700 aria-selected:text-green-400 font-medium"
+                            >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Write custom category...
+                            </CommandItem>
+                        </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+
+              {/* Custom input if not in predefined list or explicitly custom */}
+              {(!categories.some(c => c.value === formData.category) || formData.category === "") && (
+                  <div className="mt-2 transition-all duration-200">
+                      {formData.category && !categories.some(c => c.value === formData.category) && (
+                          <Label className="text-xs text-green-400 mb-1.5 block">Custom Category Selected:</Label>
+                      )}
+                      <Input
+                          value={formData.category}
+                          placeholder="Enter custom category"
+                          className="bg-gray-800 border-gray-700 text-white"
+                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                          autoFocus={!categories.some(c => c.value === formData.category)}
+                      />
+                  </div>
+              )}
             </div>
 
             {/* Department */}
