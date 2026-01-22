@@ -20,6 +20,8 @@ import {
   User,
   Sparkles,
   Shield,
+  RefreshCw,
+  AlertCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, FormEvent } from "react"
@@ -30,9 +32,11 @@ export function A2UIChatWidget() {
     isTyping,
     isOpen,
     verifiedTicket,
+    error,
     toggleChat,
     closeChat,
     sendMessage,
+    retryLastAction,
     handleAction,
     handleVerify,
     clearMessages,
@@ -158,28 +162,27 @@ export function A2UIChatWidget() {
                           </div>
                         </div>
                       ) : (
-                        /* Assistant Message - Unified response container */
-                        <div className="space-y-3">
-                          {/* Avatar Row */}
-                          <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-green-500 to-emerald-600">
-                              <Bot className="w-3.5 h-3.5 text-white" />
-                            </div>
-                            <span className="text-xs text-gray-500 font-medium">Assistant</span>
+                        /* Assistant Message - Refactored Design */
+                        <div className="flex gap-3">
+                          {/* Avatar */}
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-800 border border-gray-700">
+                            <Bot className="w-4 h-4 text-green-400" />
                           </div>
                           
-                          {/* Unified Response Container */}
-                          <div className="bg-gray-800/60 border border-gray-700/50 rounded-2xl p-3 space-y-4 overflow-hidden w-full max-w-full box-border">
+                          {/* Content Container */}
+                          <div className="flex-1 space-y-4 overflow-hidden">
                             {/* Text Content */}
                             {message.content && (
-                              <p className="text-sm text-gray-100 whitespace-pre-wrap leading-relaxed">
-                                {message.content}
-                              </p>
+                              <div className="bg-transparent pl-1">
+                                <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
+                                  {message.content}
+                                </p>
+                              </div>
                             )}
                             
-                            {/* Widgets - same container */}
+                            {/* Widgets */}
                             {message.widgets && message.widgets.length > 0 && (
-                              <div className="space-y-3 pt-1">
+                              <div className="pt-2">
                                 <A2UIRenderer
                                   widgets={message.widgets}
                                   onAction={handleAction}
@@ -194,17 +197,38 @@ export function A2UIChatWidget() {
                     </div>
                   ))}
 
+                  {/* Error State */}
+                  {error && (
+                    <div className="flex gap-3 animate-in fade-in slide-in-from-bottom-2">
+                       <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-red-500/10 border border-red-500/20">
+                         <AlertCircle className="w-4 h-4 text-red-400" />
+                       </div>
+                       <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 flex-1 flex items-center justify-between gap-3">
+                         <p className="text-sm text-red-200">{error}</p>
+                         <Button 
+                           size="sm" 
+                           variant="outline" 
+                           className="h-7 bg-red-500/10 border-red-500/30 text-red-300 hover:text-white hover:bg-red-500/30"
+                           onClick={retryLastAction}
+                         >
+                           <RefreshCw className="w-3 h-3 mr-1.5" />
+                           Retry
+                         </Button>
+                       </div>
+                    </div>
+                  )}
+
                   {/* Typing Indicator */}
                   {isTyping && (
                     <div className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                        <Bot className="w-4 h-4 text-white" />
+                      <div className="w-8 h-8 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center flex-shrink-0">
+                        <Bot className="w-4 h-4 text-green-400" />
                       </div>
-                      <div className="bg-gray-800 border border-gray-700 rounded-2xl px-4 py-3">
+                      <div className="bg-gray-800/50 rounded-2xl px-4 py-3 flex items-center">
                         <div className="flex gap-1">
-                          <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
-                          <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-                          <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
+                          <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" />
+                          <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                          <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
                         </div>
                       </div>
                     </div>

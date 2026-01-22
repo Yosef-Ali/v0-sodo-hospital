@@ -27,6 +27,23 @@ interface A2UIChatState {
   isOpen: boolean
   sessionId: string
   verifiedTicket: string | null
+  error: string | null
+  lastAction: { type: 'message' | 'action', payload: any } | null
+}
+
+// Helper to check if two widgets are identical
+const isSameWidget = (w1: A2UIWidget, w2: A2UIWidget) => {
+  return w1.widget === w2.widget && JSON.stringify(w1.props) === JSON.stringify(w2.props)
+}
+
+// Helper to filter duplicate widgets against the last message
+const filterDuplicateWidgets = (newWidgets: A2UIWidget[] | undefined, lastMessage: A2UIChatMessage | undefined) => {
+  if (!newWidgets || !lastMessage || !lastMessage.widgets) return newWidgets
+
+  // Filter out widgets that appear in the last message
+  return newWidgets.filter(nw =>
+    !lastMessage.widgets?.some(lw => isSameWidget(nw, lw))
+  )
 }
 
 export function useA2UIChat() {
@@ -36,6 +53,8 @@ export function useA2UIChat() {
     isOpen: false,
     sessionId: `session-${Date.now()}`,
     verifiedTicket: null,
+    error: null,
+    lastAction: null,
   })
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -98,6 +117,8 @@ export function useA2UIChat() {
       ...prev,
       messages: [...prev.messages, userMessage],
       isTyping: true,
+      error: null,
+      lastAction: { type: 'message', payload: content }
     }))
 
     try {
@@ -118,40 +139,45 @@ export function useA2UIChat() {
         throw new Error(data.error || "Chat failed")
       }
 
-      // Add assistant message with widgets
-      const assistantMessage: A2UIChatMessage = {
-        id: `msg-${Date.now()}-assistant`,
-        role: "assistant",
-        content: data.response.text,
-        timestamp: new Date(),
-        widgets: data.response.widgets,
-      }
+      setState((prev) => {
+        // Filter duplicates against the last message (which is the user message we just added, so check the one before that?)
+        // Actually, we should check against the last ASSISTANT message to avoid repeating suggestions.
+        const lastAssistantMsg = [...prev.messages].reverse().find(m => m.role === 'assistant')
+        const uniqueWidgets = filterDuplicateWidgets(data.response.widgets, lastAssistantMsg)
 
+        const assistantMessage: A2UIChatMessage = {
+          id: `msg-${Date.now()}-assistant`,
+          role: "assistant",
+          content: data.response.text,
+          timestamp: new Date(),
+          widgets: uniqueWidgets,
+        }
+
+        return {
+          ...prev,
+          messages: [...prev.messages, assistantMessage],
+          isTyping: false,
+          verifiedTicket: data.verifiedTicket || prev.verifiedTicket,
+        }
+      })
+    } catch (err: any) {
+      console.error("Chat error:", err)
       setState((prev) => ({
         ...prev,
-        messages: [...prev.messages, assistantMessage],
         isTyping: false,
-        verifiedTicket: data.verifiedTicket || prev.verifiedTicket,
-      }))
-    } catch (error) {
-      console.error("Chat error:", error)
-      const errorMessage: A2UIChatMessage = {
-        id: `msg-${Date.now()}-error`,
-        role: "assistant",
-        content: "I apologize, but I encountered an error. Please try again.",
-        timestamp: new Date(),
-      }
-      setState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, errorMessage],
-        isTyping: false,
+        error: err.message || "Failed to send message. Please try again."
       }))
     }
   }, [state.sessionId, state.verifiedTicket])
 
   // Handle A2UI widget actions
   const handleAction = useCallback(async (actionName: string, context: Record<string, any>) => {
-    setState((prev) => ({ ...prev, isTyping: true }))
+    setState((prev) => ({
+      ...prev,
+      isTyping: true,
+      error: null,
+      lastAction: { type: 'action', payload: { actionName, context } }
+    }))
 
     try {
       const response = await fetch("/api/a2ui-chat", {
@@ -170,25 +196,44 @@ export function useA2UIChat() {
         throw new Error(data.error || "Action failed")
       }
 
-      const assistantMessage: A2UIChatMessage = {
-        id: `msg-${Date.now()}-assistant`,
-        role: "assistant",
-        content: data.response.text,
-        timestamp: new Date(),
-        widgets: data.response.widgets,
-      }
+      setState((prev) => {
+        const lastAssistantMsg = [...prev.messages].reverse().find(m => m.role === 'assistant')
+        const uniqueWidgets = filterDuplicateWidgets(data.response.widgets, lastAssistantMsg)
 
+        const assistantMessage: A2UIChatMessage = {
+          id: `msg-${Date.now()}-assistant`,
+          role: "assistant",
+          content: data.response.text,
+          timestamp: new Date(),
+          widgets: uniqueWidgets,
+        }
+
+        return {
+          ...prev,
+          messages: [...prev.messages, assistantMessage],
+          isTyping: false,
+          verifiedTicket: data.verifiedTicket || prev.verifiedTicket,
+        }
+      })
+    } catch (err: any) {
+      console.error("Action error:", err)
       setState((prev) => ({
         ...prev,
-        messages: [...prev.messages, assistantMessage],
         isTyping: false,
-        verifiedTicket: data.verifiedTicket || prev.verifiedTicket,
+        error: err.message || "Action failed. Please try again."
       }))
-    } catch (error) {
-      console.error("Action error:", error)
-      setState((prev) => ({ ...prev, isTyping: false }))
     }
   }, [state.sessionId])
+
+  const retryLastAction = useCallback(() => {
+    if (!state.lastAction) return
+
+    if (state.lastAction.type === 'message') {
+      sendMessage(state.lastAction.payload)
+    } else {
+      handleAction(state.lastAction.payload.actionName, state.lastAction.payload.context)
+    }
+  }, [state.lastAction, sendMessage, handleAction])
 
   // Handle ticket verification
   const handleVerify = useCallback((ticketNumber: string) => {
@@ -211,9 +256,11 @@ export function useA2UIChat() {
     isTyping: state.isTyping,
     isOpen: state.isOpen,
     verifiedTicket: state.verifiedTicket,
+    error: state.error,
     toggleChat,
     closeChat,
     sendMessage,
+    retryLastAction,
     handleAction,
     handleVerify,
     clearMessages,

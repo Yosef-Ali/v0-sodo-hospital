@@ -78,17 +78,24 @@ export function CalendarPage() {
   useEffect(() => {
     async function fetchEvents() {
       setIsLoading(true)
-      const startDate = view === "year" 
+      const startDate = view === "year"
         ? new Date(currentDate.getFullYear(), 0, 1)
         : new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-      
+
       const endDate = view === "year"
         ? new Date(currentDate.getFullYear(), 11, 31, 23, 59, 59)
         : new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59)
 
+      console.log("[CalendarPage] Fetching events for:", { startDate, endDate, view })
+
       const result = await getCalendarEvents({ startDate, endDate })
+      console.log("[CalendarPage] Result:", result)
+
       if (result.success && result.data) {
+        console.log("[CalendarPage] Setting events:", result.data.length)
         setEvents(result.data)
+      } else {
+        console.log("[CalendarPage] No events or error:", result.error)
       }
       setIsLoading(false)
     }

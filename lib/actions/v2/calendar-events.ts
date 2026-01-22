@@ -39,6 +39,8 @@ export async function getCalendarEvents(params?: {
   try {
     const { startDate, endDate, type } = params || {}
 
+    console.log("[Calendar] Fetching events for range:", { startDate, endDate })
+
     // 1. Get events from calendarEvents table
     let query = db.select().from(calendarEvents)
     const conditions = []
@@ -61,14 +63,9 @@ export async function getCalendarEvents(params?: {
     }
 
     const calendarEventsResult = await query.orderBy(calendarEvents.startDate)
+    console.log("[Calendar] Found calendar events:", calendarEventsResult.length)
 
-    // 2. Get tasks with due dates (to ensure all tasks appear on calendar)
-    const taskConditions = [isNotNull(tasksV2.dueDate)]
-    if (startDate && endDate) {
-      taskConditions.push(gte(tasksV2.dueDate, startDate))
-      taskConditions.push(lte(tasksV2.dueDate, endDate))
-    }
-
+    // 2. Get ALL tasks with due dates (no date filtering to ensure they show)
     const tasksWithDueDates = await db
       .select({
         task: tasksV2,
@@ -78,19 +75,31 @@ export async function getCalendarEvents(params?: {
       .from(tasksV2)
       .leftJoin(permits, eq(tasksV2.permitId, permits.id))
       .leftJoin(people, eq(permits.personId, people.id))
-      .where(and(...taskConditions))
+      .where(isNotNull(tasksV2.dueDate))
 
-    // 3. Get existing task IDs in calendar events to avoid duplicates
+    console.log("[Calendar] Found tasks with due dates:", tasksWithDueDates.length)
+
+    // 3. Filter tasks by date range (if provided)
+    const filteredTasks = startDate && endDate
+      ? tasksWithDueDates.filter(({ task }) => {
+          const dueDate = new Date(task.dueDate!)
+          return dueDate >= startDate && dueDate <= endDate
+        })
+      : tasksWithDueDates
+
+    console.log("[Calendar] Tasks in date range:", filteredTasks.length)
+
+    // 4. Get existing task IDs in calendar events to avoid duplicates
     const existingTaskIds = new Set(
       calendarEventsResult
         .filter(e => e.entityType === "task")
         .map(e => e.entityId)
     )
 
-    // 4. Convert tasks to calendar event format (for those not already in calendar)
-    const taskEvents: CalendarEvent[] = tasksWithDueDates
+    // 5. Convert tasks to calendar event format (for those not already in calendar)
+    const taskEvents = filteredTasks
       .filter(({ task }) => !existingTaskIds.has(task.id))
-      .map(({ task, permit, person }) => {
+      .map(({ task, person }) => {
         // Build title with status indicator
         let title = ""
         if (task.status === "urgent") {
@@ -124,18 +133,18 @@ export async function getCalendarEvents(params?: {
         }
 
         return {
-          id: `task-${task.id}`,
+          id: task.id, // Use task ID directly as UUID
           title,
           description: description.trim(),
           type: "deadline" as const,
           startDate: task.dueDate!,
-          endDate: task.dueDate!,
+          endDate: task.dueDate,
           startTime: null,
           endTime: null,
           allDay: true,
           location: null,
           relatedPersonId: person?.id || null,
-          relatedPermitId: task.permitId || null,
+          relatedPermitId: task.permitId,
           entityType: "task",
           entityId: task.id,
           createdBy: null,
@@ -144,17 +153,21 @@ export async function getCalendarEvents(params?: {
         }
       })
 
-    // 5. Merge and sort all events
+    console.log("[Calendar] Task events created:", taskEvents.length)
+
+    // 6. Merge and sort all events
     const allEvents = [...calendarEventsResult, ...taskEvents].sort(
       (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     )
 
+    console.log("[Calendar] Total events returning:", allEvents.length)
+
     return {
       success: true,
-      data: allEvents,
+      data: allEvents as CalendarEvent[],
     }
   } catch (error) {
-    console.error("Error fetching calendar events:", error)
+    console.error("[Calendar] Error fetching calendar events:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to fetch calendar events",
