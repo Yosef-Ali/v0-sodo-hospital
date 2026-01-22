@@ -18,7 +18,18 @@ export async function getCompanies(params?: {
   const { query, stage, status, limit = 50, offset = 0 } = params || {}
 
   try {
-    let queryBuilder = db.select().from(companyRegistrations)
+    let queryBuilder = db.select({
+      id: companyRegistrations.id,
+      ticketNumber: companyRegistrations.ticketNumber,
+      title: companyRegistrations.title,
+      description: companyRegistrations.description,
+      stage: companyRegistrations.stage,
+      status: companyRegistrations.status,
+      companyName: companyRegistrations.companyName,
+      registrationType: companyRegistrations.registrationType,
+      createdAt: companyRegistrations.createdAt,
+      updatedAt: companyRegistrations.updatedAt
+    }).from(companyRegistrations)
 
     // Apply filters
     const conditions = []
