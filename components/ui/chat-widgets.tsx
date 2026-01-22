@@ -22,7 +22,7 @@ import {
   Download
 } from "lucide-react"
 import Link from "next/link"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { format } from "date-fns"
 import { UploadButton } from "@/lib/uploadthing-utils"
 import { useRouter } from "next/navigation"
@@ -247,9 +247,54 @@ interface QuickActionButtonsProps {
   }>
 }
 export function QuickActionButtonsWidget({ actions }: QuickActionButtonsProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const checkScrollability = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current
+      setCanScrollLeft(scrollLeft > 0)
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5)
+    }
+  }
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const scrollAmount = 150
+      scrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth"
+      })
+    }
+  }
+
+  // Check scrollability on mount and after scroll
+  useEffect(() => {
+    checkScrollability()
+  }, [actions])
+
   return (
-    <div className="max-w-full overflow-x-auto pb-2 scrollbar-hide">
-      <div className="flex gap-2 w-max">
+    <div className="relative flex items-center gap-1">
+      {/* Left Arrow */}
+      {canScrollLeft && (
+        <button
+          onClick={() => scroll("left")}
+          className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-700/50 hover:bg-gray-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors"
+          aria-label="Scroll left"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      )}
+
+      {/* Scrollable Container */}
+      <div
+        ref={scrollRef}
+        onScroll={checkScrollability}
+        className="flex gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0"
+      >
         {actions.map((action, idx) => (
           <Button
             key={idx}
@@ -263,6 +308,19 @@ export function QuickActionButtonsWidget({ actions }: QuickActionButtonsProps) {
           </Button>
         ))}
       </div>
+
+      {/* Right Arrow */}
+      {canScrollRight && (
+        <button
+          onClick={() => scroll("right")}
+          className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-700/50 hover:bg-gray-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors"
+          aria-label="Scroll right"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }
