@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Car, FileCheck, ClipboardList, Fuel, Shield, Truck, Copy, Check } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Car, FileCheck, ClipboardList, Fuel, Shield, Truck, Copy, Check, Sparkles, CheckCircle2, Pencil, RefreshCw, AlertCircle } from "lucide-react"
 import { SmartDocumentChecklist, StageProgress, DocumentSection as DocSection } from "@/components/ui/smart-document-checklist"
 import { useOcrAutoFill, mapOcrToVehicleForm } from "@/lib/hooks/use-ocr-autofill"
 import { toast } from "sonner"
@@ -116,6 +118,15 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
   
   const [documentSections, setDocumentSections] = useState<DocumentSection[]>([])
   const [ticketCopied, setTicketCopied] = useState(false)
+  
+  // OCR Preview state
+  const [ocrPreview, setOcrPreview] = useState<{
+    isOpen: boolean
+    data: Record<string, string>
+    editedData: Record<string, string>
+    docType: string
+    imageUrl: string
+  } | null>(null)
 
   // Get ticket number from vehicle prop
   const ticketNumber = vehicle?.ticketNumber || ""
@@ -123,7 +134,7 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
   // OCR Auto-fill hook
   const { extractFromImage, isLoading: isOcrLoading } = useOcrAutoFill()
 
-  // OCR extraction handler for Libre
+  // OCR extraction handler for Libre - now shows preview
   const handleOcrExtract = async (docType: string, imageUrl: string) => {
     if (docType !== "libre") return
 
@@ -133,16 +144,54 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
       const mappedFields = mapOcrToVehicleForm(result.data)
       
       if (Object.keys(mappedFields).length > 0) {
-        setFormData(prev => ({ ...prev, ...mappedFields }))
-        
-        const fieldCount = Object.keys(mappedFields).length
-        toast.success(`Auto-filled ${fieldCount} field${fieldCount > 1 ? 's' : ''} from Libre`, {
-          description: Object.keys(mappedFields).join(', ')
+        // Show preview dialog instead of auto-applying
+        setOcrPreview({
+          isOpen: true,
+          data: mappedFields,
+          editedData: { ...mappedFields },
+          docType: docType,
+          imageUrl: imageUrl
+        })
+        toast.success('Document scanned successfully!', {
+          description: 'Please review and confirm the extracted data'
         })
       }
     } else if (result.error) {
       toast.error('OCR extraction failed', { description: result.error })
     }
+  }
+
+  // Apply OCR data after user confirmation
+  const handleApplyOcrData = () => {
+    if (ocrPreview?.editedData) {
+      setFormData(prev => ({ ...prev, ...ocrPreview.editedData }))
+      const fieldCount = Object.keys(ocrPreview.editedData).length
+      toast.success(`Applied ${fieldCount} field${fieldCount > 1 ? 's' : ''} from document`)
+      setOcrPreview(null)
+    }
+  }
+
+  // Edit field in preview
+  const handlePreviewFieldEdit = (field: string, value: string) => {
+    if (ocrPreview) {
+      setOcrPreview({ ...ocrPreview, editedData: { ...ocrPreview.editedData, [field]: value } })
+    }
+  }
+
+  // Reset field to original
+  const handleResetField = (field: string) => {
+    if (ocrPreview && ocrPreview.data[field]) {
+      setOcrPreview({ ...ocrPreview, editedData: { ...ocrPreview.editedData, [field]: ocrPreview.data[field] } })
+    }
+  }
+
+  // Get field label
+  const getFieldLabel = (field: string): string => {
+    const labels: Record<string, string> = {
+      plateNumber: 'Plate Number', chassisNumber: 'Chassis Number', engineNumber: 'Engine Number',
+      vehicleType: 'Vehicle Type', vehicleModel: 'Model', vehicleYear: 'Year', ownerName: 'Owner Name'
+    }
+    return labels[field] || field
   }
 
   useEffect(() => {
@@ -240,6 +289,7 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
   const vehicleTypes = ["Car", "SUV", "Truck", "Bus", "Motorcycle", "Other"]
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="bg-gray-800 border-gray-700 w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader>
@@ -425,6 +475,68 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
         </form>
       </SheetContent>
     </Sheet>
+
+    {/* OCR Preview Dialog */}
+    <Dialog open={ocrPreview?.isOpen || false} onOpenChange={(open) => !open && setOcrPreview(null)}>
+      <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-white flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-green-400" />
+            AI Scanned Data Preview
+          </DialogTitle>
+          <DialogDescription className="text-gray-400">
+            Review and edit the extracted data below. Click "Apply" to fill the form.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 py-4 max-h-80 overflow-y-auto">
+          {Object.entries(ocrPreview?.editedData || {}).map(([field, value]) => {
+            const originalValue = ocrPreview?.data[field]
+            const isEdited = value !== originalValue
+
+            return (
+              <div key={field} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-gray-400 font-medium">{getFieldLabel(field)}</label>
+                  {isEdited && (
+                    <button type="button" onClick={() => handleResetField(field)}
+                      className="p-1 text-gray-500 hover:text-amber-400 transition-colors" title="Reset">
+                      <RefreshCw className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+                <Input
+                  value={value}
+                  onChange={(e) => handlePreviewFieldEdit(field, e.target.value)}
+                  className={`bg-gray-600 border-gray-500 text-white h-9 text-sm ${isEdited ? 'border-amber-500/50' : ''}`}
+                />
+              </div>
+            )
+          })}
+        </div>
+
+        {Object.keys(ocrPreview?.editedData || {}).length > 0 && (
+          <div className="flex items-center gap-3 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
+            <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" />
+            <p className="text-sm text-green-300">
+              Ready to apply {Object.keys(ocrPreview?.editedData || {}).length} fields
+            </p>
+          </div>
+        )}
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => setOcrPreview(null)} className="bg-gray-700 border-gray-600">
+            Cancel
+          </Button>
+          <Button onClick={handleApplyOcrData} className="bg-green-600 hover:bg-green-700"
+            disabled={Object.keys(ocrPreview?.editedData || {}).length === 0}>
+            <Check className="h-4 w-4 mr-2" />
+            Apply {Object.keys(ocrPreview?.editedData || {}).length} Fields
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }
 

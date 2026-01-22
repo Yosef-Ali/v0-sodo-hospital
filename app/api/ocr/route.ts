@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI } from "@google/generative-ai"
 import { NextResponse } from "next/server"
 import { getGoogleApiKey } from "@/lib/api-keys"
+import { readFile } from "fs/promises"
+import path from "path"
 
 // Document-specific extraction prompts
 const EXTRACTION_PROMPTS: Record<string, string> = {
@@ -74,6 +76,20 @@ Only include fields that are clearly visible. Return ONLY valid JSON, no markdow
 }
 Only include fields that are clearly visible. Return ONLY valid JSON, no markdown.`,
 
+  business_license: `Analyze this Ethiopian business license/trade license document and extract the following information in JSON format:
+{
+  "companyName": "Registered business/company name",
+  "tinNumber": "TIN (Tax Identification Number)",
+  "licenseNumber": "Business license number",
+  "businessType": "Type of business (PLC, Share Company, Sole Proprietorship, etc.)",
+  "address": "Business address",
+  "contactPerson": "Owner or manager name if visible",
+  "issueDate": "Issue date in YYYY-MM-DD format",
+  "expiryDate": "Expiry date in YYYY-MM-DD format if visible",
+  "sector": "Business sector or activity description"
+}
+Only include fields that are clearly visible. Return ONLY valid JSON, no markdown.`,
+
   general: `Analyze this document and extract any relevant information such as:
 - Names
 - ID/Permit/License numbers
@@ -95,9 +111,9 @@ export async function POST(req: Request) {
     // Get API key from settings or env
     const apiKey = await getGoogleApiKey()
     if (!apiKey) {
-      return NextResponse.json({ 
-        success: false, 
-        error: "Google API Key not configured. Please add it in Settings > AI Services" 
+      return NextResponse.json({
+        success: false,
+        error: "Google API Key not configured. Please add it in Settings > AI Services"
       }, { status: 500 })
     }
 
@@ -107,15 +123,41 @@ export async function POST(req: Request) {
     // Get the appropriate prompt
     const prompt = EXTRACTION_PROMPTS[documentType] || EXTRACTION_PROMPTS.general
 
-    // Fetch the image and convert to base64
-    const imageResponse = await fetch(imageUrl)
-    if (!imageResponse.ok) {
-      return NextResponse.json({ success: false, error: "Failed to fetch image" }, { status: 400 })
-    }
+    let base64Image: string
+    let mimeType: string
 
-    const imageBuffer = await imageResponse.arrayBuffer()
-    const base64Image = Buffer.from(imageBuffer).toString("base64")
-    const mimeType = imageResponse.headers.get("content-type") || "image/jpeg"
+    // Handle local file paths (starting with /uploads/)
+    if (imageUrl.startsWith('/uploads/')) {
+      // Read from local filesystem
+      const filePath = path.join(process.cwd(), 'public', imageUrl)
+      try {
+        const fileBuffer = await readFile(filePath)
+        base64Image = fileBuffer.toString('base64')
+        // Determine mime type from extension
+        const ext = path.extname(imageUrl).toLowerCase()
+        const mimeTypes: Record<string, string> = {
+          '.png': 'image/png',
+          '.gif': 'image/gif',
+          '.webp': 'image/webp',
+          '.jpg': 'image/jpeg',
+          '.jpeg': 'image/jpeg',
+          '.pdf': 'application/pdf',
+        }
+        mimeType = mimeTypes[ext] || 'image/jpeg'
+      } catch (fileError) {
+        console.error('Failed to read local file:', fileError)
+        return NextResponse.json({ success: false, error: "Failed to read image file" }, { status: 400 })
+      }
+    } else {
+      // Fetch remote image and convert to base64
+      const imageResponse = await fetch(imageUrl)
+      if (!imageResponse.ok) {
+        return NextResponse.json({ success: false, error: "Failed to fetch image" }, { status: 400 })
+      }
+      const imageBuffer = await imageResponse.arrayBuffer()
+      base64Image = Buffer.from(imageBuffer).toString("base64")
+      mimeType = imageResponse.headers.get("content-type") || "image/jpeg"
+    }
 
     // Use Gemini 2.5 Flash for vision (multimodal OCR)
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })

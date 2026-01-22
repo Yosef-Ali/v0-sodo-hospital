@@ -2,14 +2,23 @@
 
 import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Building2, FileText, BadgeCheck, RefreshCw, Copy, Check } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Building2, FileText, BadgeCheck, RefreshCw, Copy, Check, Sparkles, CheckCircle2 } from "lucide-react"
 import { SmartDocumentChecklist, StageProgress, DocumentSection as DocSection } from "@/components/ui/smart-document-checklist"
+import { useOcrAutoFill, mapOcrToCompanyForm } from "@/lib/hooks/use-ocr-autofill"
+import { toast } from "sonner"
+
+// OCR-enabled document types (business_license contains company info)
+const OCR_DOCUMENT_TYPES: Record<string, string> = {
+  business_license: "business_license",
+}
 
 // ===================== CONFIG =====================
 
@@ -91,9 +100,77 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
   
   const [documentSections, setDocumentSections] = useState<DocumentSection[]>([])
   const [ticketCopied, setTicketCopied] = useState(false)
+  
+  // OCR Preview state
+  const [ocrPreview, setOcrPreview] = useState<{
+    isOpen: boolean
+    data: Record<string, string>
+    editedData: Record<string, string>
+    docType: string
+  } | null>(null)
 
   // Get ticket number from company prop
   const ticketNumber = company?.ticketNumber || ""
+
+  // OCR Auto-fill hook
+  const { extractFromImage, isLoading: isOcrLoading } = useOcrAutoFill()
+
+  // OCR extraction handler for Business License
+  const handleOcrExtract = async (docType: string, imageUrl: string) => {
+    if (docType !== "business_license") return
+
+    const result = await extractFromImage(imageUrl, "business_license")
+    
+    if (result.success && result.data) {
+      const mappedFields = mapOcrToCompanyForm(result.data)
+      
+      if (Object.keys(mappedFields).length > 0) {
+        setOcrPreview({
+          isOpen: true,
+          data: mappedFields,
+          editedData: { ...mappedFields },
+          docType: docType
+        })
+        toast.success('Business license scanned successfully!', {
+          description: 'Please review and confirm the extracted data'
+        })
+      }
+    } else if (result.error) {
+      toast.error('OCR extraction failed', { description: result.error })
+    }
+  }
+
+  // Apply OCR data after user confirmation
+  const handleApplyOcrData = () => {
+    if (ocrPreview?.editedData) {
+      setFormData(prev => ({ ...prev, ...ocrPreview.editedData }))
+      toast.success(`Applied ${Object.keys(ocrPreview.editedData).length} fields from document`)
+      setOcrPreview(null)
+    }
+  }
+
+  // Edit field in preview
+  const handlePreviewFieldEdit = (field: string, value: string) => {
+    if (ocrPreview) {
+      setOcrPreview({ ...ocrPreview, editedData: { ...ocrPreview.editedData, [field]: value } })
+    }
+  }
+
+  // Reset field to original
+  const handleResetField = (field: string) => {
+    if (ocrPreview && ocrPreview.data[field]) {
+      setOcrPreview({ ...ocrPreview, editedData: { ...ocrPreview.editedData, [field]: ocrPreview.data[field] } })
+    }
+  }
+
+  // Get field label
+  const getFieldLabel = (field: string): string => {
+    const labels: Record<string, string> = {
+      companyName: 'Company Name', tinNumber: 'TIN Number', licenseNumber: 'License Number',
+      businessType: 'Business Type', address: 'Address', contactPerson: 'Contact Person'
+    }
+    return labels[field] || field
+  }
 
   useEffect(() => {
     if (company) {
@@ -188,6 +265,7 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
   const businessTypes = ["PLC", "Share Company", "Sole Proprietorship", "Partnership", "NGO", "Other"]
 
   return (
+    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="bg-gray-800 border-gray-700 w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader>
@@ -348,6 +426,9 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
                     onAddFile={handleAddFile}
                     onRemoveFile={handleRemoveFile}
                     onAddCustomDocument={handleAddCustomDocument}
+                    ocrDocumentTypes={OCR_DOCUMENT_TYPES}
+                    onOcrExtract={handleOcrExtract}
+                    isOcrLoading={isOcrLoading}
                   />
                 </div>
               )}
@@ -368,6 +449,58 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
         </form>
       </SheetContent>
     </Sheet>
+
+    {/* OCR Preview Dialog */}
+    <Dialog open={ocrPreview?.isOpen || false} onOpenChange={(open) => !open && setOcrPreview(null)}>
+      <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-white flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-green-400" />
+            AI Scanned Data Preview
+          </DialogTitle>
+          <DialogDescription className="text-gray-400">
+            Review and edit the extracted data below. Click "Apply" to fill the form.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-3 py-4 max-h-80 overflow-y-auto">
+          {Object.entries(ocrPreview?.editedData || {}).map(([field, value]) => {
+            const isEdited = value !== ocrPreview?.data[field]
+            return (
+              <div key={field} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs text-gray-400 font-medium">{getFieldLabel(field)}</label>
+                  {isEdited && (
+                    <button type="button" onClick={() => handleResetField(field)}
+                      className="p-1 text-gray-500 hover:text-amber-400 transition-colors" title="Reset">
+                      <RefreshCw className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+                <Input value={value} onChange={(e) => handlePreviewFieldEdit(field, e.target.value)}
+                  className={`bg-gray-600 border-gray-500 text-white h-9 text-sm ${isEdited ? 'border-amber-500/50' : ''}`} />
+              </div>
+            )
+          })}
+        </div>
+
+        {Object.keys(ocrPreview?.editedData || {}).length > 0 && (
+          <div className="flex items-center gap-3 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
+            <CheckCircle2 className="h-5 w-5 text-green-400" />
+            <p className="text-sm text-green-300">Ready to apply {Object.keys(ocrPreview?.editedData || {}).length} fields</p>
+          </div>
+        )}
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={() => setOcrPreview(null)} className="bg-gray-700 border-gray-600">Cancel</Button>
+          <Button onClick={handleApplyOcrData} className="bg-green-600 hover:bg-green-700"
+            disabled={Object.keys(ocrPreview?.editedData || {}).length === 0}>
+            <Check className="h-4 w-4 mr-2" /> Apply {Object.keys(ocrPreview?.editedData || {}).length} Fields
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }
 

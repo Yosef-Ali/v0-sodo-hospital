@@ -1,5 +1,41 @@
 # Sodo Hospital - VPS Deployment Guide
 
+## Local Development with VPS Database
+
+### Quick Start (Connect to VPS Database)
+
+```bash
+# Terminal 1: Start SSH tunnel (keep this running)
+pnpm db:tunnel
+
+# Terminal 2: Run the app
+pnpm dev
+```
+
+### Switch Between Databases
+
+```bash
+# Use VPS Docker PostgreSQL
+pnpm db:vps
+
+# Use Neon Cloud PostgreSQL  
+pnpm db:neon
+
+# Check current database
+./scripts/switch-db.sh
+```
+
+### Database Connection Details (VPS)
+| Item | Value |
+|------|-------|
+| Local Port | localhost:5433 |
+| Remote | 72.62.170.70:5432 |
+| Database | sodo_hospital |
+| User | postgres |
+| Password | sodo2024secure |
+
+---
+
 ## Live URLs
 
 | Service | URL |

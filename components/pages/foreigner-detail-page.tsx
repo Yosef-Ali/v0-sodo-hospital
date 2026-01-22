@@ -194,53 +194,72 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
             </div>
           </Card>
 
-          {/* Documents Information */}
-          {documents && documents.length > 0 && (
-            <Card className="bg-gray-800 border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-blue-500" />
-                Uploaded Documents
-              </h2>
-              <div className="grid grid-cols-1 gap-3">
-                {documents.map((doc: any) => (
-                  <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-gray-800 rounded-md border border-gray-700">
-                        <FileText className="h-5 w-5 text-blue-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-white">{doc.title || doc.type}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <Badge variant="outline" className="text-[10px] text-gray-400 border-gray-700 h-5 px-1.5">
-                            {doc.fileType || "Document"}
-                          </Badge>
-                          <span className="text-xs text-gray-500">
-                            {new Date(doc.createdAt).toLocaleDateString()}
-                          </span>
+          {/* Documents Information - Show from both sources */}
+          {(() => {
+            // Gather documents from documentSections JSONB field
+            const sectionDocs = person.documentSections?.flatMap((section: any) => 
+              (section.files || []).map((fileUrl: string, idx: number) => ({
+                id: `${section.type}-${idx}`,
+                type: section.type,
+                title: section.type?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+                fileUrl: fileUrl,
+                fileType: fileUrl?.split('.').pop()?.toUpperCase() || 'Document',
+                createdAt: person.updatedAt || person.createdAt
+              }))
+            ) || []
+            // Combine with documents from documentsV2 table
+            const allDocs = [...sectionDocs, ...(documents || [])]
+            
+            if (allDocs.length === 0) return null
+            
+            return (
+              <Card className="bg-gray-800 border-gray-700 p-6">
+                <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-500" />
+                  Uploaded Documents
+                  <Badge className="bg-blue-900/50 text-blue-300 text-xs ml-2">{allDocs.length}</Badge>
+                </h2>
+                <div className="grid grid-cols-1 gap-3">
+                  {allDocs.map((doc: any) => (
+                    <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors group">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-gray-800 rounded-md border border-gray-700 group-hover:border-blue-500/50 transition-colors">
+                          <FileText className="h-5 w-5 text-blue-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-white">{doc.title || doc.type}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Badge variant="outline" className="text-[10px] text-gray-400 border-gray-700 h-5 px-1.5">
+                              {doc.fileType || "Document"}
+                            </Badge>
+                            <span className="text-xs text-gray-500">
+                              {new Date(doc.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
+                      
+                      <div className="flex items-center gap-2">
+                        {doc.fileUrl ? (
+                           <Link 
+                             href={doc.fileUrl} 
+                             target="_blank"
+                             prefetch={false}
+                           >
+                             <Button variant="ghost" size="sm" className="h-8 text-green-400 hover:text-green-300 hover:bg-green-900/20">
+                               View
+                             </Button>
+                           </Link>
+                        ) : (
+                          <span className="text-xs text-gray-500 italic px-2">No file</span>
+                        )}
+                      </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
-                      {doc.fileUrl ? (
-                         <Link 
-                           href={doc.fileUrl} 
-                           target="_blank"
-                           prefetch={false}
-                         >
-                           <Button variant="ghost" size="sm" className="h-8 text-green-400 hover:text-green-300 hover:bg-green-900/20">
-                             View
-                           </Button>
-                         </Link>
-                      ) : (
-                        <span className="text-xs text-gray-500 italic px-2">No file</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          )}
+                  ))}
+                </div>
+              </Card>
+            )
+          })()}
 
           {/* Guardian Information */}
           {guardian && (
@@ -297,25 +316,69 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
 
         {/* Right Column */}
         <div className="space-y-6">
-          {/* Quick Stats */}
+          {/* Quick Stats - Enhanced with real-time document counts */}
           <Card className="bg-gray-800 border-gray-700 p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Quick Stats</h2>
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              Quick Stats
+            </h2>
             <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-400">Permits</span>
-                <span className="text-white font-medium">{permits?.length || 0}</span>
+              {/* Permits */}
+              <div className="flex items-center justify-between p-2 rounded-lg bg-gray-900/50 hover:bg-gray-900 transition-colors">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded bg-blue-500/20">
+                    <FileText className="h-3.5 w-3.5 text-blue-400" />
+                  </div>
+                  <span className="text-sm text-gray-400">Permits</span>
+                </div>
+                <span className="text-white font-semibold bg-gray-700 px-2.5 py-0.5 rounded-full text-sm">
+                  {permits?.length || 0}
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-400">Documents</span>
-                <span className="text-white font-medium">{documents?.length || 0}</span>
+              
+              {/* Documents - Count from documentSections JSONB field */}
+              <div className="flex items-center justify-between p-2 rounded-lg bg-gray-900/50 hover:bg-gray-900 transition-colors">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded bg-emerald-500/20">
+                    <FileText className="h-3.5 w-3.5 text-emerald-400" />
+                  </div>
+                  <span className="text-sm text-gray-400">Documents</span>
+                </div>
+                <span className="text-white font-semibold bg-gray-700 px-2.5 py-0.5 rounded-full text-sm">
+                  {(() => {
+                    // Count documents from documentSections JSONB field
+                    const sectionsCount = person.documentSections?.reduce((total: number, section: any) => {
+                      return total + (section.files?.length || 0)
+                    }, 0) || 0
+                    // Also include documents from documentsV2 table
+                    const dbDocsCount = documents?.length || 0
+                    return sectionsCount + dbDocsCount
+                  })()}
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-400">Dependents</span>
-                <span className="text-white font-medium">{dependents?.length || 0}</span>
+              
+              {/* Dependents */}
+              <div className="flex items-center justify-between p-2 rounded-lg bg-gray-900/50 hover:bg-gray-900 transition-colors">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded bg-purple-500/20">
+                    <User className="h-3.5 w-3.5 text-purple-400" />
+                  </div>
+                  <span className="text-sm text-gray-400">Dependents</span>
+                </div>
+                <span className="text-white font-semibold bg-gray-700 px-2.5 py-0.5 rounded-full text-sm">
+                  {dependents?.length || 0}
+                </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-400">Status</span>
-                <Badge className="bg-green-900 text-green-300 text-xs">Active</Badge>
+              
+              {/* Status */}
+              <div className="flex items-center justify-between p-2 rounded-lg bg-gray-900/50 hover:bg-gray-900 transition-colors">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded bg-green-500/20">
+                    <UserCheck className="h-3.5 w-3.5 text-green-400" />
+                  </div>
+                  <span className="text-sm text-gray-400">Status</span>
+                </div>
+                <Badge className="bg-green-900 text-green-300 text-xs font-medium px-2.5">Active</Badge>
               </div>
             </div>
           </Card>

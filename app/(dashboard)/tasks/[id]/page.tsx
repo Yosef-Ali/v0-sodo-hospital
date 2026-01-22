@@ -11,24 +11,13 @@ interface TaskPageProps {
 
 export default async function TaskPage({ params }: TaskPageProps) {
   const { id } = await params
+  
+  // Fetch directly without cache to debug 404s and ensure fresh data
+  const result = await getTaskById(id)
 
-  const getCachedTask = unstable_cache(
-    async (taskId: string) => {
-      const result = await getTaskById(taskId)
-      return result.success ? result.data : null
-    },
-    [`task-${id}`],
-    {
-      revalidate: 60,
-      tags: [`task-${id}`]
-    }
-  )
-
-  const task = await getCachedTask(id)
-
-  if (!task) {
+  if (!result.success || !result.data) {
     notFound()
   }
 
-  return <TaskDetailPage initialData={task} />
+  return <TaskDetailPage initialData={result.data} />
 }

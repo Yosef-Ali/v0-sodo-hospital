@@ -3,12 +3,14 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, FileText, Users, Plus, Trash2, X, File, Check, Circle, Briefcase, Home, Stethoscope, Loader2, Sparkles, Copy } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { User, FileText, Users, Plus, Trash2, X, File, Check, Circle, Briefcase, Home, Stethoscope, Loader2, Sparkles, Copy, Eye, CheckCircle2, ScanLine, AlertCircle, RefreshCw, Pencil } from "lucide-react"
 import { UploadDropzone } from "@/lib/uploadthing-utils"
 import { useOcrAutoFill, mapOcrToPersonForm, type DocumentTypeForOcr } from "@/lib/hooks/use-ocr-autofill"
 import { toast } from "sonner"
@@ -262,7 +264,7 @@ function DocumentChecklist({
 }) {
   const [activeUpload, setActiveUpload] = useState<string | null>(null)
   const [ocrDocType, setOcrDocType] = useState<string | null>(null)
-  const [showCompleted, setShowCompleted] = useState(false)
+  const [showCompleted, setShowCompleted] = useState(true)  // Show completed by default
   const [showRemaining, setShowRemaining] = useState(true)
   const [customTitle, setCustomTitle] = useState("")
   const [showCustomInput, setShowCustomInput] = useState(false)
@@ -313,14 +315,6 @@ function DocumentChecklist({
           </Button>
         </div>
         
-        {hasFiles && (
-          <div className="flex gap-2 mt-2 flex-wrap">
-            {section?.files.map((url, idx) => (
-              <DocumentPreview key={idx} url={url} index={idx} onRemove={() => onRemoveFile(doc.value, idx)} />
-            ))}
-          </div>
-        )}
-        
         {activeUpload === doc.value && (
           <div className="mt-2">
             <UploadDropzone
@@ -364,45 +358,10 @@ function DocumentChecklist({
         </div>
       </div>
 
-      {/* Completed Section */}
-      {completedDocs.length > 0 && (
-        <div>
-          <button 
-            type="button"
-            onClick={() => setShowCompleted(!showCompleted)}
-            className="flex items-center gap-2 text-xs text-green-400 hover:text-green-300 mb-2 w-full"
-          >
-            <Check className="h-3 w-3" />
-            <span>Completed ({completedDocs.length})</span>
-            <span className="text-gray-500">{showCompleted ? '▼' : '▶'}</span>
-          </button>
-          {showCompleted && (
-            <div className="space-y-2 pl-2 border-l-2 border-green-600/30">
-              {completedDocs.map(doc => renderDocumentItem(doc))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Remaining Section */}
-      {remainingDocs.length > 0 && (
-        <div>
-          <button 
-            type="button"
-            onClick={() => setShowRemaining(!showRemaining)}
-            className="flex items-center gap-2 text-xs text-amber-400 hover:text-amber-300 mb-2 w-full"
-          >
-            <Circle className="h-3 w-3" />
-            <span>Remaining ({remainingDocs.length})</span>
-            <span className="text-gray-500">{showRemaining ? '▼' : '▶'}</span>
-          </button>
-          {showRemaining && (
-            <div className="space-y-2 pl-2 border-l-2 border-amber-600/30">
-              {remainingDocs.map(doc => renderDocumentItem(doc))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* All Documents - Simple flat list */}
+      <div className="space-y-2">
+        {documents.map(doc => renderDocumentItem(doc))}
+      </div>
 
       {/* Custom Documents */}
       {customDocs.length > 0 && (
@@ -487,31 +446,51 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
   const [ticketCopied, setTicketCopied] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Track auto-filled fields for visual highlighting
+  const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set())
+
+  // Quick scan mode state
+  const [quickScanOpen, setQuickScanOpen] = useState(false)
+  const [quickScanDocType, setQuickScanDocType] = useState<DocumentTypeForOcr>("passport")
+
+  // OCR Preview state - shows extracted data before applying
+  const [ocrPreview, setOcrPreview] = useState<{
+    isOpen: boolean
+    data: Record<string, string>
+    editedData: Record<string, string>
+    rawData: Record<string, any>
+    docType: string
+    imageUrl: string
+  } | null>(null)
+
   // Get ticket number from person prop
   const ticketNumber = person?.ticketNumber || ""
 
   // OCR Auto-fill hook
   const { extractFromImage, isLoading: isOcrLoading } = useOcrAutoFill()
 
-  // OCR extraction handler
+  // OCR extraction handler - now shows preview instead of auto-applying
   const handleOcrExtract = async (docType: string, imageUrl: string) => {
     const ocrDocType = OCR_DOCUMENT_TYPES[docType]
     if (!ocrDocType) return
 
     const result = await extractFromImage(imageUrl, ocrDocType)
-    
+
     if (result.success && result.data) {
       const mappedFields = mapOcrToPersonForm(result.data, ocrDocType)
-      
+
       if (Object.keys(mappedFields).length > 0) {
-        setFormData(prev => ({
-          ...prev,
-          ...mappedFields,
-        }))
-        
-        const fieldCount = Object.keys(mappedFields).length
-        toast.success(`Auto-filled ${fieldCount} field${fieldCount > 1 ? 's' : ''} from document`, {
-          description: Object.keys(mappedFields).join(', ')
+        // Show preview dialog instead of auto-applying
+        setOcrPreview({
+          isOpen: true,
+          data: mappedFields,
+          editedData: { ...mappedFields }, // Allow editing before applying
+          rawData: result.data,
+          docType: docType,
+          imageUrl: imageUrl
+        })
+        toast.success('Document scanned successfully!', {
+          description: 'Please review and confirm the extracted data'
         })
       } else if (result.warning) {
         toast.warning('Could not extract structured data', {
@@ -523,6 +502,108 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
         description: result.error
       })
     }
+  }
+
+  // Quick scan handler - scans document without going through document checklist
+  const handleQuickScan = async (imageUrl: string) => {
+    const result = await extractFromImage(imageUrl, quickScanDocType)
+
+    if (result.success && result.data) {
+      const mappedFields = mapOcrToPersonForm(result.data, quickScanDocType)
+
+      if (Object.keys(mappedFields).length > 0) {
+        setOcrPreview({
+          isOpen: true,
+          data: mappedFields,
+          editedData: { ...mappedFields },
+          rawData: result.data,
+          docType: quickScanDocType,
+          imageUrl: imageUrl
+        })
+        setQuickScanOpen(false)
+        toast.success('Document scanned successfully!', {
+          description: `Found ${Object.keys(mappedFields).length} fields`
+        })
+      } else {
+        toast.warning('Could not extract structured data', {
+          description: 'Try a clearer image or different document type'
+        })
+      }
+    } else if (result.error) {
+      toast.error('OCR extraction failed', {
+        description: result.error
+      })
+    }
+  }
+
+  // Apply OCR data after user confirmation
+  const handleApplyOcrData = () => {
+    if (ocrPreview?.editedData) {
+      // Apply the edited data to form
+      setFormData(prev => ({
+        ...prev,
+        ...ocrPreview.editedData,
+      }))
+
+      // Track which fields were auto-filled for visual highlighting
+      const newAutoFilledFields = new Set(autoFilledFields)
+      Object.keys(ocrPreview.editedData).forEach(field => newAutoFilledFields.add(field))
+      setAutoFilledFields(newAutoFilledFields)
+
+      // Clear auto-fill highlight after 5 seconds
+      setTimeout(() => {
+        setAutoFilledFields(new Set())
+      }, 5000)
+
+      const fieldCount = Object.keys(ocrPreview.editedData).length
+      toast.success(`Applied ${fieldCount} field${fieldCount > 1 ? 's' : ''} from document`, {
+        description: 'Fields are highlighted in green'
+      })
+      setOcrPreview(null)
+    }
+  }
+
+  // Update edited field in preview
+  const handlePreviewFieldEdit = (field: string, value: string) => {
+    if (ocrPreview) {
+      setOcrPreview({
+        ...ocrPreview,
+        editedData: { ...ocrPreview.editedData, [field]: value }
+      })
+    }
+  }
+
+  // Reset a field to original OCR value
+  const handleResetField = (field: string) => {
+    if (ocrPreview && ocrPreview.data[field]) {
+      setOcrPreview({
+        ...ocrPreview,
+        editedData: { ...ocrPreview.editedData, [field]: ocrPreview.data[field] }
+      })
+    }
+  }
+
+  // Check if a field is auto-filled for styling
+  const isAutoFilled = (fieldName: string) => autoFilledFields.has(fieldName)
+
+  // Get human-readable field label
+  const getFieldLabel = (field: string): string => {
+    const labels: Record<string, string> = {
+      firstName: 'First Name',
+      lastName: 'Last Name',
+      nationality: 'Nationality',
+      gender: 'Gender',
+      dateOfBirth: 'Date of Birth',
+      passportNo: 'Passport Number',
+      passportExpiryDate: 'Passport Expiry',
+      workPermitNo: 'Work Permit Number',
+      workPermitExpiryDate: 'Work Permit Expiry',
+      residenceIdNo: 'Residence ID Number',
+      residenceIdExpiryDate: 'Residence ID Expiry',
+      medicalLicenseNo: 'Medical License Number',
+      medicalLicenseExpiryDate: 'Medical License Expiry',
+    }
+    return labels[field] || field.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase())
   }
 
   useEffect(() => {
@@ -738,7 +819,106 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
               </button>
             </div>
           )}
+
+          {/* Quick Scan Feature - Prominent AI Auto-fill Button */}
+          <div className="mt-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setQuickScanOpen(true)}
+              className="w-full border-dashed border-green-500/50 bg-green-500/5 hover:bg-green-500/10 text-green-400 hover:text-green-300 transition-all"
+              disabled={isOcrLoading}
+            >
+              {isOcrLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Scanning document...
+                </>
+              ) : (
+                <>
+                  <ScanLine className="h-4 w-4 mr-2" />
+                  Quick Scan Document (AI Auto-fill)
+                </>
+              )}
+            </Button>
+          </div>
         </SheetHeader>
+
+        {/* Quick Scan Dialog */}
+        <Dialog open={quickScanOpen} onOpenChange={setQuickScanOpen}>
+          <DialogContent className="bg-gray-800 border-gray-700 max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-white flex items-center gap-2">
+                <ScanLine className="h-5 w-5 text-green-400" />
+                Quick Scan Document
+              </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Upload a document to automatically extract and fill form data using AI.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              {/* Document Type Selection */}
+              <div className="space-y-2">
+                <Label className="text-gray-300">Document Type</Label>
+                <Select
+                  value={quickScanDocType}
+                  onValueChange={(v) => setQuickScanDocType(v as DocumentTypeForOcr)}
+                >
+                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-700 border-gray-600">
+                    <SelectItem value="passport" className="text-white">Passport</SelectItem>
+                    <SelectItem value="work_permit" className="text-white">Work Permit</SelectItem>
+                    <SelectItem value="residence_id" className="text-white">Residence ID</SelectItem>
+                    <SelectItem value="medical_license" className="text-white">Medical License</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Upload Area */}
+              <div className="space-y-2">
+                <Label className="text-gray-300">Upload Document</Label>
+                <UploadDropzone
+                  endpoint="permitDocumentUploader"
+                  onClientUploadComplete={async (res) => {
+                    if (res?.[0]?.url) {
+                      await handleQuickScan(res[0].url)
+                    }
+                  }}
+                  onUploadError={(error: Error) => {
+                    toast.error(`Upload failed: ${error.message}`)
+                  }}
+                  appearance={{
+                    container: "border-gray-600 bg-gray-700/30 h-40",
+                    button: "bg-green-600 hover:bg-green-700",
+                    label: "text-gray-400",
+                    allowedContent: "text-gray-500 text-xs",
+                  }}
+                />
+              </div>
+
+              {/* Supported Formats Note */}
+              <div className="flex items-start gap-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                <AlertCircle className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-blue-300">
+                  Supports JPG, PNG, PDF, and other image formats. For best results, ensure the document is clear and well-lit.
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setQuickScanOpen(false)}
+                className="bg-gray-700 border-gray-600 text-gray-300"
+              >
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         <form onSubmit={handleSubmit} className="mt-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -800,22 +980,36 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-gray-300">First Name *</Label>
+                  <Label className={`text-gray-300 flex items-center gap-1 ${isAutoFilled('firstName') ? 'text-green-400' : ''}`}>
+                    First Name * {isAutoFilled('firstName') && <Sparkles className="h-3 w-3" />}
+                  </Label>
                   <Input name="firstName" value={formData.firstName} onChange={handleChange}
-                    placeholder="John" className="bg-gray-700 border-gray-600 text-white" required />
+                    placeholder="John"
+                    className={`bg-gray-700 border-gray-600 text-white transition-all duration-500 ${
+                      isAutoFilled('firstName') ? 'border-green-500 ring-2 ring-green-500/30 bg-green-500/10' : ''
+                    }`} required />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-gray-300">Last Name *</Label>
+                  <Label className={`text-gray-300 flex items-center gap-1 ${isAutoFilled('lastName') ? 'text-green-400' : ''}`}>
+                    Last Name * {isAutoFilled('lastName') && <Sparkles className="h-3 w-3" />}
+                  </Label>
                   <Input name="lastName" value={formData.lastName} onChange={handleChange}
-                    placeholder="Doe" className="bg-gray-700 border-gray-600 text-white" required />
+                    placeholder="Doe"
+                    className={`bg-gray-700 border-gray-600 text-white transition-all duration-500 ${
+                      isAutoFilled('lastName') ? 'border-green-500 ring-2 ring-green-500/30 bg-green-500/10' : ''
+                    }`} required />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-gray-300">Nationality</Label>
+                  <Label className={`text-gray-300 flex items-center gap-1 ${isAutoFilled('nationality') ? 'text-green-400' : ''}`}>
+                    Nationality {isAutoFilled('nationality') && <Sparkles className="h-3 w-3" />}
+                  </Label>
                   <Select value={formData.nationality} onValueChange={(v) => handleSelectChange("nationality", v)}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className={`bg-gray-700 border-gray-600 text-white transition-all duration-500 ${
+                      isAutoFilled('nationality') ? 'border-green-500 ring-2 ring-green-500/30 bg-green-500/10' : ''
+                    }`}>
                       <SelectValue placeholder="Select nationality" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-700 border-gray-600">
@@ -824,9 +1018,13 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-gray-300">Gender</Label>
+                  <Label className={`text-gray-300 flex items-center gap-1 ${isAutoFilled('gender') ? 'text-green-400' : ''}`}>
+                    Gender {isAutoFilled('gender') && <Sparkles className="h-3 w-3" />}
+                  </Label>
                   <Select value={formData.gender} onValueChange={(v) => handleSelectChange("gender", v)}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className={`bg-gray-700 border-gray-600 text-white transition-all duration-500 ${
+                      isAutoFilled('gender') ? 'border-green-500 ring-2 ring-green-500/30 bg-green-500/10' : ''
+                    }`}>
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-700 border-gray-600">
@@ -839,14 +1037,23 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-gray-300">Date of Birth</Label>
+                  <Label className={`text-gray-300 flex items-center gap-1 ${isAutoFilled('dateOfBirth') ? 'text-green-400' : ''}`}>
+                    Date of Birth {isAutoFilled('dateOfBirth') && <Sparkles className="h-3 w-3" />}
+                  </Label>
                   <Input type="date" name="dateOfBirth" value={formData.dateOfBirth} onChange={handleChange}
-                    className="bg-gray-700 border-gray-600 text-white" />
+                    className={`bg-gray-700 border-gray-600 text-white transition-all duration-500 ${
+                      isAutoFilled('dateOfBirth') ? 'border-green-500 ring-2 ring-green-500/30 bg-green-500/10' : ''
+                    }`} />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-gray-300">Passport No.</Label>
+                  <Label className={`text-gray-300 flex items-center gap-1 ${isAutoFilled('passportNo') ? 'text-green-400' : ''}`}>
+                    Passport No. {isAutoFilled('passportNo') && <Sparkles className="h-3 w-3" />}
+                  </Label>
                   <Input name="passportNo" value={formData.passportNo} onChange={handleChange}
-                    placeholder="AB1234567" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="AB1234567"
+                    className={`bg-gray-700 border-gray-600 text-white transition-all duration-500 ${
+                      isAutoFilled('passportNo') ? 'border-green-500 ring-2 ring-green-500/30 bg-green-500/10' : ''
+                    }`} />
                 </div>
               </div>
 
@@ -1052,6 +1259,162 @@ export function PersonSheet({ open, onOpenChange, onSubmit, person }: PersonShee
           </div>
         </form>
       </SheetContent>
+
+      {/* OCR Preview Dialog - Shows extracted data before applying */}
+      <Dialog open={ocrPreview?.isOpen || false} onOpenChange={(open) => !open && setOcrPreview(null)}>
+        <DialogContent className="bg-gray-800 border-gray-700 max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-green-400" />
+              AI Scanned Data Preview
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Review and edit the extracted data below. Fields with existing values show a comparison.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 overflow-y-auto flex-1">
+            {/* Scanned Document Preview */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                Scanned Document
+              </h4>
+              {ocrPreview?.imageUrl && (
+                <div className="border border-gray-600 rounded-lg overflow-hidden bg-gray-900">
+                  {ocrPreview.imageUrl.toLowerCase().endsWith('.pdf') ? (
+                    <div className="flex flex-col items-center justify-center py-8 px-4">
+                      <File className="h-12 w-12 text-red-400 mb-2" />
+                      <span className="text-gray-300 text-sm">PDF Document</span>
+                      <span className="text-gray-500 text-xs mt-1 truncate max-w-full">
+                        {ocrPreview.imageUrl.split('/').pop()}
+                      </span>
+                    </div>
+                  ) : (
+                    <img
+                      src={ocrPreview.imageUrl}
+                      alt="Scanned document"
+                      className="w-full h-auto max-h-64 object-contain"
+                    />
+                  )}
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500">
+                  Document type: <span className="text-gray-300">{ocrPreview?.docType?.replace(/_/g, ' ').toUpperCase()}</span>
+                </p>
+                <Badge variant="outline" className="text-xs border-green-500/30 text-green-400 bg-green-500/10">
+                  {Object.keys(ocrPreview?.editedData || {}).length} fields found
+                </Badge>
+              </div>
+            </div>
+
+            {/* Extracted Data Fields - Now Editable */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-gray-400 flex items-center gap-2">
+                  <Pencil className="h-4 w-4 text-green-400" />
+                  Edit Before Applying
+                </h4>
+              </div>
+              <div className="space-y-3 max-h-80 overflow-y-auto pr-2">
+                {Object.entries(ocrPreview?.editedData || {}).map(([field, value]) => {
+                  const existingValue = formData[field as keyof PersonFormData] as string
+                  const originalValue = ocrPreview?.data[field]
+                  const isEdited = value !== originalValue
+                  const hasExistingValue = existingValue && existingValue !== value
+
+                  return (
+                    <div key={field} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs text-gray-400 font-medium">{getFieldLabel(field)}</label>
+                        <div className="flex items-center gap-1">
+                          {isEdited && (
+                            <button
+                              type="button"
+                              onClick={() => handleResetField(field)}
+                              className="p-1 text-gray-500 hover:text-amber-400 transition-colors"
+                              title="Reset to original"
+                            >
+                              <RefreshCw className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Editable Input */}
+                      <Input
+                        value={value}
+                        onChange={(e) => handlePreviewFieldEdit(field, e.target.value)}
+                        className={`bg-gray-600 border-gray-500 text-white h-9 text-sm ${
+                          isEdited ? 'border-amber-500/50' : ''
+                        }`}
+                      />
+
+                      {/* Show existing value comparison if different */}
+                      {hasExistingValue && (
+                        <div className="flex items-start gap-2 p-2 bg-amber-900/20 border border-amber-500/30 rounded text-xs">
+                          <AlertCircle className="h-3.5 w-3.5 text-amber-400 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <span className="text-amber-300">Current value: </span>
+                            <span className="text-gray-300">{existingValue}</span>
+                            <span className="text-gray-500 block mt-0.5">Will be replaced with new value</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+              {Object.keys(ocrPreview?.editedData || {}).length === 0 && (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <AlertCircle className="h-8 w-8 text-gray-500 mb-2" />
+                  <p className="text-gray-500 text-sm">No data could be extracted.</p>
+                  <p className="text-gray-600 text-xs mt-1">Try a clearer image or different document type.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Summary Banner */}
+          {Object.keys(ocrPreview?.editedData || {}).length > 0 && (
+            <div className="flex items-center gap-3 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
+              <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm text-green-300">
+                  Ready to apply {Object.keys(ocrPreview?.editedData || {}).length} fields to the form
+                </p>
+                <p className="text-xs text-gray-400">
+                  {Object.entries(ocrPreview?.editedData || {}).filter(([field]) => {
+                    const existingValue = formData[field as keyof PersonFormData] as string
+                    return existingValue && existingValue !== ocrPreview?.editedData[field]
+                  }).length > 0 && (
+                    <>Some existing values will be replaced.</>
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 pt-4 border-t border-gray-700">
+            <Button
+              variant="outline"
+              onClick={() => setOcrPreview(null)}
+              className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApplyOcrData}
+              className="bg-green-600 hover:bg-green-700 text-white"
+              disabled={Object.keys(ocrPreview?.editedData || {}).length === 0}
+            >
+              <Check className="h-4 w-4 mr-2" />
+              Apply {Object.keys(ocrPreview?.editedData || {}).length} Fields
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   )
 }

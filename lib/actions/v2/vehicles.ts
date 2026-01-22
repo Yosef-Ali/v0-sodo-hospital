@@ -109,6 +109,53 @@ export async function createVehicle(data: {
       return { success: false, error: "Category is required" }
     }
 
+    // Check for duplicate plate number
+    if (data.plateNumber) {
+      const existingVehicle = await db
+        .select({
+          id: vehicles.id,
+          title: vehicles.title,
+          plateNumber: vehicles.plateNumber,
+          ownerName: vehicles.ownerName
+        })
+        .from(vehicles)
+        .where(eq(vehicles.plateNumber, data.plateNumber))
+        .limit(1)
+
+      if (existingVehicle.length > 0) {
+        return {
+          success: false,
+          error: "A vehicle with this plate number already exists",
+          errorCode: "DUPLICATE_PLATE_NUMBER",
+          existingVehicle: existingVehicle[0]
+        }
+      }
+    }
+
+    // Check for duplicate chassis number
+    if (data.chassisNumber) {
+      const existingVehicle = await db
+        .select({
+          id: vehicles.id,
+          title: vehicles.title,
+          plateNumber: vehicles.plateNumber,
+          chassisNumber: vehicles.chassisNumber,
+          ownerName: vehicles.ownerName
+        })
+        .from(vehicles)
+        .where(eq(vehicles.chassisNumber, data.chassisNumber))
+        .limit(1)
+
+      if (existingVehicle.length > 0) {
+        return {
+          success: false,
+          error: "A vehicle with this chassis number already exists",
+          errorCode: "DUPLICATE_CHASSIS_NUMBER",
+          existingVehicle: existingVehicle[0]
+        }
+      }
+    }
+
     const result = await db
       .insert(vehicles)
       .values({
@@ -155,7 +202,7 @@ export async function updateVehicle(
     description: string
     category: string
     status: string
-
+    plateNumber: string
     vehicleType: string
     vehicleModel: string
     vehicleYear: string
@@ -173,7 +220,7 @@ export async function updateVehicle(
 ) {
   try {
     const existing = await db
-      .select({ id: vehicles.id })
+      .select({ id: vehicles.id, ticketNumber: vehicles.ticketNumber })
       .from(vehicles)
       .where(eq(vehicles.id, vehicleId))
       .limit(1)
@@ -182,9 +229,62 @@ export async function updateVehicle(
       return { success: false, error: "Vehicle not found" }
     }
 
+    // Generate ticket number if missing
+    const updateData: any = { ...data }
+    if (!existing[0].ticketNumber) {
+      updateData.ticketNumber = generateTicketNumber("VEH")
+    }
+
+    // Check for duplicate plate number (excluding current vehicle)
+    if (data.plateNumber) {
+      const existingPlate = await db
+        .select({
+          id: vehicles.id,
+          title: vehicles.title,
+          plateNumber: vehicles.plateNumber,
+          ownerName: vehicles.ownerName
+        })
+        .from(vehicles)
+        .where(eq(vehicles.plateNumber, data.plateNumber))
+        .limit(1)
+
+      if (existingPlate.length > 0 && existingPlate[0].id !== vehicleId) {
+        return {
+          success: false,
+          error: "A vehicle with this plate number already exists",
+          errorCode: "DUPLICATE_PLATE_NUMBER",
+          existingVehicle: existingPlate[0]
+        }
+      }
+    }
+
+    // Check for duplicate chassis number (excluding current vehicle)
+    if (data.chassisNumber) {
+      const existingChassis = await db
+        .select({
+          id: vehicles.id,
+          title: vehicles.title,
+          plateNumber: vehicles.plateNumber,
+          chassisNumber: vehicles.chassisNumber,
+          ownerName: vehicles.ownerName
+        })
+        .from(vehicles)
+        .where(eq(vehicles.chassisNumber, data.chassisNumber))
+        .limit(1)
+
+      if (existingChassis.length > 0 && existingChassis[0].id !== vehicleId) {
+        return {
+          success: false,
+          error: "A vehicle with this chassis number already exists",
+          errorCode: "DUPLICATE_CHASSIS_NUMBER",
+          existingVehicle: existingChassis[0]
+        }
+      }
+    }
+
     const result = await db
       .update(vehicles)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...updateData, updatedAt: new Date() })
       .where(eq(vehicles.id, vehicleId))
       .returning()
 
@@ -264,5 +364,46 @@ export async function getVehicleStats() {
   } catch (error) {
     console.error("Error fetching vehicle stats:", error)
     return { success: false, error: "Failed to fetch statistics" }
+  }
+}
+
+/**
+ * Backfill missing ticket numbers for all vehicle records
+ */
+export async function backfillVehicleTicketNumbers() {
+  try {
+    const vehiclesWithoutTickets = await db
+      .select({ id: vehicles.id, title: vehicles.title })
+      .from(vehicles)
+      .where(sql`${vehicles.ticketNumber} IS NULL`)
+
+    if (vehiclesWithoutTickets.length === 0) {
+      return { success: true, message: "All vehicles already have ticket numbers", updated: 0 }
+    }
+
+    let updated = 0
+    for (const vehicle of vehiclesWithoutTickets) {
+      try {
+        const ticketNumber = generateTicketNumber("VEH")
+        await db
+          .update(vehicles)
+          .set({ ticketNumber, updatedAt: new Date() })
+          .where(eq(vehicles.id, vehicle.id))
+        updated++
+      } catch (err) {
+        console.error(`Failed to update vehicle ${vehicle.title}:`, err)
+      }
+    }
+
+    revalidatePath("/vehicle")
+    return {
+      success: true,
+      message: `Updated ${updated} of ${vehiclesWithoutTickets.length} vehicles`,
+      updated,
+      total: vehiclesWithoutTickets.length
+    }
+  } catch (error) {
+    console.error("Error backfilling vehicle ticket numbers:", error)
+    return { success: false, error: "Failed to backfill ticket numbers" }
   }
 }

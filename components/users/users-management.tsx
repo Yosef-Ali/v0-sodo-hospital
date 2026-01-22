@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, UserPlus, Mail, Shield, AlertCircle, Search } from "lucide-react"
+import { Users, UserPlus, Mail, Shield, AlertCircle, Search, Check } from "lucide-react"
 
 interface UserProfile {
   id: string
@@ -28,32 +28,37 @@ export function UsersManagement() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const [inviteEmail, setInviteEmail] = useState("")
-  const [inviteRole, setInviteRole] = useState("user")
+  
+  // Create User state
+  const [createName, setCreateName] = useState("")
+  const [createEmail, setCreateEmail] = useState("")
+  const [createPassword, setCreatePassword] = useState("")
+  const [createRole, setCreateRole] = useState("USER")
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteMessage, setInviteMessage] = useState<string | null>(null)
 
   useEffect(() => {
     fetchUsers()
-  }, [currentUser])
+  }, [session])
 
   const fetchUsers = async () => {
     try {
-      // This would typically fetch from a users table via API.
-      // For now, we'll just show the current NextAuth user if available.
-      if (session?.user) {
-        const mockUsers: UserProfile[] = [
-          {
-            id: session.user.id || "current-user",
-            email: session.user.email || "",
-            full_name: session.user.name || "Current User",
-            role: "admin",
-            created_at: new Date().toISOString(),
-            last_sign_in: new Date().toISOString(),
-          },
-        ]
-        setUsers(mockUsers)
+      const { getUsers } = await import("@/lib/actions/users")
+      const result = await getUsers()
+      
+      if (result.success && result.data) {
+        // Map DB users to UserProfile interface
+        const mappedUsers: UserProfile[] = result.data.map((u: any) => ({
+          id: u.id,
+          email: u.email,
+          full_name: u.name,
+          role: u.role,
+          created_at: u.createdAt,
+          last_sign_in: u.updatedAt // Using updatedAt as proxy for now
+        }))
+        setUsers(mappedUsers)
       } else {
+        // Fallback or empty
         setUsers([])
       }
     } catch (err: any) {
@@ -63,21 +68,33 @@ export function UsersManagement() {
     }
   }
 
-  const handleInviteUser = async (e: React.FormEvent) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault()
     setInviteLoading(true)
     setInviteMessage(null)
     setError(null)
 
     try {
-      // In a real implementation, you would:
-      // 1. Create a user invitation record in your database
-      // 2. Send an invitation email via Stack Auth API
-      // For now, we'll just show a success message
+      const { createUser } = await import("@/lib/actions/users")
+      const result = await createUser({
+        name: createName,
+        email: createEmail,
+        password: createPassword,
+        role: createRole as any
+      })
 
-      setInviteMessage(`Invitation sent to ${inviteEmail}!`)
-      setInviteEmail("")
-      setInviteRole("user")
+      if (!result.success) {
+        throw new Error(result.error)
+      }
+
+      setInviteMessage(`User ${createName} created successfully!`)
+      setCreateName("")
+      setCreateEmail("")
+      setCreatePassword("")
+      setCreateRole("USER")
+      
+      // Refresh list
+      fetchUsers()
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -103,52 +120,86 @@ export function UsersManagement() {
           <DialogTrigger asChild>
             <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
               <UserPlus className="mr-2 h-4 w-4" />
-              Invite User
+              Create User
             </Button>
           </DialogTrigger>
           <DialogContent className="bg-gray-900 border-gray-700">
             <DialogHeader>
-              <DialogTitle className="text-white">Invite New User</DialogTitle>
+              <DialogTitle className="text-white">Create New User</DialogTitle>
               <DialogDescription className="text-gray-400">
-                Send an invitation to join SODDO Hospital's system
+                Add a new user to the system. They will be able to log in immediately.
               </DialogDescription>
             </DialogHeader>
 
             {inviteMessage && (
               <Alert className="bg-green-950/50 border-green-900">
-                <Mail className="h-4 w-4" />
+                <Check className="h-4 w-4" />
                 <AlertDescription>{inviteMessage}</AlertDescription>
               </Alert>
             )}
 
-            <form onSubmit={handleInviteUser} className="space-y-4">
+            <form onSubmit={handleCreateUser} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="invite-email" className="text-gray-300">
-                  Email Address
+                <Label htmlFor="create-name" className="text-gray-300">
+                  Full Name
                 </Label>
                 <Input
-                  id="invite-email"
-                  type="email"
-                  placeholder="user@hospital.com"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
+                  id="create-name"
+                  type="text"
+                  placeholder="John Doe"
+                  value={createName}
+                  onChange={(e) => setCreateName(e.target.value)}
                   required
                   className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-green-500 focus:ring-green-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="invite-role" className="text-gray-300">
+                <Label htmlFor="create-email" className="text-gray-300">
+                  Email Address
+                </Label>
+                <Input
+                  id="create-email"
+                  type="email"
+                  placeholder="user@hospital.com"
+                  value={createEmail}
+                  onChange={(e) => setCreateEmail(e.target.value)}
+                  required
+                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-green-500 focus:ring-green-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="create-password" className="text-gray-300">
+                  Password
+                </Label>
+                <Input
+                  id="create-password"
+                  type="password"
+                  placeholder="Minimum 6 characters"
+                  value={createPassword}
+                  onChange={(e) => setCreatePassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="bg-gray-800 border-gray-700 text-white placeholder:text-gray-500 focus:border-green-500 focus:ring-green-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="create-role" className="text-gray-300">
                   Role
                 </Label>
-                <Select value={inviteRole} onValueChange={setInviteRole}>
+                <Select value={createRole} onValueChange={setCreateRole}>
                   <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-gray-800 border-gray-700">
-                    <SelectItem value="user">User</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="USER">User</SelectItem>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="HR_MANAGER">HR Manager</SelectItem>
+                    <SelectItem value="HR">HR</SelectItem>
+                    <SelectItem value="LOGISTICS">Logistics</SelectItem>
+                    <SelectItem value="FINANCE">Finance</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -158,7 +209,7 @@ export function UsersManagement() {
                 className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
                 disabled={inviteLoading}
               >
-                {inviteLoading ? "Sending..." : "Send Invitation"}
+                {inviteLoading ? "Creating..." : "Create User"}
               </Button>
             </form>
           </DialogContent>

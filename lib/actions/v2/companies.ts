@@ -96,6 +96,29 @@ export async function createCompany(data: {
       return { success: false, error: "Title is required" }
     }
 
+    // Check for duplicate company name
+    if (data.companyName) {
+      const existingCompany = await db
+        .select({
+          id: companyRegistrations.id,
+          title: companyRegistrations.title,
+          companyName: companyRegistrations.companyName,
+          registrationType: companyRegistrations.registrationType
+        })
+        .from(companyRegistrations)
+        .where(eq(companyRegistrations.companyName, data.companyName))
+        .limit(1)
+
+      if (existingCompany.length > 0) {
+        return {
+          success: false,
+          error: "A company with this name already exists",
+          errorCode: "DUPLICATE_COMPANY_NAME",
+          existingCompany: existingCompany[0]
+        }
+      }
+    }
+
     const result = await db
       .insert(companyRegistrations)
       .values({
@@ -143,7 +166,7 @@ export async function updateCompany(
 ) {
   try {
     const existing = await db
-      .select({ id: companyRegistrations.id })
+      .select({ id: companyRegistrations.id, ticketNumber: companyRegistrations.ticketNumber })
       .from(companyRegistrations)
       .where(eq(companyRegistrations.id, companyId))
       .limit(1)
@@ -152,9 +175,38 @@ export async function updateCompany(
       return { success: false, error: "Company registration not found" }
     }
 
+    // Generate ticket number if missing
+    const updateData: any = { ...data }
+    if (!existing[0].ticketNumber) {
+      updateData.ticketNumber = generateTicketNumber("CMP")
+    }
+
+    // Check for duplicate company name (excluding current company)
+    if (data.companyName) {
+      const existingName = await db
+        .select({
+          id: companyRegistrations.id,
+          title: companyRegistrations.title,
+          companyName: companyRegistrations.companyName,
+          registrationType: companyRegistrations.registrationType
+        })
+        .from(companyRegistrations)
+        .where(eq(companyRegistrations.companyName, data.companyName))
+        .limit(1)
+
+      if (existingName.length > 0 && existingName[0].id !== companyId) {
+        return {
+          success: false,
+          error: "A company with this name already exists",
+          errorCode: "DUPLICATE_COMPANY_NAME",
+          existingCompany: existingName[0]
+        }
+      }
+    }
+
     const result = await db
       .update(companyRegistrations)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...updateData, updatedAt: new Date() })
       .where(eq(companyRegistrations.id, companyId))
       .returning()
 
@@ -234,5 +286,46 @@ export async function getCompanyStats() {
   } catch (error) {
     console.error("Error fetching company stats:", error)
     return { success: false, error: "Failed to fetch statistics" }
+  }
+}
+
+/**
+ * Backfill missing ticket numbers for all company records
+ */
+export async function backfillCompanyTicketNumbers() {
+  try {
+    const companiesWithoutTickets = await db
+      .select({ id: companyRegistrations.id, title: companyRegistrations.title })
+      .from(companyRegistrations)
+      .where(sql`${companyRegistrations.ticketNumber} IS NULL`)
+
+    if (companiesWithoutTickets.length === 0) {
+      return { success: true, message: "All companies already have ticket numbers", updated: 0 }
+    }
+
+    let updated = 0
+    for (const company of companiesWithoutTickets) {
+      try {
+        const ticketNumber = generateTicketNumber("CMP")
+        await db
+          .update(companyRegistrations)
+          .set({ ticketNumber, updatedAt: new Date() })
+          .where(eq(companyRegistrations.id, company.id))
+        updated++
+      } catch (err) {
+        console.error(`Failed to update company ${company.title}:`, err)
+      }
+    }
+
+    revalidatePath("/company")
+    return {
+      success: true,
+      message: `Updated ${updated} of ${companiesWithoutTickets.length} companies`,
+      updated,
+      total: companiesWithoutTickets.length
+    }
+  } catch (error) {
+    console.error("Error backfilling company ticket numbers:", error)
+    return { success: false, error: "Failed to backfill ticket numbers" }
   }
 }

@@ -161,7 +161,7 @@ export async function updateImport(
 ) {
   try {
     const existing = await db
-      .select({ id: importPermits.id })
+      .select({ id: importPermits.id, ticketNumber: importPermits.ticketNumber })
       .from(importPermits)
       .where(eq(importPermits.id, importId))
       .limit(1)
@@ -170,9 +170,15 @@ export async function updateImport(
       return { success: false, error: "Import permit not found" }
     }
 
+    // Generate ticket number if missing
+    const updateData: any = { ...data }
+    if (!existing[0].ticketNumber) {
+      updateData.ticketNumber = generateTicketNumber("IMP")
+    }
+
     const result = await db
       .update(importPermits)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...updateData, updatedAt: new Date() })
       .where(eq(importPermits.id, importId))
       .returning()
 
@@ -252,5 +258,46 @@ export async function getImportStats() {
   } catch (error) {
     console.error("Error fetching import stats:", error)
     return { success: false, error: "Failed to fetch statistics" }
+  }
+}
+
+/**
+ * Backfill missing ticket numbers for all import records
+ */
+export async function backfillImportTicketNumbers() {
+  try {
+    const importsWithoutTickets = await db
+      .select({ id: importPermits.id, title: importPermits.title })
+      .from(importPermits)
+      .where(sql`${importPermits.ticketNumber} IS NULL`)
+
+    if (importsWithoutTickets.length === 0) {
+      return { success: true, message: "All imports already have ticket numbers", updated: 0 }
+    }
+
+    let updated = 0
+    for (const imp of importsWithoutTickets) {
+      try {
+        const ticketNumber = generateTicketNumber("IMP")
+        await db
+          .update(importPermits)
+          .set({ ticketNumber, updatedAt: new Date() })
+          .where(eq(importPermits.id, imp.id))
+        updated++
+      } catch (err) {
+        console.error(`Failed to update import ${imp.title}:`, err)
+      }
+    }
+
+    revalidatePath("/import")
+    return {
+      success: true,
+      message: `Updated ${updated} of ${importsWithoutTickets.length} imports`,
+      updated,
+      total: importsWithoutTickets.length
+    }
+  } catch (error) {
+    console.error("Error backfilling import ticket numbers:", error)
+    return { success: false, error: "Failed to backfill ticket numbers" }
   }
 }

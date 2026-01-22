@@ -218,6 +218,25 @@ export async function syncEntityToCalendar(
 }
 
 /**
+ * Delete calendar event by entity (Task, Permit, etc.)
+ */
+export async function deleteEntityFromCalendar(entityType: string, entityId: string) {
+  try {
+    const deleted = await db.delete(calendarEvents).where(
+      and(
+        eq(calendarEvents.entityType, entityType),
+        eq(calendarEvents.entityId, entityId)
+      )
+    )
+    revalidatePath("/calendar")
+    return { success: true }
+  } catch (error) {
+    console.error("Error deleting entity from calendar:", error)
+    return { success: false, error: "Failed to delete from calendar" }
+  }
+}
+
+/**
  * Generate calendar events for expiring permits
  * Run this via Cron or periodically
  */

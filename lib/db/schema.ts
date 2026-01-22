@@ -334,7 +334,7 @@ export const importPermits = pgTable("import_permits", {
   ticketNumber: varchar("ticket_number", { length: 50 }).unique(), // Unique Import ID (e.g., IMP-001)
   title: varchar("title", { length: 500 }).notNull(),
   description: text("description"),
-  category: varchar("category", { length: 50 }).notNull(), // "pip" | "single_window"
+  category: varchar("category", { length: 50 }).notNull(), // "pip" | "single_window" | "customs_clearance"
   status: varchar("status", { length: 50 }).default("pending").notNull(),
   dueDate: timestamp("due_date"),
   assigneeId: uuid("assignee_id").references(() => users.id),

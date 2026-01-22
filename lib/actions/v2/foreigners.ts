@@ -204,13 +204,23 @@ export async function createPerson(data: {
     // Check for duplicate passport number
     if (data.passportNo) {
       const existingPerson = await db
-        .select({ id: people.id })
+        .select({
+          id: people.id,
+          firstName: people.firstName,
+          lastName: people.lastName,
+          passportNo: people.passportNo
+        })
         .from(people)
         .where(eq(people.passportNo, data.passportNo))
         .limit(1)
 
       if (existingPerson.length > 0) {
-        return { success: false, error: "A person with this passport number already exists" }
+        return {
+          success: false,
+          error: "A person with this passport number already exists",
+          errorCode: "DUPLICATE_PASSPORT",
+          existingPerson: existingPerson[0]
+        }
       }
     }
 
@@ -277,15 +287,21 @@ export async function updatePerson(
   }>
 ) {
   try {
-    // Check if person exists
+    // Check if person exists and get current ticket number
     const existing = await db
-      .select({ id: people.id })
+      .select({ id: people.id, ticketNumber: people.ticketNumber })
       .from(people)
       .where(eq(people.id, personId))
       .limit(1)
 
     if (existing.length === 0) {
       return { success: false, error: "Person not found" }
+    }
+
+    // Generate ticket number if missing
+    const updateData: any = { ...data }
+    if (!existing[0].ticketNumber) {
+      updateData.ticketNumber = generateTicketNumber("FOR")
     }
 
     // Check if guardian exists if provided
@@ -319,10 +335,10 @@ export async function updatePerson(
       }
     }
 
-    console.log("Updating person:", personId, "with data:", JSON.stringify(data, null, 2))
+    console.log("Updating person:", personId, "with data:", JSON.stringify(updateData, null, 2))
     const result = await db
       .update(people)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...updateData, updatedAt: new Date() })
       .where(eq(people.id, personId))
       .returning()
 
@@ -414,7 +430,6 @@ export async function deletePerson(personId: string, options?: { cascade?: boole
       await db.delete(tasksV2).where(sql`${tasksV2.entityType} = 'person' AND ${tasksV2.entityId} = ${personId}`)
     }
 
-    console.log("Updating person:", personId, "with data:", JSON.stringify(data, null, 2))
     const result = await db
       .delete(people)
       .where(eq(people.id, personId))
@@ -442,7 +457,6 @@ export async function deletePerson(personId: string, options?: { cascade?: boole
  */
 export async function getDependents(guardianId: string) {
   try {
-    console.log("Updating person:", personId, "with data:", JSON.stringify(data, null, 2))
     const result = await db
       .select()
       .from(people)
@@ -486,5 +500,53 @@ export async function getPeopleStats() {
   } catch (error) {
     console.error("Error fetching people stats:", error)
     return { success: false, error: "Failed to fetch statistics" }
+  }
+}
+
+/**
+ * Backfill missing ticket numbers for all people records
+ * This should be run once to fix existing records without ticket numbers
+ */
+export async function backfillMissingTicketNumbers() {
+  try {
+    // Find all people without ticket numbers
+    const peopleWithoutTickets = await db
+      .select({ id: people.id, firstName: people.firstName, lastName: people.lastName })
+      .from(people)
+      .where(sql`${people.ticketNumber} IS NULL`)
+
+    if (peopleWithoutTickets.length === 0) {
+      return { success: true, message: "All records already have ticket numbers", updated: 0 }
+    }
+
+    let updated = 0
+    const errors: string[] = []
+
+    for (const person of peopleWithoutTickets) {
+      try {
+        const ticketNumber = generateTicketNumber("FOR")
+        await db
+          .update(people)
+          .set({ ticketNumber, updatedAt: new Date() })
+          .where(eq(people.id, person.id))
+        updated++
+      } catch (err) {
+        errors.push(`Failed to update ${person.firstName} ${person.lastName}: ${err}`)
+      }
+    }
+
+    revalidatePath("/foreigners")
+    revalidatePath("/dashboard")
+
+    return {
+      success: true,
+      message: `Updated ${updated} of ${peopleWithoutTickets.length} records`,
+      updated,
+      total: peopleWithoutTickets.length,
+      errors: errors.length > 0 ? errors : undefined
+    }
+  } catch (error) {
+    console.error("Error backfilling ticket numbers:", error)
+    return { success: false, error: "Failed to backfill ticket numbers" }
   }
 }

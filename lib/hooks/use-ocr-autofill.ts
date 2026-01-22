@@ -11,7 +11,7 @@ interface OcrResult {
 
 export type DocumentTypeForOcr =
   | "passport" | "work_permit" | "residence_id" | "medical_license"
-  | "libre" | "bill_of_lading" | "general"
+  | "libre" | "bill_of_lading" | "business_license" | "general"
 
 /**
  * Hook for OCR auto-fill functionality using Gemini 2.5 Flash
@@ -142,3 +142,18 @@ export function mapOcrToImportForm(ocrData: Record<string, any>): Record<string,
   return mapped
 }
 
+/**
+ * Maps OCR extracted data to CompanySheet form fields (from Business License)
+ */
+export function mapOcrToCompanyForm(ocrData: Record<string, any>): Record<string, string> {
+  const mapped: Record<string, string> = {}
+
+  if (ocrData.companyName) mapped.companyName = ocrData.companyName
+  if (ocrData.tinNumber) mapped.tinNumber = ocrData.tinNumber
+  if (ocrData.licenseNumber) mapped.licenseNumber = ocrData.licenseNumber
+  if (ocrData.businessType) mapped.businessType = ocrData.businessType
+  if (ocrData.address) mapped.address = ocrData.address
+  if (ocrData.contactPerson) mapped.contactPerson = ocrData.contactPerson
+
+  return mapped
+}

@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -26,13 +25,15 @@ export function LoginForm() {
     setMessage(null)
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({
+      const result = await import("next-auth/react").then(mod => mod.signIn("credentials", {
         email,
         password,
-      })
+        redirect: false,
+      }))
 
-      if (error) throw error
+      if (result?.error) {
+        throw new Error("Invalid email or password")
+      }
 
       router.push("/dashboard")
       router.refresh()
@@ -48,15 +49,8 @@ export function LoginForm() {
     setError(null)
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (error) throw error
+        // Not implemented for VPS setup yet, placeholder or remove
+        setError("Google login not configured for this environment")
     } catch (error: any) {
       setError(error.message)
       setLoading(false)

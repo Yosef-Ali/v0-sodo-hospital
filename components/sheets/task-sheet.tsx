@@ -25,8 +25,14 @@ import {
   Car,
   Stethoscope,
   Plane,
-  User
+  User,
+  Check,
+  ChevronsUpDown,
+  Plus
 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 // Define the shape of the task object coming from the database/parent
 interface Task {
@@ -85,6 +91,8 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
   
   const [loadingUsers, setLoadingUsers] = useState(false)
   const [loadingEntities, setLoadingEntities] = useState(false)
+  
+  const [isTitleOpen, setIsTitleOpen] = useState(false)
   
   const [formData, setFormData] = useState<TaskFormData>({
     title: "",
@@ -672,43 +680,82 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                 </Label>
                 {/* Quick Title Logic */}
                 <div className="flex gap-2 flex-col">
-                  {relevantTitles.length > 0 && (
-                    <Select
-                      value={relevantTitles.includes(formData.title) ? formData.title : "custom"}
-                      onValueChange={(value) => {
-                        if (value !== "custom") {
-                          setFormData({ ...formData, title: value })
-                        } else {
-                           if (relevantTitles.includes(formData.title)) {
-                              setFormData({ ...formData, title: "" })
-                           }
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
-                        <SelectValue placeholder="Select a standard task..." />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
-                        {relevantTitles.map((title) => (
-                          <SelectItem key={title} value={title} className="text-white">
-                            {title}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="custom" className="text-green-400 font-medium border-t border-gray-600 mt-1 pt-1">
-                          + Create custom title
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
+                  {relevantTitles.length > 0 ? (
+                    <Popover open={isTitleOpen} onOpenChange={setIsTitleOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={isTitleOpen}
+                          className="w-full justify-between bg-gray-700 border-gray-600 text-white hover:bg-gray-600 hover:text-white"
+                        >
+                          {formData.title && relevantTitles.includes(formData.title)
+                            ? formData.title
+                            : formData.title ? formData.title : "Select or type task title..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0 bg-gray-700 border-gray-600">
+                        <Command className="bg-gray-700 text-white">
+                          <CommandInput placeholder="Search or type new title..." className="text-white placeholder:text-gray-400" />
+                          <CommandList>
+                            <CommandEmpty className="py-2 px-4 text-sm text-gray-400">
+                               No preset found. Type custom title.
+                            </CommandEmpty>
+                            <CommandGroup heading="Suggestions">
+                              {relevantTitles.map((title) => (
+                                <CommandItem
+                                  key={title}
+                                  value={title}
+                                  onSelect={(currentValue) => {
+                                    setFormData({ ...formData, title: currentValue })
+                                    setIsTitleOpen(false)
+                                  }}
+                                  className="text-white hover:bg-gray-600 aria-selected:bg-gray-600 aria-selected:text-white"
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      formData.title === title ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {title}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                            <CommandGroup heading="Custom">
+                                <CommandItem
+                                  value="custom-title-option"
+                                  onSelect={() => {
+                                    setFormData({ ...formData, title: "" }) // Clear to show input
+                                    setIsTitleOpen(false)
+                                  }}
+                                  className="text-green-400 hover:bg-gray-600 aria-selected:bg-gray-600 aria-selected:text-green-400 font-medium"
+                                >
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  Write custom title...
+                                </CommandItem>
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  ) : null}
                   
-                  {/* Custom Input */}
-                  {(!formData.category || !relevantTitles.includes(formData.title)) && (
-                    <Input
-                      value={formData.title}
-                      placeholder="e.g., Renew Medical License for Dr. Smith"
-                      className="bg-gray-700 border-gray-600 text-white"
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    />
+                  {/* Custom Input: Show if explicit custom selection OR no quick titles available OR current title is not in presets */}
+                  {(!formData.category || relevantTitles.length === 0 || (formData.title && !relevantTitles.includes(formData.title)) || formData.title === "") && (
+                     <div className={cn("transition-all duration-200", relevantTitles.length > 0 && "mt-2")}>
+                        {relevantTitles.length > 0 && formData.title && !relevantTitles.includes(formData.title) && (
+                            <Label className="text-xs text-green-400 mb-1.5 block">Custom Title Selected:</Label>
+                        )}
+                        <Input
+                          value={formData.title}
+                          placeholder={relevantTitles.length > 0 ? "Type your custom title here..." : "e.g., Renew Medical License for Dr. Smith"}
+                          className="bg-gray-700 border-gray-600 text-white"
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          autoFocus={relevantTitles.length > 0 && !relevantTitles.includes(formData.title)}
+                        />
+                     </div>
                   )}
                 </div>
               </div>

@@ -5,7 +5,7 @@ import { eq, desc, and, gte, lte, sql, or, isNull, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { gregorianToEC, formatEC } from "@/lib/dates/ethiopian"
 import { hospitalTaskCategories, getAllWorkflows, TaskWorkflow, DocumentItem } from "@/lib/data/hospital-tasks"
-import { syncTaskToCalendar } from "@/lib/actions/v2/calendar-events"
+import { syncTaskToCalendar, deleteEntityFromCalendar } from "@/lib/actions/v2/calendar-events"
 
 /**
  * Get all tasks with optional filters and pagination
@@ -444,6 +444,9 @@ export async function deleteTask(taskId: string, options?: { deletePermit?: bool
 
     revalidatePath("/tasks")
     revalidatePath("/dashboard")
+    // Delete from Calendar
+    await deleteEntityFromCalendar("task", taskId)
+
     if (result[0].permitId) {
       revalidatePath(`/permits/${result[0].permitId}`)
     }
@@ -866,6 +869,11 @@ export async function createTaskWithWorkflow(data: {
     revalidatePath("/dashboard")
     if (permitId) {
       revalidatePath(`/permits/${permitId}`)
+    }
+
+    // Sync to calendar
+    if (data.dueDate) {
+      await syncTaskToCalendar(result[0].id)
     }
 
     return { success: true, data: result[0] }
