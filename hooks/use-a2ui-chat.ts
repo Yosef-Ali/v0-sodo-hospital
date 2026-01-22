@@ -187,6 +187,7 @@ export function useA2UIChat() {
           action: actionName,
           context,
           sessionId: state.sessionId,
+          verifiedTicket: state.verifiedTicket,
         }),
       })
 

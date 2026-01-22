@@ -269,31 +269,47 @@ export function QuickActionButtonsWidget({ actions }: QuickActionButtonsProps) {
     }
   }
 
-  // Check scrollability on mount and after scroll
+  // Check scrollability on mount, after scroll, and on resize
   useEffect(() => {
+    // Initial check
     checkScrollability()
+    
+    // Double check after a short delay to allow layout to settle
+    const timer = setTimeout(checkScrollability, 100)
+
+    // Check on window resize
+    const handleResize = () => checkScrollability()
+    window.addEventListener("resize", handleResize)
+
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener("resize", handleResize)
+    }
   }, [actions])
 
   return (
-    <div className="relative flex items-center gap-1">
-      {/* Left Arrow */}
-      {canScrollLeft && (
-        <button
-          onClick={() => scroll("left")}
-          className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-700/50 hover:bg-gray-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors"
-          aria-label="Scroll left"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-      )}
+    <div className="flex items-center gap-1 max-w-full">
+      {/* Left Arrow - Always visible, disabled when can't scroll */}
+      <button
+        onClick={() => scroll("left")}
+        disabled={!canScrollLeft}
+        className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors shadow-sm z-10 ${
+          canScrollLeft
+            ? "bg-green-600 hover:bg-green-500 text-white cursor-pointer"
+            : "bg-gray-700/30 text-gray-500 cursor-not-allowed"
+        }`}
+        aria-label="Scroll left"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
 
-      {/* Scrollable Container */}
+      {/* Scrollable Container - Constrained to parent width */}
       <div
         ref={scrollRef}
         onScroll={checkScrollability}
-        className="flex gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0"
+        className="flex gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0 max-w-full"
       >
         {actions.map((action, idx) => (
           <Button
@@ -309,18 +325,21 @@ export function QuickActionButtonsWidget({ actions }: QuickActionButtonsProps) {
         ))}
       </div>
 
-      {/* Right Arrow */}
-      {canScrollRight && (
-        <button
-          onClick={() => scroll("right")}
-          className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-700/50 hover:bg-gray-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors"
-          aria-label="Scroll right"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      )}
+      {/* Right Arrow - Always visible, disabled when can't scroll */}
+      <button
+        onClick={() => scroll("right")}
+        disabled={!canScrollRight}
+        className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors shadow-sm z-10 ${
+          canScrollRight
+            ? "bg-green-600 hover:bg-green-500 text-white cursor-pointer"
+            : "bg-gray-700/30 text-gray-500 cursor-not-allowed"
+        }`}
+        aria-label="Scroll right"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
     </div>
   )
 }

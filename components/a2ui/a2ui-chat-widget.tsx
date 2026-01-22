@@ -142,14 +142,14 @@ export function A2UIChatWidget() {
                 <X className="w-4 h-4" />
               </Button>
             </div>
-          </div>
+           </div>
 
           {/* Content */}
           {!isMinimized && (
             <>
               {/* Messages Area */}
-              <ScrollArea className="flex-1 px-4 py-4 overflow-hidden">
-                <div className="space-y-6 overflow-hidden">
+              <ScrollArea className="flex-1 px-4 py-4 w-full">
+                <div className="space-y-6">
                   {messages.map((message) => (
                     <div key={message.id}>
                       {message.role === "user" ? (
@@ -164,17 +164,17 @@ export function A2UIChatWidget() {
                         </div>
                       ) : (
                         /* Assistant Message - Refactored Design */
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 w-full">
                           {/* Avatar */}
                           <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-gray-800 border border-gray-700">
                             <Bot className="w-4 h-4 text-green-400" />
                           </div>
                           
-                          {/* Content Container */}
-                          <div className="flex-1 min-w-0 space-y-4 overflow-hidden">
+                          {/* Content Container - Strict width containment */}
+                          <div className="flex-1 w-0 space-y-4">
                             {/* Text Content */}
                             {message.content && (
-                              <div className="bg-transparent pl-1 text-sm text-gray-200 leading-relaxed">
+                              <div className="bg-transparent pl-1 text-sm text-gray-200 leading-relaxed relative">
                                 <ReactMarkdown
                                   components={{
                                     p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
@@ -196,7 +196,7 @@ export function A2UIChatWidget() {
                             
                             {/* Widgets */}
                             {message.widgets && message.widgets.length > 0 && (
-                              <div className="pt-2">
+                              <div className="pt-2 relative">
                                 <A2UIRenderer
                                   widgets={message.widgets}
                                   onAction={handleAction}

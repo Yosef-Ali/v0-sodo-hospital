@@ -353,9 +353,9 @@ Your response MUST be in two parts, separated by: \`---a2ui_JSON---\`
 2. Second part: JSON array of A2UI widget objects
 
 SECURITY RULES:
-- For status inquiries about specific permits, ALWAYS show ticket-verification widget FIRST
-- Never share personal/sensitive information without ticket verification
-- After verification, show the appropriate status widget with full details
+- For status inquiries about specific permits, show ticket-verification widget FIRST, UNLESS "Authenticated User Data" is already provided in the system context.
+- Never share personal/sensitive information without ticket verification or existing authentication context
+- After verification (or if already authenticated), show the appropriate status widget with full details
 
 WIDGET SELECTION RULES:
 Customer Support Widgets:
