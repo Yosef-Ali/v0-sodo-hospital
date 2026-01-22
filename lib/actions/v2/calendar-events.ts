@@ -587,16 +587,18 @@ export async function syncTaskToCalendar(taskId: string) {
     const taskResult = await db
       .select({
         task: tasksV2,
-        permit: permits
+        permit: permits,
+        person: people
       })
       .from(tasksV2)
       .leftJoin(permits, eq(tasksV2.permitId, permits.id))
+      .leftJoin(people, eq(permits.personId, people.id))
       .where(eq(tasksV2.id, taskId))
       .limit(1)
 
     if (taskResult.length === 0) return { success: false, error: "Task not found" }
 
-    const { task, permit } = taskResult[0]
+    const { task, permit, person } = taskResult[0]
 
     // If task has no due date, remove from calendar if it exists
     if (!task.dueDate) {
@@ -609,17 +611,52 @@ export async function syncTaskToCalendar(taskId: string) {
       return { success: true, action: "removed" }
     }
 
-    const title = `Task: ${task.title}`
+    // Build title with status indicator
+    let title = ""
+    if (task.status === "urgent") {
+      title = `🚨 URGENT: ${task.title}`
+    } else if (task.priority === "high") {
+      title = `⚠️ HIGH: ${task.title}`
+    } else {
+      title = `Task: ${task.title}`
+    }
+
+    // Build detailed description
+    const dueDate = new Date(task.dueDate)
+    const today = new Date()
+    const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+    let description = task.description || ""
+    description += `\n\n--- Task Details ---`
+    description += `\nStatus: ${task.status?.toUpperCase() || "PENDING"}`
+    description += `\nPriority: ${task.priority?.toUpperCase() || "MEDIUM"}`
+    description += `\nDue Date: ${dueDate.toLocaleDateString()}`
+
+    if (daysUntilDue < 0) {
+      description += `\n⚠️ OVERDUE by ${Math.abs(daysUntilDue)} day(s)`
+    } else if (daysUntilDue === 0) {
+      description += `\n⚠️ DUE TODAY`
+    } else if (daysUntilDue <= 7) {
+      description += `\n⏰ Due in ${daysUntilDue} day(s)`
+    }
+
+    if (person) {
+      description += `\nPerson: ${person.firstName} ${person.lastName}`
+    }
+    if (permit) {
+      description += `\nPermit: ${permit.category?.replace(/_/g, " ")}`
+    }
 
     await syncEntityToCalendar(
       "task",
       task.id,
       {
         title,
-        description: task.description || "",
+        description: description.trim(),
         date: task.dueDate,
         type: "deadline",
         relatedPermitId: task.permitId || undefined,
+        relatedPersonId: person?.id
       }
     )
 
