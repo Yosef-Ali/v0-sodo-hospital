@@ -58,7 +58,7 @@ export function A2UIChatWidget() {
         <Button
           onClick={toggleChat}
           size="lg"
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white z-50 group transition-all duration-300 hover:scale-110"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-lg bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white z-40 group transition-all duration-300 hover:scale-110"
         >
           <Sparkles className="w-6 h-6 group-hover:scale-110 transition-transform" />
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-gray-900 animate-pulse" />
@@ -69,7 +69,7 @@ export function A2UIChatWidget() {
       {isOpen && (
         <div
           className={cn(
-            "fixed z-50 bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl transition-all duration-500 ease-out border border-gray-700/50",
+            "fixed z-40 bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl transition-all duration-500 ease-out border border-gray-700/50",
             isExpanded
               ? "inset-2 sm:inset-4 lg:inset-12"
               : isMinimized

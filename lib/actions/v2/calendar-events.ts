@@ -29,6 +29,7 @@ export async function createCalendarEvent(data: NewCalendarEvent) {
 
 /**
  * Get calendar events for a specific date range
+ * Also includes tasks with due dates that may not be in the calendar events table
  */
 export async function getCalendarEvents(params?: {
   startDate?: Date
@@ -38,12 +39,11 @@ export async function getCalendarEvents(params?: {
   try {
     const { startDate, endDate, type } = params || {}
 
+    // 1. Get events from calendarEvents table
     let query = db.select().from(calendarEvents)
-
     const conditions = []
 
     if (startDate && endDate) {
-      // Get events that fall within or overlap the date range
       conditions.push(
         and(
           gte(calendarEvents.startDate, startDate),
@@ -60,11 +60,98 @@ export async function getCalendarEvents(params?: {
       query = query.where(and(...conditions)) as any
     }
 
-    const events = await query.orderBy(calendarEvents.startDate)
+    const calendarEventsResult = await query.orderBy(calendarEvents.startDate)
+
+    // 2. Get tasks with due dates (to ensure all tasks appear on calendar)
+    const taskConditions = [isNotNull(tasksV2.dueDate)]
+    if (startDate && endDate) {
+      taskConditions.push(gte(tasksV2.dueDate, startDate))
+      taskConditions.push(lte(tasksV2.dueDate, endDate))
+    }
+
+    const tasksWithDueDates = await db
+      .select({
+        task: tasksV2,
+        permit: permits,
+        person: people
+      })
+      .from(tasksV2)
+      .leftJoin(permits, eq(tasksV2.permitId, permits.id))
+      .leftJoin(people, eq(permits.personId, people.id))
+      .where(and(...taskConditions))
+
+    // 3. Get existing task IDs in calendar events to avoid duplicates
+    const existingTaskIds = new Set(
+      calendarEventsResult
+        .filter(e => e.entityType === "task")
+        .map(e => e.entityId)
+    )
+
+    // 4. Convert tasks to calendar event format (for those not already in calendar)
+    const taskEvents: CalendarEvent[] = tasksWithDueDates
+      .filter(({ task }) => !existingTaskIds.has(task.id))
+      .map(({ task, permit, person }) => {
+        // Build title with status indicator
+        let title = ""
+        if (task.status === "urgent") {
+          title = `🚨 URGENT: ${task.title}`
+        } else if (task.priority === "high") {
+          title = `⚠️ HIGH: ${task.title}`
+        } else {
+          title = `Task: ${task.title}`
+        }
+
+        // Build description
+        const dueDate = new Date(task.dueDate!)
+        const today = new Date()
+        const daysUntilDue = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+
+        let description = task.description || ""
+        description += `\n\nStatus: ${task.status?.toUpperCase() || "PENDING"}`
+        description += `\nPriority: ${task.priority?.toUpperCase() || "MEDIUM"}`
+        description += `\nDue: ${dueDate.toLocaleDateString()}`
+
+        if (daysUntilDue < 0) {
+          description += `\n⚠️ OVERDUE by ${Math.abs(daysUntilDue)} day(s)`
+        } else if (daysUntilDue === 0) {
+          description += `\n⚠️ DUE TODAY`
+        } else if (daysUntilDue <= 7) {
+          description += `\n⏰ Due in ${daysUntilDue} day(s)`
+        }
+
+        if (person) {
+          description += `\nPerson: ${person.firstName} ${person.lastName}`
+        }
+
+        return {
+          id: `task-${task.id}`,
+          title,
+          description: description.trim(),
+          type: "deadline" as const,
+          startDate: task.dueDate!,
+          endDate: task.dueDate!,
+          startTime: null,
+          endTime: null,
+          allDay: true,
+          location: null,
+          relatedPersonId: person?.id || null,
+          relatedPermitId: task.permitId || null,
+          entityType: "task",
+          entityId: task.id,
+          createdBy: null,
+          createdAt: task.createdAt,
+          updatedAt: task.updatedAt
+        }
+      })
+
+    // 5. Merge and sort all events
+    const allEvents = [...calendarEventsResult, ...taskEvents].sort(
+      (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+    )
 
     return {
       success: true,
-      data: events,
+      data: allEvents,
     }
   } catch (error) {
     console.error("Error fetching calendar events:", error)
@@ -171,12 +258,16 @@ export async function syncEntityToCalendar(
 ) {
   try {
     // Check if event already exists for this entity
-    const existing = await db.query.calendarEvents.findFirst({
-      where: and(
-        eq(calendarEvents.entityType, entityType),
-        eq(calendarEvents.entityId, entityId)
+    const [existing] = await db
+      .select()
+      .from(calendarEvents)
+      .where(
+        and(
+          eq(calendarEvents.entityType, entityType),
+          eq(calendarEvents.entityId, entityId)
+        )
       )
-    })
+      .limit(1)
 
     if (existing) {
       // Update existing event
@@ -222,7 +313,7 @@ export async function syncEntityToCalendar(
  */
 export async function deleteEntityFromCalendar(entityType: string, entityId: string) {
   try {
-    const deleted = await db.delete(calendarEvents).where(
+    await db.delete(calendarEvents).where(
       and(
         eq(calendarEvents.entityType, entityType),
         eq(calendarEvents.entityId, entityId)
@@ -449,12 +540,15 @@ export async function getExpiringItems(daysAhead: number = 30) {
     }
 
     // 3. Get expiring vehicles
-    const expiringVehicles = await db.query.vehicles.findMany({
-      where: and(
-        isNotNull(vehicles.dueDate),
-        lte(vehicles.dueDate, futureDate)
+    const expiringVehicles = await db
+      .select()
+      .from(vehicles)
+      .where(
+        and(
+          isNotNull(vehicles.dueDate),
+          lte(vehicles.dueDate, futureDate)
+        )
       )
-    })
 
     for (const vehicle of expiringVehicles) {
       if (!vehicle.dueDate) continue
@@ -474,12 +568,15 @@ export async function getExpiringItems(daysAhead: number = 30) {
     }
 
     // 4. Get expiring imports
-    const expiringImports = await db.query.importPermits.findMany({
-      where: and(
-        isNotNull(importPermits.dueDate),
-        lte(importPermits.dueDate, futureDate)
+    const expiringImports = await db
+      .select()
+      .from(importPermits)
+      .where(
+        and(
+          isNotNull(importPermits.dueDate),
+          lte(importPermits.dueDate, futureDate)
+        )
       )
-    })
 
     for (const imp of expiringImports) {
       if (!imp.dueDate) continue
@@ -499,12 +596,15 @@ export async function getExpiringItems(daysAhead: number = 30) {
     }
 
     // 5. Get expiring company registrations
-    const expiringCompanies = await db.query.companyRegistrations.findMany({
-      where: and(
-        isNotNull(companyRegistrations.dueDate),
-        lte(companyRegistrations.dueDate, futureDate)
+    const expiringCompanies = await db
+      .select()
+      .from(companyRegistrations)
+      .where(
+        and(
+          isNotNull(companyRegistrations.dueDate),
+          lte(companyRegistrations.dueDate, futureDate)
+        )
       )
-    })
 
     for (const company of expiringCompanies) {
       if (!company.dueDate) continue
