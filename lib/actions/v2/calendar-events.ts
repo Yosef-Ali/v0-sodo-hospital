@@ -77,9 +77,9 @@ export async function getCalendarEvents(params?: {
     // 3. Filter tasks by date range (if provided)
     const filteredTasks = startDate && endDate
       ? tasksWithDueDates.filter(({ task }) => {
-          const dueDate = new Date(task.dueDate!)
-          return dueDate >= startDate && dueDate <= endDate
-        })
+        const dueDate = new Date(task.dueDate!)
+        return dueDate >= startDate && dueDate <= endDate
+      })
       : tasksWithDueDates
 
     // 4. Get existing task IDs in calendar events to avoid duplicates
@@ -599,7 +599,15 @@ export async function getExpiringItems(daysAhead: number = 30) {
 
     // 5. Get expiring company registrations
     const expiringCompanies = await db
-      .select()
+      .select({
+        id: companyRegistrations.id,
+        ticketNumber: companyRegistrations.ticketNumber,
+        title: companyRegistrations.title,
+        companyName: companyRegistrations.companyName,
+        registrationType: companyRegistrations.registrationType,
+        dueDate: companyRegistrations.dueDate,
+        status: companyRegistrations.status,
+      })
       .from(companyRegistrations)
       .where(
         and(

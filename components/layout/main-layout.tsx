@@ -7,8 +7,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Separator } from "@/components/ui/separator"
 import { A2UIChatWidget } from "@/components/a2ui"
 import { UserMenu } from "@/components/layout/user-menu"
-import { Bell } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { NotificationBell } from "@/components/layout/notification-bell"
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -27,14 +26,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
             <span>Permit Management System</span>
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="relative text-gray-400 hover:text-white hover:bg-gray-800"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-green-500"></span>
-            </Button>
+            <NotificationBell />
             <UserMenu />
           </div>
         </header>
