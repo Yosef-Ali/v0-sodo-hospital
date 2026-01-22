@@ -128,6 +128,13 @@ export async function getPersonById(personId: string) {
       .where(eq(permits.personId, personId))
       .orderBy(desc(permits.createdAt))
 
+    // Get related calendar events
+    const personEvents = await db
+      .select()
+      .from(calendarEvents)
+      .where(eq(calendarEvents.relatedPersonId, personId))
+      .orderBy(desc(calendarEvents.startDate))
+
     return {
       success: true,
       data: {
@@ -136,6 +143,7 @@ export async function getPersonById(personId: string) {
         dependents,
         documents,
         permits: personPermits,
+        calendarEvents: personEvents,
       },
     }
   } catch (error) {

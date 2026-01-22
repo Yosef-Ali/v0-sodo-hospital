@@ -34,6 +34,7 @@ export function PersonActionsCard({ personId, hasRelatedData, onEdit }: PersonAc
   const [isLoading, setIsLoading] = useState(false)
   const [cascadeDelete, setCascadeDelete] = useState(false)
   const [open, setOpen] = useState(false)
+  const [forceShowRelatedWarning, setForceShowRelatedWarning] = useState(false)
 
   const handleDelete = async () => {
     setIsLoading(true)
@@ -41,6 +42,7 @@ export function PersonActionsCard({ personId, hasRelatedData, onEdit }: PersonAc
     // Safety check: if related data exists but cascade not checked, server would error anyway, 
     // but good to check here or rely on server response.
     
+    // Use cascade if checked OR if we are forced to show the warning (implying user saw it and checked it)
     const result = await deletePerson(personId, { cascade: cascadeDelete })
 
     if (result.success) {
@@ -56,8 +58,16 @@ export function PersonActionsCard({ personId, hasRelatedData, onEdit }: PersonAc
         description: result.error || "Could not delete person.",
         variant: "destructive",
       })
-      // Reset dialog if failed
-      setOpen(false) 
+      
+      // Critical Fix: If the error implies related data (foreign key constraint), 
+      // we must allow the user to see the cascade option even if the UI didn't initially detect it.
+      if (result.error && result.error.includes("related data")) {
+        setForceShowRelatedWarning(true)
+        // Keep dialog open so they can check the box and try again
+        setOpen(true)
+      } else {
+        setOpen(false) 
+      }
     }
 
     setIsLoading(false)
@@ -111,7 +121,7 @@ export function PersonActionsCard({ personId, hasRelatedData, onEdit }: PersonAc
               </AlertDialogDescription>
             </AlertDialogHeader>
 
-            {hasRelatedData && (
+            {(hasRelatedData || forceShowRelatedWarning) && (
               <div className="bg-red-900/20 border border-red-900/50 rounded-md p-4 my-2">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
@@ -120,7 +130,7 @@ export function PersonActionsCard({ personId, hasRelatedData, onEdit }: PersonAc
                       Warning: Associated Data Found
                     </p>
                     <p className="text-xs text-red-300/80 leading-relaxed">
-                      This person has associated <strong>Permits, Tasks, or Dependents</strong>. 
+                      This person has associated <strong>Permits, Tasks, Dependents, or Events</strong>. 
                       Standard deletion is blocked to prevent data loss.
                     </p>
                     <div className="flex items-start space-x-2 pt-1">
@@ -149,7 +159,7 @@ export function PersonActionsCard({ personId, hasRelatedData, onEdit }: PersonAc
               {/* Disable delete if hasRelatedData but checkbox NOT checked */}
               <AlertDialogAction
                 onClick={handleDelete}
-                disabled={hasRelatedData && !cascadeDelete || isLoading}
+                disabled={(hasRelatedData || forceShowRelatedWarning) && !cascadeDelete || isLoading}
                 className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? "Deleting..." : "Delete Permanently"}

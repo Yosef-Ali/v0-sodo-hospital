@@ -31,6 +31,7 @@ interface ForeignerDetailPageProps {
     dependents?: any[]
     permits?: any[]
     documents?: any[]
+    calendarEvents?: any[]
   }
 }
 
@@ -40,7 +41,7 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
   
   // Use local state for person data so we can update it after edit
   const [personData, setPersonData] = useState(initialData.person)
-  const { guardian, dependents, permits, documents } = initialData
+  const { guardian, dependents, permits, documents, calendarEvents } = initialData
   
   const [editSheetOpen, setEditSheetOpen] = useState(false)
   const [ticketCopied, setTicketCopied] = useState(false)
@@ -410,7 +411,7 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
           {/* Actions Card */}
           <PersonActionsCard 
             personId={person.id} 
-            hasRelatedData={Boolean((permits && permits.length > 0) || (dependents && dependents.length > 0) || (documents && documents.length > 0))}
+            hasRelatedData={Boolean((permits && permits.length > 0) || (dependents && dependents.length > 0) || (documents && documents.length > 0) || (calendarEvents && calendarEvents.length > 0))}
             onEdit={() => setEditSheetOpen(true)}
           />
         </div>

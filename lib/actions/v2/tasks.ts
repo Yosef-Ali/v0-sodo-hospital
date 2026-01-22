@@ -491,15 +491,16 @@ export async function getTaskStats() {
   try {
     const stats = await db
       .select({
-        status: tasksV2.status,
-        priority: tasksV2.priority,
+        status: sql<string>`${tasksV2.status}::text`,
+        priority: sql<string>`${tasksV2.priority}::text`,
         count: sql<number>`cast(count(*) as integer)`,
       })
       .from(tasksV2)
-      .groupBy(tasksV2.status, tasksV2.priority)
+      .groupBy(sql`${tasksV2.status}::text`, sql`${tasksV2.priority}::text`)
 
     // Aggregate by status
     const byStatus = stats.reduce((acc, stat) => {
+      // stat.status is now string from the query cast
       acc[stat.status] = (acc[stat.status] || 0) + stat.count
       return acc
     }, {} as Record<string, number>)
