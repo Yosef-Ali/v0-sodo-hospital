@@ -39,8 +39,6 @@ export async function getCalendarEvents(params?: {
   try {
     const { startDate, endDate, type } = params || {}
 
-    console.log("[Calendar] Fetching events for range:", { startDate, endDate })
-
     // 1. Get events from calendarEvents table
     let query = db.select().from(calendarEvents)
     const conditions = []
@@ -63,9 +61,8 @@ export async function getCalendarEvents(params?: {
     }
 
     const calendarEventsResult = await query.orderBy(calendarEvents.startDate)
-    console.log("[Calendar] Found calendar events:", calendarEventsResult.length)
 
-    // 2. Get ALL tasks with due dates (no date filtering to ensure they show)
+    // 2. Get ALL tasks with due dates
     const tasksWithDueDates = await db
       .select({
         task: tasksV2,
@@ -77,8 +74,6 @@ export async function getCalendarEvents(params?: {
       .leftJoin(people, eq(permits.personId, people.id))
       .where(isNotNull(tasksV2.dueDate))
 
-    console.log("[Calendar] Found tasks with due dates:", tasksWithDueDates.length)
-
     // 3. Filter tasks by date range (if provided)
     const filteredTasks = startDate && endDate
       ? tasksWithDueDates.filter(({ task }) => {
@@ -86,8 +81,6 @@ export async function getCalendarEvents(params?: {
           return dueDate >= startDate && dueDate <= endDate
         })
       : tasksWithDueDates
-
-    console.log("[Calendar] Tasks in date range:", filteredTasks.length)
 
     // 4. Get existing task IDs in calendar events to avoid duplicates
     const existingTaskIds = new Set(
@@ -153,14 +146,10 @@ export async function getCalendarEvents(params?: {
         }
       })
 
-    console.log("[Calendar] Task events created:", taskEvents.length)
-
     // 6. Merge and sort all events
     const allEvents = [...calendarEventsResult, ...taskEvents].sort(
       (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
     )
-
-    console.log("[Calendar] Total events returning:", allEvents.length)
 
     return {
       success: true,

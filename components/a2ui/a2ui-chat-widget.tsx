@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useState, FormEvent } from "react"
+import ReactMarkdown from "react-markdown"
 
 export function A2UIChatWidget() {
   const {
@@ -170,13 +171,26 @@ export function A2UIChatWidget() {
                           </div>
                           
                           {/* Content Container */}
-                          <div className="flex-1 space-y-4 overflow-hidden">
+                          <div className="flex-1 min-w-0 space-y-4 overflow-hidden">
                             {/* Text Content */}
                             {message.content && (
-                              <div className="bg-transparent pl-1">
-                                <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
+                              <div className="bg-transparent pl-1 text-sm text-gray-200 leading-relaxed">
+                                <ReactMarkdown
+                                  components={{
+                                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                    strong: ({ children }) => <span className="font-bold text-white">{children}</span>,
+                                    ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
+                                    ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+                                    li: ({ children }) => <li className="text-gray-300">{children}</li>,
+                                    a: ({ href, children }) => (
+                                      <a href={href} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:underline">
+                                        {children}
+                                      </a>
+                                    ),
+                                  }}
+                                >
                                   {message.content}
-                                </p>
+                                </ReactMarkdown>
                               </div>
                             )}
                             

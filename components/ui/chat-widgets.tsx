@@ -48,7 +48,7 @@ export function StatusBadgeWidget({ status, label, count }: StatusBadgeWidgetPro
     warning: { color: "bg-orange-500/20 text-orange-400 border-orange-500/50", icon: AlertCircle }
   }
 
-  const { color, icon: Icon } = variants[status]
+  const { color, icon: Icon } = variants[status] || { color: "bg-gray-500/20 text-gray-400 border-gray-500/50", icon: AlertCircle }
 
   return (
     <div className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded-full border", color)}>
@@ -246,22 +246,23 @@ interface QuickActionButtonsProps {
     variant?: "default" | "outline" | "secondary"
   }>
 }
-
 export function QuickActionButtonsWidget({ actions }: QuickActionButtonsProps) {
   return (
-    <div className="flex flex-wrap gap-2">
-      {actions.map((action, idx) => (
-        <Button
-          key={idx}
-          variant={action.variant || "outline"}
-          size="sm"
-          onClick={action.onClick || (() => console.log(`Action: ${action.label}`))}
-          className="text-xs border-gray-700 hover:border-green-500 hover:bg-green-500/10 hover:text-green-400"
-        >
-          {action.icon}
-          {action.label}
-        </Button>
-      ))}
+    <div className="max-w-full overflow-x-auto pb-2 scrollbar-hide">
+      <div className="flex gap-2 w-max">
+        {actions.map((action, idx) => (
+          <Button
+            key={idx}
+            variant={action.variant || "outline"}
+            size="sm"
+            onClick={action.onClick || (() => console.log(`Action: ${action.label}`))}
+            className="text-xs border-gray-700 hover:border-green-500 hover:bg-green-500/10 hover:text-green-400 whitespace-nowrap flex-shrink-0"
+          >
+            {action.icon}
+            {action.label}
+          </Button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -332,7 +333,7 @@ export function DocumentCardWidget({ title, status, type, date, progress, action
     error: { color: "text-red-400", icon: AlertCircle, label: "Error" }
   }
 
-  const { color, icon: Icon, label } = statusConfig[status]
+  const { color, icon: Icon, label } = statusConfig[status] || { color: "text-gray-400", icon: AlertCircle, label: status || "Unknown" }
 
   return (
     <Card className="bg-gray-800 border-gray-700 w-full overflow-hidden">
@@ -572,6 +573,7 @@ interface PermitStatusWidgetProps {
     url: string
   }>
   personName?: string
+  entityId?: string
 }
 
 export function PermitStatusWidget({
@@ -585,7 +587,8 @@ export function PermitStatusWidget({
   estimatedCompletion,
   notes,
   documentLinks,
-  personName
+  personName,
+  entityId
 }: PermitStatusWidgetProps) {
   const statusConfig = {
     pending: { color: "text-amber-400", bgColor: "bg-amber-500/20", borderColor: "border-amber-500/50", icon: Clock, label: "Pending Review" },
@@ -596,9 +599,17 @@ export function PermitStatusWidget({
     expired: { color: "text-gray-400", bgColor: "bg-gray-500/20", borderColor: "border-gray-500/50", icon: AlertCircle, label: "Expired" }
   }
 
-  const { color, bgColor, borderColor, icon: Icon, label } = statusConfig[status]
+  const { color, bgColor, borderColor, icon: Icon, label } = statusConfig[status] || {
+    color: "text-gray-400", 
+    bgColor: "bg-gray-500/20", 
+    borderColor: "border-gray-500/50", 
+    icon: AlertCircle, 
+    label: status || "Unknown"
+  }
 
   const [showDetails, setShowDetails] = useState(false)
+
+
 
   return (
     <Card className="bg-gray-800 border-gray-700 w-full overflow-hidden">
@@ -644,7 +655,7 @@ export function PermitStatusWidget({
             onClick={() => setShowDetails(prev => !prev)}
             className="h-7 px-2 text-xs text-green-300 hover:text-green-200 hover:bg-gray-800"
           >
-            {showDetails ? "Hide details" : "Show details"}
+            {showDetails ? "Hide preview" : "Quick Preview"}
           </Button>
         </div>
 
@@ -707,17 +718,8 @@ export function PermitStatusWidget({
           </div>
         )}
       </CardContent>
+
       <CardFooter className="flex flex-row gap-2">
-        <Link href={`/permits/${ticketNumber}`} className="flex-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full text-xs h-8 border-gray-700 hover:border-green-500 hover:bg-green-500/10 hover:text-green-400"
-          >
-            <FileText className="w-3.5 h-3.5 mr-1.5" />
-            View Details
-          </Button>
-        </Link>
         <Button variant="outline" size="sm" className="flex-1 text-xs h-8 border-gray-700 hover:border-green-500 hover:bg-green-500/10 hover:text-green-400">
           <Download className="w-3.5 h-3.5 mr-1.5" />
           Download

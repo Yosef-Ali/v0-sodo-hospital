@@ -99,6 +99,7 @@ function A2UIWidgetComponent({ widget, onAction, onVerify }: A2UIWidgetComponent
           notes={props.notes}
           personName={props.personName}
           documentLinks={props.documentLinks}
+          entityId={props.entityId}
         />
       )
 
