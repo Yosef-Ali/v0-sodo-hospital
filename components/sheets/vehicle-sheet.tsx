@@ -2,16 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Car, FileCheck, ClipboardList, Fuel, Shield, Truck, Copy, Check, Sparkles, CheckCircle2, Pencil, RefreshCw, AlertCircle, Loader2 } from "lucide-react"
-import { SmartDocumentChecklist, StageProgress, DocumentSection as DocSection } from "@/components/ui/smart-document-checklist"
+import { Car, FileCheck, ClipboardList, Fuel, Shield, Truck, Copy, Check, AlertCircle, Loader2 } from "lucide-react"
+import { SmartDocumentChecklist, StageProgress } from "@/components/ui/smart-document-checklist"
 import { useOcrAutoFill, mapOcrToVehicleForm } from "@/lib/hooks/use-ocr-autofill"
 import { toast } from "sonner"
 
@@ -97,11 +95,16 @@ interface DocumentSection {
   files: string[]
 }
 
+interface FormErrors {
+  plateNumber?: string
+  serviceType?: string
+}
+
 // ===================== MAIN COMPONENT =====================
 
 export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleSheetProps) {
   const [activeTab, setActiveTab] = useState("vehicle")
-  
+
   const [formData, setFormData] = useState({
     plateNumber: "",
     chassisNumber: "",
@@ -115,10 +118,12 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
     currentStage: "DOCUMENT_PREP",
     notes: "",
   })
-  
+
   const [documentSections, setDocumentSections] = useState<DocumentSection[]>([])
   const [ticketCopied, setTicketCopied] = useState(false)
-  
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   // Track auto-filled fields for visual highlighting
   const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set())
 
@@ -133,47 +138,53 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
     if (docType !== "libre") return
 
     const result = await extractFromImage(imageUrl, "libre")
-    
+
     if (result.success && result.data) {
+      // Check if the response contains rawText (unstructured) or warning
+      if (result.data.rawText || result.warning) {
+        toast.warning("Could not extract vehicle details", {
+          description: "The uploaded document doesn't appear to be a vehicle registration (Libre). Please upload a valid Libre document.",
+          duration: 6000,
+        })
+        return
+      }
+
       const mappedFields = mapOcrToVehicleForm(result.data)
-      
+
       if (Object.keys(mappedFields).length > 0) {
-        // 1. Auto-fill form data
         setFormData(prev => ({ ...prev, ...mappedFields }))
-        
-        // 2. Highlight fields
+
         const newAutoFilledFields = new Set(autoFilledFields)
         Object.keys(mappedFields).forEach(field => newAutoFilledFields.add(field))
         setAutoFilledFields(newAutoFilledFields)
-        
-        // Clear highlight after 5 seconds
+
+        // Clear errors for auto-filled fields
+        if (mappedFields.plateNumber) {
+          setErrors(prev => ({ ...prev, plateNumber: undefined }))
+        }
+
         setTimeout(() => setAutoFilledFields(new Set()), 5000)
-        
-        // 3. Switch to vehicle tab to show results
         setActiveTab("vehicle")
-        
-        toast.success('Document scanned successfully', {
-          description: `Auto-filled ${Object.keys(mappedFields).length} fields from Libre`
+
+        toast.success("Document scanned successfully", {
+          description: `Auto-filled ${Object.keys(mappedFields).length} fields from Libre`,
         })
       } else {
-        toast.warning('Scanned document but found no matching fields')
+        toast.warning("Unrecognized document", {
+          description: "No vehicle information found. Make sure you uploaded a Libre (vehicle registration) document.",
+          duration: 6000,
+        })
       }
     } else if (result.error) {
-      toast.error('OCR extraction failed', { description: result.error })
+      toast.error("Document scan failed", {
+        description: result.error,
+        duration: 5000,
+      })
     }
   }
 
   // Check if a field is auto-filled for styling
   const isAutoFilled = (fieldName: string) => autoFilledFields.has(fieldName)
-
-  // Get field label
-  const getFieldLabel = (field: string): string => {
-    const labels: Record<string, string> = {
-      plateNumber: 'Plate Number', chassisNumber: 'Chassis Number', engineNumber: 'Engine Number',
-      vehicleType: 'Vehicle Type', vehicleModel: 'Model', vehicleYear: 'Year', ownerName: 'Owner Name'
-    }
-    return labels[field] || field
-  }
 
   useEffect(() => {
     if (vehicle) {
@@ -200,6 +211,7 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
       })
       setDocumentSections([])
     }
+    setErrors({})
     setActiveTab("vehicle")
   }, [vehicle, open])
 
@@ -215,14 +227,20 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
     return STAGES[formData.serviceType as keyof typeof STAGES] || []
   }
 
-  // Handlers
+  // Clear field error on change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }))
+    }
   }
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }))
+    }
     if (name === "serviceType") {
       setDocumentSections([])
       setFormData(prev => ({ ...prev, currentStage: "DOCUMENT_PREP" }))
@@ -241,7 +259,7 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
   }
 
   const handleRemoveFile = (docType: string, fileIndex: number) => {
-    setDocumentSections(prev => prev.map(s => 
+    setDocumentSections(prev => prev.map(s =>
       s.type === docType ? { ...s, files: s.files.filter((_, i) => i !== fileIndex) } : s
     ))
   }
@@ -254,21 +272,53 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
     ])
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Generate title from vehicle info
-    const title = [formData.vehicleType, formData.vehicleModel, formData.plateNumber]
-      .filter(Boolean)
-      .join(" - ") || formData.plateNumber || "Vehicle"
+  // Validate form
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {}
 
-    const submissionData = {
-      ...formData,
-      title,
-      category: formData.serviceType || "inspection",
-      documentSections,
-      documents: documentSections.flatMap(s => s.files),
+    if (!formData.plateNumber.trim()) {
+      newErrors.plateNumber = "Plate number is required"
     }
-    onSubmit(submissionData)
+    if (!formData.serviceType) {
+      newErrors.serviceType = "Please select a service type"
+    }
+
+    setErrors(newErrors)
+
+    if (Object.keys(newErrors).length > 0) {
+      // Navigate to the tab with the first error
+      if (newErrors.plateNumber) {
+        setActiveTab("vehicle")
+      } else if (newErrors.serviceType) {
+        setActiveTab("service")
+      }
+      return false
+    }
+    return true
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validate()) return
+
+    setIsSubmitting(true)
+    try {
+      const title = [formData.vehicleType, formData.vehicleModel, formData.plateNumber]
+        .filter(Boolean)
+        .join(" - ") || formData.plateNumber || "Vehicle"
+
+      const submissionData = {
+        ...formData,
+        title,
+        category: formData.serviceType || "inspection",
+        documentSections,
+        documents: documentSections.flatMap(s => s.files),
+      }
+      await onSubmit(submissionData)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const isEditMode = !!vehicle
@@ -286,7 +336,6 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
           <SheetDescription className="text-gray-400">
             {isEditMode ? "Update vehicle details and documents." : "Enter vehicle details, select service type, and upload required documents."}
           </SheetDescription>
-          {/* Ticket Number Display in Edit Mode */}
           {isEditMode && ticketNumber && (
             <div className="flex items-center gap-2 mt-2 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
               <span className="text-gray-400 text-xs">Ticket:</span>
@@ -322,9 +371,11 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
             <TabsList className="grid w-full grid-cols-2 bg-gray-700/50 mb-4">
               <TabsTrigger value="vehicle" className="data-[state=active]:bg-green-600 text-xs">
                 <Car className="h-3 w-3 mr-1" /> Vehicle Info
+                {errors.plateNumber && <AlertCircle className="h-3 w-3 ml-1 text-red-400" />}
               </TabsTrigger>
               <TabsTrigger value="service" className="data-[state=active]:bg-green-600 text-xs">
                 <FileCheck className="h-3 w-3 mr-1" /> Service & Docs
+                {errors.serviceType && <AlertCircle className="h-3 w-3 ml-1 text-red-400" />}
               </TabsTrigger>
             </TabsList>
 
@@ -332,11 +383,23 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
             <TabsContent value="vehicle" className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-gray-300">Plate Number *</Label>
+                  <Label className={`${errors.plateNumber ? 'text-red-400' : 'text-gray-300'}`}>
+                    Plate Number <span className="text-red-400">*</span>
+                  </Label>
                   <Input name="plateNumber" value={formData.plateNumber} onChange={handleChange}
                     placeholder="3-AA-12345"
-                    className={`bg-gray-700 text-white ${isAutoFilled('plateNumber') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`}
-                    required />
+                    className={`bg-gray-700 text-white ${
+                      errors.plateNumber
+                        ? 'border-red-500 ring-1 ring-red-500 focus-visible:ring-red-500'
+                        : isAutoFilled('plateNumber')
+                          ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500'
+                          : 'border-gray-600'
+                    }`} />
+                  {errors.plateNumber && (
+                    <p className="text-xs text-red-400 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" /> {errors.plateNumber}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-300">Vehicle Type</Label>
@@ -406,21 +469,28 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
             {/* ===================== SERVICE TAB ===================== */}
             <TabsContent value="service" className="space-y-4">
               {/* Service Type Selection */}
-              <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-700">
-                <h4 className="text-sm font-medium text-green-400 mb-3">Select Service Type</h4>
+              <div className={`bg-gray-700/30 rounded-lg p-4 border ${errors.serviceType ? 'border-red-500' : 'border-gray-700'}`}>
+                <h4 className={`text-sm font-medium mb-3 ${errors.serviceType ? 'text-red-400' : 'text-green-400'}`}>
+                  Select Service Type <span className="text-red-400">*</span>
+                </h4>
                 <div className="grid grid-cols-2 gap-2">
                   {SERVICE_TYPES.map(type => (
                     <button key={type.value} type="button"
                       onClick={() => handleSelectChange("serviceType", type.value)}
                       className={`p-3 rounded-lg border-2 transition-all flex items-center gap-2
-                        ${formData.serviceType === type.value 
-                          ? 'border-green-500 bg-green-500/20 text-green-400' 
+                        ${formData.serviceType === type.value
+                          ? 'border-green-500 bg-green-500/20 text-green-400'
                           : 'border-gray-600 hover:border-gray-500 text-gray-400'}`}>
                       <type.icon className="h-4 w-4" />
                       <span className="text-xs">{type.label}</span>
                     </button>
                   ))}
                 </div>
+                {errors.serviceType && (
+                  <p className="text-xs text-red-400 flex items-center gap-1 mt-2">
+                    <AlertCircle className="h-3 w-3" /> {errors.serviceType}
+                  </p>
+                )}
               </div>
 
               {/* Stage Progress */}
@@ -437,8 +507,8 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
                       </SelectContent>
                     </Select>
                   </div>
-                  <StageProgress 
-                    stages={getStages()} 
+                  <StageProgress
+                    stages={getStages()}
                     currentStage={formData.currentStage}
                     onStageChange={(stage) => handleSelectChange("currentStage", stage)}
                   />
@@ -473,19 +543,17 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
               Cancel
             </Button>
             <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!formData.plateNumber || isOcrLoading}>
+              disabled={isOcrLoading || isSubmitting}>
               {isOcrLoading ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scanning...</>
+              ) : isSubmitting ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
               ) : isEditMode ? "Update Vehicle" : "Confirm & Save Vehicle"}
             </Button>
           </div>
         </form>
       </SheetContent>
     </Sheet>
-
-
-
-
     </>
   )
 }
