@@ -31,3 +31,11 @@ next-env.d.ts
 /blob-report/
 /playwright/.cache/
 /public/uploads/
+
+# logs
+tunnel.log
+*.log
+
+# temp scripts
+scripts/tmp-*
+scripts/test-*
