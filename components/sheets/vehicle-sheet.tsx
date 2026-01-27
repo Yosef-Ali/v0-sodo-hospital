@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Car, FileCheck, ClipboardList, Fuel, Shield, Truck, Copy, Check, Sparkles, CheckCircle2, Pencil, RefreshCw, AlertCircle } from "lucide-react"
+import { Car, FileCheck, ClipboardList, Fuel, Shield, Truck, Copy, Check, Sparkles, CheckCircle2, Pencil, RefreshCw, AlertCircle, Loader2 } from "lucide-react"
 import { SmartDocumentChecklist, StageProgress, DocumentSection as DocSection } from "@/components/ui/smart-document-checklist"
 import { useOcrAutoFill, mapOcrToVehicleForm } from "@/lib/hooks/use-ocr-autofill"
 import { toast } from "sonner"
@@ -119,14 +119,8 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
   const [documentSections, setDocumentSections] = useState<DocumentSection[]>([])
   const [ticketCopied, setTicketCopied] = useState(false)
   
-  // OCR Preview state
-  const [ocrPreview, setOcrPreview] = useState<{
-    isOpen: boolean
-    data: Record<string, string>
-    editedData: Record<string, string>
-    docType: string
-    imageUrl: string
-  } | null>(null)
+  // Track auto-filled fields for visual highlighting
+  const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set())
 
   // Get ticket number from vehicle prop
   const ticketNumber = vehicle?.ticketNumber || ""
@@ -134,7 +128,7 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
   // OCR Auto-fill hook
   const { extractFromImage, isLoading: isOcrLoading } = useOcrAutoFill()
 
-  // OCR extraction handler for Libre - now shows preview
+  // OCR extraction handler for Libre - Inline Autofill
   const handleOcrExtract = async (docType: string, imageUrl: string) => {
     if (docType !== "libre") return
 
@@ -144,46 +138,33 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
       const mappedFields = mapOcrToVehicleForm(result.data)
       
       if (Object.keys(mappedFields).length > 0) {
-        // Show preview dialog instead of auto-applying
-        setOcrPreview({
-          isOpen: true,
-          data: mappedFields,
-          editedData: { ...mappedFields },
-          docType: docType,
-          imageUrl: imageUrl
+        // 1. Auto-fill form data
+        setFormData(prev => ({ ...prev, ...mappedFields }))
+        
+        // 2. Highlight fields
+        const newAutoFilledFields = new Set(autoFilledFields)
+        Object.keys(mappedFields).forEach(field => newAutoFilledFields.add(field))
+        setAutoFilledFields(newAutoFilledFields)
+        
+        // Clear highlight after 5 seconds
+        setTimeout(() => setAutoFilledFields(new Set()), 5000)
+        
+        // 3. Switch to vehicle tab to show results
+        setActiveTab("vehicle")
+        
+        toast.success('Document scanned successfully', {
+          description: `Auto-filled ${Object.keys(mappedFields).length} fields from Libre`
         })
-        toast.success('Document scanned successfully!', {
-          description: 'Please review and confirm the extracted data'
-        })
+      } else {
+        toast.warning('Scanned document but found no matching fields')
       }
     } else if (result.error) {
       toast.error('OCR extraction failed', { description: result.error })
     }
   }
 
-  // Apply OCR data after user confirmation
-  const handleApplyOcrData = () => {
-    if (ocrPreview?.editedData) {
-      setFormData(prev => ({ ...prev, ...ocrPreview.editedData }))
-      const fieldCount = Object.keys(ocrPreview.editedData).length
-      toast.success(`Applied ${fieldCount} field${fieldCount > 1 ? 's' : ''} from document`)
-      setOcrPreview(null)
-    }
-  }
-
-  // Edit field in preview
-  const handlePreviewFieldEdit = (field: string, value: string) => {
-    if (ocrPreview) {
-      setOcrPreview({ ...ocrPreview, editedData: { ...ocrPreview.editedData, [field]: value } })
-    }
-  }
-
-  // Reset field to original
-  const handleResetField = (field: string) => {
-    if (ocrPreview && ocrPreview.data[field]) {
-      setOcrPreview({ ...ocrPreview, editedData: { ...ocrPreview.editedData, [field]: ocrPreview.data[field] } })
-    }
-  }
+  // Check if a field is auto-filled for styling
+  const isAutoFilled = (fieldName: string) => autoFilledFields.has(fieldName)
 
   // Get field label
   const getFieldLabel = (field: string): string => {
@@ -275,14 +256,19 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    // Generate title from vehicle info
+    const title = [formData.vehicleType, formData.vehicleModel, formData.plateNumber]
+      .filter(Boolean)
+      .join(" - ") || formData.plateNumber || "Vehicle"
+
     const submissionData = {
       ...formData,
-      category: formData.vehicleType, // Map vehicleType to category for the action
+      title,
+      category: formData.serviceType || "inspection",
       documentSections,
       documents: documentSections.flatMap(s => s.files),
     }
     onSubmit(submissionData)
-    // Don't close here - parent handles closing after async operation completes
   }
 
   const isEditMode = !!vehicle
@@ -337,12 +323,14 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
                 <div className="space-y-2">
                   <Label className="text-gray-300">Plate Number *</Label>
                   <Input name="plateNumber" value={formData.plateNumber} onChange={handleChange}
-                    placeholder="3-AA-12345" className="bg-gray-700 border-gray-600 text-white" required />
+                    placeholder="3-AA-12345"
+                    className={`bg-gray-700 text-white ${isAutoFilled('plateNumber') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`}
+                    required />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-300">Vehicle Type</Label>
                   <Select value={formData.vehicleType} onValueChange={(v) => handleSelectChange("vehicleType", v)}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className={`bg-gray-700 text-white ${isAutoFilled('vehicleType') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`}>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-700 border-gray-600">
@@ -356,12 +344,14 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
                 <div className="space-y-2">
                   <Label className="text-gray-300">Chassis Number</Label>
                   <Input name="chassisNumber" value={formData.chassisNumber} onChange={handleChange}
-                    placeholder="Chassis #" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="Chassis #"
+                    className={`bg-gray-700 text-white ${isAutoFilled('chassisNumber') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-300">Engine Number</Label>
                   <Input name="engineNumber" value={formData.engineNumber} onChange={handleChange}
-                    placeholder="Engine #" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="Engine #"
+                    className={`bg-gray-700 text-white ${isAutoFilled('engineNumber') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
               </div>
 
@@ -369,12 +359,14 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
                 <div className="space-y-2">
                   <Label className="text-gray-300">Model</Label>
                   <Input name="vehicleModel" value={formData.vehicleModel} onChange={handleChange}
-                    placeholder="Toyota Corolla" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="Toyota Corolla"
+                    className={`bg-gray-700 text-white ${isAutoFilled('vehicleModel') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-300">Year</Label>
                   <Input name="vehicleYear" value={formData.vehicleYear} onChange={handleChange}
-                    placeholder="2020" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="2020"
+                    className={`bg-gray-700 text-white ${isAutoFilled('vehicleYear') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
               </div>
 
@@ -382,12 +374,14 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
                 <div className="space-y-2">
                   <Label className="text-gray-300">Owner Name</Label>
                   <Input name="ownerName" value={formData.ownerName} onChange={handleChange}
-                    placeholder="Owner name" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="Owner name"
+                    className={`bg-gray-700 text-white ${isAutoFilled('ownerName') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-300">Current Mileage</Label>
                   <Input name="currentMileage" value={formData.currentMileage} onChange={handleChange}
-                    placeholder="50,000 km" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="50,000 km"
+                    className={`bg-gray-700 text-white ${isAutoFilled('currentMileage') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
               </div>
 
@@ -469,73 +463,16 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
             </Button>
             <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700"
               disabled={!formData.plateNumber}>
-              {isEditMode ? "Update Vehicle" : "Add Vehicle"}
+              {isEditMode ? "Update Vehicle" : "Confirm & Save Vehicle"}
             </Button>
           </div>
         </form>
       </SheetContent>
     </Sheet>
 
-    {/* OCR Preview Dialog */}
-    <Dialog open={ocrPreview?.isOpen || false} onOpenChange={(open) => !open && setOcrPreview(null)}>
-      <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-green-400" />
-            AI Scanned Data Preview
-          </DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Review and edit the extracted data below. Click "Apply" to fill the form.
-          </DialogDescription>
-        </DialogHeader>
 
-        <div className="space-y-3 py-4 max-h-80 overflow-y-auto">
-          {Object.entries(ocrPreview?.editedData || {}).map(([field, value]) => {
-            const originalValue = ocrPreview?.data[field]
-            const isEdited = value !== originalValue
 
-            return (
-              <div key={field} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs text-gray-400 font-medium">{getFieldLabel(field)}</label>
-                  {isEdited && (
-                    <button type="button" onClick={() => handleResetField(field)}
-                      className="p-1 text-gray-500 hover:text-amber-400 transition-colors" title="Reset">
-                      <RefreshCw className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-                <Input
-                  value={value}
-                  onChange={(e) => handlePreviewFieldEdit(field, e.target.value)}
-                  className={`bg-gray-600 border-gray-500 text-white h-9 text-sm ${isEdited ? 'border-amber-500/50' : ''}`}
-                />
-              </div>
-            )
-          })}
-        </div>
 
-        {Object.keys(ocrPreview?.editedData || {}).length > 0 && (
-          <div className="flex items-center gap-3 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
-            <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" />
-            <p className="text-sm text-green-300">
-              Ready to apply {Object.keys(ocrPreview?.editedData || {}).length} fields
-            </p>
-          </div>
-        )}
-
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => setOcrPreview(null)} className="bg-gray-700 border-gray-600">
-            Cancel
-          </Button>
-          <Button onClick={handleApplyOcrData} className="bg-green-600 hover:bg-green-700"
-            disabled={Object.keys(ocrPreview?.editedData || {}).length === 0}>
-            <Check className="h-4 w-4 mr-2" />
-            Apply {Object.keys(ocrPreview?.editedData || {}).length} Fields
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
     </>
   )
 }

@@ -10,6 +10,8 @@ import { Search, Filter, Plus, Car, FileCheck, Fuel, Shield, Truck } from "lucid
 import { Input } from "@/components/ui/input"
 import { VehicleSheet } from "@/components/sheets/vehicle-sheet"
 import { getVehicles, getVehicleStats, createVehicle, updateVehicle, deleteVehicle, getVehicleById } from "@/lib/actions/v2/vehicles"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface VehiclePageProps {
   initialData: {
@@ -25,7 +27,40 @@ interface VehiclePageProps {
 }
 
 export function VehiclePage({ initialData }: VehiclePageProps) {
+  const router = useRouter()
   const [vehicles, setVehicles] = useState<any[]>(initialData.vehicles)
+  // ... (existing state)
+
+  // ... (existing helper functions)
+
+  const handleSubmit = async (data: any) => {
+    if (selectedVehicle?.id) {
+      const result = await updateVehicle(selectedVehicle.id, data)
+      if (result.success) {
+        toast.success("Vehicle updated successfully")
+        setIsSheetOpen(false)
+        setSelectedVehicle(null)
+        loadVehicles()
+        router.refresh()
+      } else {
+        toast.error(result.error || "Failed to update vehicle")
+      }
+    } else {
+      const result = await createVehicle(data)
+      if (result.success) {
+        toast.success("Vehicle created successfully")
+        setIsSheetOpen(false)
+        setSelectedVehicle(null)
+        if (data.category && activeTab !== "all" && activeTab !== data.category) {
+          setActiveTab(data.category)
+        }
+        loadVehicles()
+        router.refresh()
+      } else {
+        toast.error(result.error || "Failed to create vehicle")
+      }
+    }
+  }
   const [stats, setStats] = useState(initialData.stats)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
@@ -76,22 +111,7 @@ export function VehiclePage({ initialData }: VehiclePageProps) {
     }
   }
 
-  const handleSubmit = async (data: any) => {
-    if (selectedVehicle?.id) {
-      // Update existing - use selectedVehicle.id since form doesn't include it
-      const result = await updateVehicle(selectedVehicle.id, data)
-      if (result.success) {
-        loadVehicles()
-      }
-    } else {
-      const result = await createVehicle(data)
-      if (result.success) {
-        loadVehicles()
-      }
-    }
-    setIsSheetOpen(false)
-    setSelectedVehicle(null)
-  }
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
