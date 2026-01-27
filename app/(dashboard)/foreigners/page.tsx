@@ -11,8 +11,9 @@ const getCachedPeopleData = unstable_cache(
     ])
 
     return {
-      people: peopleResult.success ? peopleResult.data : [],
-      stats: statsResult.success ? statsResult.data : { total: 0, dependents: 0, withPermits: 0 }
+      people: peopleResult.success && peopleResult.data ? peopleResult.data : [],
+      stats: statsResult.success && statsResult.data ? statsResult.data : { total: 0, dependents: 0, withPermits: 0 },
+      error: (!peopleResult.success && peopleResult.error) || (!statsResult.success && statsResult.error) || undefined
     }
   },
   ['people-data'],

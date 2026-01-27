@@ -70,8 +70,15 @@ export async function getPeople(params?: {
       .offset(offset)
 
     return { success: true, data: result }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching people:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running."
+      }
+    }
     return { success: false, error: "Failed to fetch people" }
   }
 }
@@ -146,9 +153,13 @@ export async function getPersonById(personId: string) {
         calendarEvents: personEvents,
       },
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching person:", error)
-    return { success: false, error: "Failed to fetch person details" }
+    const isConnError = error.code === 'ECONNREFUSED' || error.message?.includes('connection')
+    return {
+      success: false,
+      error: isConnError ? "Database connection failed. Please ensure the SSH tunnel is running." : "Failed to fetch person details"
+    }
   }
 }
 
@@ -504,8 +515,15 @@ export async function getDependents(guardianId: string) {
       .orderBy(desc(people.createdAt))
 
     return { success: true, data: result }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching dependents:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running."
+      }
+    }
     return { success: false, error: "Failed to fetch dependents" }
   }
 }
@@ -537,8 +555,15 @@ export async function getPeopleStats() {
         withPermits: withPermits[0]?.count || 0,
       },
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching people stats:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running."
+      }
+    }
     return { success: false, error: "Failed to fetch statistics" }
   }
 }

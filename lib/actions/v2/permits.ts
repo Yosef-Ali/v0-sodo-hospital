@@ -571,7 +571,7 @@ export async function getPermitStats() {
     const vehicleCount = await db
       .select({ count: sql<number>`cast(count(*) as integer)` })
       .from(vehicles)
-    
+
     // Query import_permits table
     const importCount = await db
       .select({ count: sql<number>`cast(count(*) as integer)` })
@@ -619,8 +619,15 @@ export async function getPermitStats() {
         },
       },
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching permit stats:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running."
+      }
+    }
     return { success: false, error: "Failed to fetch permit statistics" }
   }
 }

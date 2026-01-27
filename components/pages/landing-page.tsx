@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useSession } from "next-auth/react"
-import { Activity, Sparkles, Users, Briefcase, FileText, Clock, Star, TrendingDown, CheckCircle, ArrowRight } from "lucide-react"
+import { Activity, Sparkles, Users, Briefcase, FileText, Clock, Star, TrendingDown, CheckCircle, ArrowRight, AlertTriangle, Terminal } from "lucide-react"
 import { A2UIChatWidget } from "@/components/a2ui"
 import { Button } from "@/components/ui/button"
 import { UserButton } from "@/components/auth/user-button"
@@ -25,12 +25,14 @@ interface LandingPageProps {
       high: number
     }
   } | null
+  dbError?: string
 }
 
 export function LandingPage({ 
   initialPeople = [], 
   notifications = [],
-  taskStats
+  taskStats,
+  dbError
 }: LandingPageProps) {
   const { data: session } = useSession()
   
@@ -81,6 +83,27 @@ export function LandingPage({
       </nav>
 
       <div className="max-w-7xl mr-auto ml-auto pt-16 pr-6 pb-8 pl-6">
+        {dbError && (
+          <div className="mb-8 p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col md:flex-row items-center gap-6 fade-in shadow-lg shadow-amber-500/5">
+            <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-6 h-6 text-amber-500" />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="text-lg font-semibold text-amber-400 mb-1">Database Connection Required</h3>
+              <p className="text-slate-400 text-sm mb-4 md:mb-0">
+                The application cannot connect to the VPS database. This usually means the SSH tunnel is down.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 w-full md:w-auto">
+              <div className="bg-slate-900/50 rounded-lg px-4 py-2 border border-slate-700 flex items-center gap-2 group">
+                <Terminal className="w-4 h-4 text-slate-500 group-hover:text-green-400 transition-colors" />
+                <code className="text-xs text-slate-300 font-mono">./scripts/start-db-tunnel.sh</code>
+              </div>
+              <p className="text-[10px] text-slate-500 text-center">Run this command in a separate terminal</p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
 
           {/* Hero Section */}

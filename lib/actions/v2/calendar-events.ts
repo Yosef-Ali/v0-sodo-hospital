@@ -637,8 +637,16 @@ export async function getExpiringItems(daysAhead: number = 30) {
     expiringItems.sort((a, b) => a.daysRemaining - b.daysRemaining)
 
     return { success: true, data: expiringItems }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching expiring items:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running.",
+        data: []
+      }
+    }
     return { success: false, error: "Failed to fetch expiring items", data: [] }
   }
 }

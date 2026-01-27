@@ -35,6 +35,7 @@ interface ForeignersPageProps {
       dependents: number
       withPermits: number
     }
+    error?: string
   }
 }
 
@@ -46,7 +47,7 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
   const [stats, setStats] = useState(initialData.stats)
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(initialData.error || null)
   const [activeStatTab, setActiveStatTab] = useState<"all" | "dependents" | "permits">("all")
   const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedPerson, setSelectedPerson] = useState<any>(null)

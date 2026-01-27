@@ -1,8 +1,11 @@
 import { LandingPage } from "@/components/pages/landing-page"
 import { getPeople } from "@/lib/actions/v2/foreigners"
 import { getTasks, getTaskStats, getUpcomingTasks } from "@/lib/actions/v2/tasks"
+import { checkDbConnection } from "@/lib/db/check-connection"
 
 export default async function Home() {
+  const dbStatus = await checkDbConnection()
+  
   const [peopleRes, urgentTasksRes, upcomingTasksRes, statsRes] = await Promise.all([
     getPeople({ limit: 10 }),
     getTasks({ status: "urgent", limit: 10, includeCompleted: false }),
@@ -26,6 +29,7 @@ export default async function Home() {
       initialPeople={people} 
       notifications={notifications}
       taskStats={stats}
+      dbError={dbStatus.reachable ? undefined : dbStatus.error}
     />
   )
 }

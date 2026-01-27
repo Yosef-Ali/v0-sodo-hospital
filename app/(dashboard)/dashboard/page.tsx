@@ -24,6 +24,10 @@ const getCachedDashboardData = unstable_cache(
       permits: [],
       overdueCount: overdueResult.success && overdueResult.data ? overdueResult.data.length : 0,
       expiringItems: expiringResult.success ? expiringResult.data : [],
+      error: (!taskStatsResult.success && (taskStatsResult as any).error) || 
+             (!permitStatsResult.success && (permitStatsResult as any).error) || 
+             (!overdueResult.success && (overdueResult as any).error) || 
+             (!expiringResult.success && (expiringResult as any).error) || undefined
     }
   },
   ['dashboard-data'],

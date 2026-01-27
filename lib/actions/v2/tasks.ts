@@ -86,9 +86,13 @@ export async function getTasks(params?: {
       .offset(offset)
 
     return { success: true, data: result }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching tasks:", error)
-    return { success: false, error: "Failed to fetch tasks" }
+    const isConnError = error.code === 'ECONNREFUSED' || error.message?.includes('connection')
+    return {
+      success: false,
+      error: isConnError ? "Database connection failed. Please ensure the SSH tunnel is running." : "Failed to fetch tasks"
+    }
   }
 }
 
@@ -121,26 +125,18 @@ export async function getTaskById(taskId: string) {
     // Fetch linked entity if available
     if (taskData.task.entityType && taskData.task.entityId) {
       if (taskData.task.entityType === 'vehicle') {
-        const vehicle = await db.query.vehicles.findFirst({
-          where: eq(vehicles.id, taskData.task.entityId)
-        })
-        if (vehicle) entityData = { type: 'vehicle', data: vehicle }
+        const vehicleRes = await db.select().from(vehicles).where(eq(vehicles.id, taskData.task.entityId)).limit(1)
+        if (vehicleRes.length > 0) entityData = { type: 'vehicle', data: vehicleRes[0] }
       } else if (taskData.task.entityType === 'import') {
-        const importPermit = await db.query.importPermits.findFirst({
-          where: eq(importPermits.id, taskData.task.entityId)
-        })
-        if (importPermit) entityData = { type: 'import', data: importPermit }
+        const importRes = await db.select().from(importPermits).where(eq(importPermits.id, taskData.task.entityId)).limit(1)
+        if (importRes.length > 0) entityData = { type: 'import', data: importRes[0] }
       } else if (taskData.task.entityType === 'company') {
-        const company = await db.query.companyRegistrations.findFirst({
-          where: eq(companyRegistrations.id, taskData.task.entityId)
-        })
-        if (company) entityData = { type: 'company', data: company }
+        const companyRes = await db.select().from(companyRegistrations).where(eq(companyRegistrations.id, taskData.task.entityId)).limit(1)
+        if (companyRes.length > 0) entityData = { type: 'company', data: companyRes[0] }
       } else if (taskData.task.entityType === 'person' && !taskData.person) {
         // If linked as 'person' but not via permit (fallback)
-        const person = await db.query.people.findFirst({
-          where: eq(people.id, taskData.task.entityId)
-        })
-        if (person) entityData = { type: 'person', data: person }
+        const personRes = await db.select().from(people).where(eq(people.id, taskData.task.entityId)).limit(1)
+        if (personRes.length > 0) entityData = { type: 'person', data: personRes[0] }
       }
     }
 
@@ -491,23 +487,24 @@ export async function getTaskStats() {
   try {
     const stats = await db
       .select({
-        status: sql<string>`${tasksV2.status}::text`,
-        priority: sql<string>`${tasksV2.priority}::text`,
+        status: tasksV2.status,
+        priority: tasksV2.priority,
         count: sql<number>`cast(count(*) as integer)`,
       })
       .from(tasksV2)
-      .groupBy(sql`${tasksV2.status}::text`, sql`${tasksV2.priority}::text`)
+      .groupBy(tasksV2.status, tasksV2.priority)
 
     // Aggregate by status
     const byStatus = stats.reduce((acc, stat) => {
-      // stat.status is now string from the query cast
-      acc[stat.status] = (acc[stat.status] || 0) + stat.count
+      const statusStr = stat.status as string
+      acc[statusStr] = (acc[statusStr] || 0) + stat.count
       return acc
     }, {} as Record<string, number>)
 
     // Aggregate by priority
     const byPriority = stats.reduce((acc, stat) => {
-      acc[stat.priority] = (acc[stat.priority] || 0) + stat.count
+      const priorityStr = stat.priority as string
+      acc[priorityStr] = (acc[priorityStr] || 0) + stat.count
       return acc
     }, {} as Record<string, number>)
 
@@ -530,8 +527,15 @@ export async function getTaskStats() {
         },
       },
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching task stats:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running."
+      }
+    }
     return { success: false, error: "Failed to fetch task statistics" }
   }
 }
@@ -579,8 +583,15 @@ export async function getOverdueTasks() {
       .orderBy(tasksV2.dueDate)
 
     return { success: true, data: result }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching overdue tasks:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running."
+      }
+    }
     return { success: false, error: "Failed to fetch overdue tasks" }
   }
 }
@@ -727,8 +738,15 @@ export async function getUpcomingTasks(daysAhead: number = 7) {
       .orderBy(tasksV2.dueDate)
 
     return { success: true, data: result }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching upcoming tasks:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running."
+      }
+    }
     return { success: false, error: "Failed to fetch upcoming tasks" }
   }
 }
@@ -796,13 +814,11 @@ export async function createTaskWithWorkflow(data: {
 
         // 3. Create Checklist Items & Smart Document Linking
         // Check what docs the person ALREADY has
-        const personDocs = await db.query.documentsV2.findMany({
-          where: eq(documentsV2.personId, data.personId)
-        })
+        const personDocs = await db.select().from(documentsV2).where(eq(documentsV2.personId, data.personId))
 
-        const personRecord = await db.query.people.findFirst({
-          where: eq(people.id, data.personId)
-        })
+        const personRes = await db.select().from(people).where(eq(people.id, data.personId)).limit(1)
+        const personRecord = personRes.length > 0 ? personRes[0] : null
+
 
         if (workflow.documents.length > 0) {
           for (const doc of workflow.documents) {
@@ -827,10 +843,11 @@ export async function createTaskWithWorkflow(data: {
             if (!isCompleted) {
               // Fuzzy match document type/title
               // e.g. doc.name="Passport Copy" matches existing doc with title="Passport"
-              const matchingDoc = personDocs.find(d =>
+              const matchingDoc = personDocs.find((d: any) =>
                 (d.title && doc.name.toLowerCase().includes(d.title.toLowerCase())) ||
                 (d.type && doc.name.toLowerCase().includes(d.type.toLowerCase()))
               )
+
               if (matchingDoc && matchingDoc.fileUrl) {
                 isCompleted = true
                 fileUrls = [matchingDoc.fileUrl]

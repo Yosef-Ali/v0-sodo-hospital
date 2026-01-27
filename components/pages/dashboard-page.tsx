@@ -31,38 +31,38 @@ interface DashboardPageProps {
     myTasks: any[]
     expiringItems: ExpiringItem[]
     currentUser: { id: string; name: string | null } | null
+    error?: string
   }
 }
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
-  const { taskStats, permitStats, permits, overdueCount, myTasks, expiringItems, currentUser } = initialData
+  const { taskStats, permitStats, permits, overdueCount, myTasks, expiringItems, currentUser, error } = initialData
+  const router = useRouter()
+  const { toast } = useToast()
 
   // Count expiring items by status
-  const expiredCount = expiringItems?.filter(i => i.status === "expired").length || 0
-  const urgentExpiryCount = expiringItems?.filter(i => i.status === "urgent").length || 0
-  const warningExpiryCount = expiringItems?.filter(i => i.status === "warning").length || 0
+  const expiredCount = expiringItems?.filter((i: ExpiringItem) => i.status === "expired").length || 0
+  const urgentExpiryCount = expiringItems?.filter((i: ExpiringItem) => i.status === "urgent").length || 0
+  const warningExpiryCount = expiringItems?.filter((i: ExpiringItem) => i.status === "warning").length || 0
   const totalExpiringCount = expiringItems?.length || 0
 
-  const pendingTasks = taskStats.byStatus?.pending || 0
-  const inProgressTasks = taskStats.byStatus?.["in-progress"] || 0
-  const completedTasks = taskStats.byStatus?.completed || 0
-  const urgentTasks = taskStats.byStatus?.urgent || 0
-  const totalTasks = taskStats.total || pendingTasks + inProgressTasks + completedTasks + urgentTasks
+  const pendingTasks = taskStats?.byStatus?.pending || 0
+  const inProgressTasks = taskStats?.byStatus?.["in-progress"] || 0
+  const completedTasks = taskStats?.byStatus?.completed || 0
+  const urgentTasks = taskStats?.byStatus?.urgent || 0
+  const totalTasks = taskStats?.total || pendingTasks + inProgressTasks + completedTasks + urgentTasks
 
-  const highPriorityTasks = taskStats.byPriority?.high || 0
-  const mediumPriorityTasks = taskStats.byPriority?.medium || 0
-  const lowPriorityTasks = taskStats.byPriority?.low || 0
+  const highPriorityTasks = taskStats?.byPriority?.high || 0
+  const mediumPriorityTasks = taskStats?.byPriority?.medium || 0
+  const lowPriorityTasks = taskStats?.byPriority?.low || 0
 
   const openTasks = pendingTasks + inProgressTasks + urgentTasks
   const completionRate = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0
 
-  const totalPermits = permitStats.total || 0
-  const pendingPermits = permitStats.byStatus?.PENDING || 0
-  const submittedPermits = permitStats.byStatus?.SUBMITTED || 0
-  const approvedPermits = permitStats.byStatus?.APPROVED || 0
-
-  const router = useRouter()
-  const { toast } = useToast()
+  const totalPermits = permitStats?.total || 0
+  const pendingPermits = permitStats?.byStatus?.PENDING || 0
+  const submittedPermits = permitStats?.byStatus?.SUBMITTED || 0
+  const approvedPermits = permitStats?.byStatus?.APPROVED || 0
 
   return (
     <div className="p-8">
@@ -70,6 +70,23 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
         title="Administrative Dashboard"
         description="A quick overview of tasks, permits, and recent activity."
       />
+
+      {error && (
+        <div className="mb-8 p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col md:flex-row items-center gap-6 fade-in shadow-lg shadow-amber-500/5">
+          <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="h-6 w-6 text-amber-500" />
+          </div>
+          <div className="flex-1 text-center md:text-left">
+            <h3 className="text-lg font-semibold text-amber-400 mb-1">Database Connection Required</h3>
+            <p className="text-slate-400 text-sm mb-4 md:mb-0">
+              {error.includes("SSH") ? "The SSH tunnel is likely down. Please restore it to see your data." : error}
+            </p>
+          </div>
+          <div className="bg-slate-900/50 rounded-lg px-4 py-2 border border-slate-700 font-mono text-xs text-slate-300">
+            ./scripts/start-db-tunnel.sh
+          </div>
+        </div>
+      )}
 
       {/* Overdue tasks strip */}
       <div className="mt-4 mb-4 flex items-center justify-between rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
@@ -131,9 +148,9 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               <p className="text-xs text-red-200 mb-2">Most urgent:</p>
               <ul className="space-y-1">
                 {expiringItems
-                  .filter(i => i.status === "expired" || i.status === "urgent")
+                  .filter((i: ExpiringItem) => i.status === "expired" || i.status === "urgent")
                   .slice(0, 5)
-                  .map((item) => (
+                  .map((item: ExpiringItem) => (
                     <li key={item.id} className="flex items-center justify-between text-xs">
                       <span className="text-gray-300">
                         <span className={item.status === "expired" ? "text-red-400" : "text-orange-400"}>
@@ -191,17 +208,17 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
                 items={[
                   {
                     label: "Work Permits",
-                    value: String(permitStats.byCategory?.WORK_PERMIT || 0),
+                    value: String(permitStats?.byCategory?.WORK_PERMIT || 0),
                     action: { text: "View", link: "/permits?category=WORK_PERMIT" },
                   },
                   {
                     label: "Vehicles",
-                    value: String(permitStats.byCategory?.VEHICLE || 0),
+                    value: String(permitStats?.byCategory?.VEHICLE || 0),
                     action: { text: "View", link: "/vehicle" },
                   },
                   {
                     label: "Imports",
-                    value: String(permitStats.byCategory?.IMPORT || 0), // Fallback to PIP if merged
+                    value: String(permitStats?.byCategory?.IMPORT || 0),
                     action: { text: "View", link: "/import" },
                   },
                 ]}
