@@ -6,117 +6,91 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import { Search, Filter, Plus, Car, FileCheck, Clock, CheckCircle2, AlertCircle, Fuel, Shield, Truck } from "lucide-react"
+import { Search, Filter, Plus, Car, FileCheck, Fuel, Shield, Truck } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { VehicleTaskSheet } from "@/components/sheets/vehicle-task-sheet"
+import { VehicleSheet } from "@/components/sheets/vehicle-sheet"
+import { getVehicles, getVehicleStats, createVehicle, updateVehicle, deleteVehicle, getVehicleById } from "@/lib/actions/v2/vehicles"
 
-interface VehicleTask {
-  id: string
-  title: string
-  description: string
-  category: "inspection" | "road_fund" | "insurance" | "road_transport"
-  status: "pending" | "in-progress" | "completed" | "urgent"
-  dueDate: string
-  assignee: string
-  vehicleInfo: string
-  plateNumber: string
-  documents: string[]
-  createdAt: string
+interface VehiclePageProps {
+  initialData: {
+    vehicles: any[]
+    stats: {
+      total: number
+      inspection: number
+      roadFund: number
+      insurance: number
+      roadTransport: number
+    }
+  }
 }
 
-// Sample data
-const sampleTasks: VehicleTask[] = [
-  {
-    id: "1",
-    title: "Annual Vehicle Inspection",
-    description: "Annual inspection for hospital ambulance",
-    category: "inspection",
-    status: "pending",
-    dueDate: "2026-01-15",
-    assignee: "Kalkidan Folli",
-    vehicleInfo: "Toyota Land Cruiser Ambulance",
-    plateNumber: "AA-12345",
-    documents: ["Libre", "Previous Inspection"],
-    createdAt: "2026-01-01",
-  },
-  {
-    id: "2",
-    title: "Road Fund Payment",
-    description: "Quarterly road fund payment for fleet",
-    category: "road_fund",
-    status: "in-progress",
-    dueDate: "2026-01-20",
-    assignee: "Bethel Ayalew",
-    vehicleInfo: "Hospital Fleet",
-    plateNumber: "Multiple",
-    documents: ["Bank Slip", "Libre"],
-    createdAt: "2026-01-02",
-  },
-  {
-    id: "3",
-    title: "Insurance Renewal",
-    description: "Comprehensive insurance renewal",
-    category: "insurance",
-    status: "urgent",
-    dueDate: "2026-01-10",
-    assignee: "Niccodimos Ezechiel",
-    vehicleInfo: "Admin Vehicle",
-    plateNumber: "AA-67890",
-    documents: ["Current Policy", "Vehicle Registration"],
-    createdAt: "2026-01-01",
-  },
-]
-
-export function VehiclePage() {
-  const [tasks, setTasks] = useState<VehicleTask[]>(sampleTasks)
+export function VehiclePage({ initialData }: VehiclePageProps) {
+  const [vehicles, setVehicles] = useState<any[]>(initialData.vehicles)
+  const [stats, setStats] = useState(initialData.stats)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedTask, setSelectedTask] = useState<VehicleTask | null>(null)
+  const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  // Filter tasks
-  const filteredTasks = tasks.filter((task) => {
-    if (activeTab !== "all" && activeTab !== task.category && activeTab !== task.status) {
+  // Load vehicles with optional filters
+  const loadVehicles = async (query?: string) => {
+    setLoading(true)
+    const result = await getVehicles({ query, limit: 100 })
+    if (result.success && result.data) {
+      setVehicles(result.data)
+    }
+    const statsResult = await getVehicleStats()
+    if (statsResult.success && statsResult.data) {
+      setStats(statsResult.data)
+    }
+    setLoading(false)
+  }
+
+  // Filter vehicles based on current tab and search
+  const filteredVehicles = vehicles.filter((item) => {
+    if (activeTab !== "all" && activeTab !== item.category && activeTab !== item.status) {
       return false
     }
-    if (searchQuery && !task.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !task.plateNumber.toLowerCase().includes(searchQuery.toLowerCase())) {
+    if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
+        !item.plateNumber?.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false
     }
     return true
   })
 
-  // Count tasks
-  const taskCounts = {
-    all: tasks.length,
-    inspection: tasks.filter((t) => t.category === "inspection").length,
-    road_fund: tasks.filter((t) => t.category === "road_fund").length,
-    insurance: tasks.filter((t) => t.category === "insurance").length,
-    road_transport: tasks.filter((t) => t.category === "road_transport").length,
-  }
-
   const handleCreateNew = () => {
-    setSelectedTask(null)
+    setSelectedVehicle(null)
     setIsSheetOpen(true)
   }
 
-  const handleEditTask = (task: VehicleTask) => {
-    setSelectedTask(task)
+  const handleEditVehicle = async (item: any) => {
+    // Optimistically select item, but fetch fresh data
+    setSelectedVehicle(item)
     setIsSheetOpen(true)
+    
+    // Fetch fresh data to ensure we have all fields (especially those missing from list view cache)
+    const freshData = await getVehicleById(item.id)
+    if (freshData.success && freshData.data) {
+      setSelectedVehicle(freshData.data)
+    }
   }
 
-  const handleAddTask = (taskData: any) => {
-    if (taskData.id) {
-      setTasks(tasks.map((t) => (t.id === taskData.id ? { ...t, ...taskData } : t)))
-    } else {
-      const newTask: VehicleTask = {
-        id: Date.now().toString(),
-        ...taskData,
-        createdAt: new Date().toISOString().split("T")[0],
+  const handleSubmit = async (data: any) => {
+    if (selectedVehicle?.id) {
+      // Update existing - use selectedVehicle.id since form doesn't include it
+      const result = await updateVehicle(selectedVehicle.id, data)
+      if (result.success) {
+        loadVehicles()
       }
-      setTasks([newTask, ...tasks])
+    } else {
+      const result = await createVehicle(data)
+      if (result.success) {
+        loadVehicles()
+      }
     }
     setIsSheetOpen(false)
+    setSelectedVehicle(null)
   }
 
   const getStatusColor = (status: string) => {
@@ -161,19 +135,19 @@ export function VehiclePage() {
           <div className="w-full overflow-x-auto">
             <TabsList className="bg-gray-800 border border-gray-700 inline-flex min-w-max gap-2 rounded-md">
               <TabsTrigger value="all" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                All <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">{taskCounts.all}</Badge>
+                All <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">{stats.total}</Badge>
               </TabsTrigger>
               <TabsTrigger value="inspection" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                Inspection <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">{taskCounts.inspection}</Badge>
+                Inspection <Badge className="ml-1 bg-blue-500/20 text-blue-300 text-xs border border-blue-500/30">{stats.inspection}</Badge>
               </TabsTrigger>
               <TabsTrigger value="road_fund" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                Road Fund <Badge className="ml-1 bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">{taskCounts.road_fund}</Badge>
+                Road Fund <Badge className="ml-1 bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">{stats.roadFund}</Badge>
               </TabsTrigger>
               <TabsTrigger value="insurance" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                Insurance <Badge className="ml-1 bg-green-500/20 text-green-300 text-xs border border-green-500/30">{taskCounts.insurance}</Badge>
+                Insurance <Badge className="ml-1 bg-green-500/20 text-green-300 text-xs border border-green-500/30">{stats.insurance}</Badge>
               </TabsTrigger>
               <TabsTrigger value="road_transport" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                Road Transport <Badge className="ml-1 bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30">{taskCounts.road_transport}</Badge>
+                Road Transport <Badge className="ml-1 bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30">{stats.roadTransport}</Badge>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -193,71 +167,81 @@ export function VehiclePage() {
             <Filter className="h-4 w-4 mr-2" /> Filter
           </Button>
           <Button size="sm" className="bg-gradient-to-r from-green-600 to-emerald-600" onClick={handleCreateNew}>
-            <Plus className="h-4 w-4 mr-2" /> New Task
+            <Plus className="h-4 w-4 mr-2" /> New Vehicle
           </Button>
         </div>
       </div>
 
-      {/* Task Cards */}
-      {filteredTasks.length === 0 ? (
+      {/* Vehicle Cards */}
+      {filteredVehicles.length === 0 ? (
         <div className="bg-gray-800/60 rounded-lg border border-gray-700 p-8 text-center">
           <Car className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No vehicle tasks found</h3>
+          <h3 className="text-lg font-medium text-white mb-2">No vehicle records found</h3>
           <p className="text-gray-400 mb-4">
-            {searchQuery ? "No tasks match your search." : "Create a new vehicle task to get started."}
+            {searchQuery ? "No vehicles match your search." : "Create a new vehicle record to get started."}
           </p>
           <Button className="bg-green-600 hover:bg-green-700" onClick={handleCreateNew}>
-            <Plus className="h-4 w-4 mr-2" /> Create Vehicle Task
+            <Plus className="h-4 w-4 mr-2" /> Create Vehicle Record
           </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTasks.map((task) => (
-            <Card key={task.id} className="bg-gray-800 border-gray-700 overflow-hidden hover:border-gray-600 transition-all">
+          {filteredVehicles.map((item) => (
+            <Card key={item.id} className="bg-gray-800 border-gray-700 overflow-hidden hover:border-gray-600 transition-all">
               <div className="p-5">
                 <div className="flex justify-between items-start mb-3">
                   <div className="bg-gray-700 p-2 rounded-md">
-                    {getCategoryIcon(task.category)}
+                    {getCategoryIcon(item.category)}
                   </div>
-                  <Badge className={`text-xs border ${getStatusColor(task.status)}`}>
-                    {task.status.replace("-", " ")}
+                  <Badge className={`text-xs border ${getStatusColor(item.status)}`}>
+                    {item.status.replace("-", " ")}
                   </Badge>
                 </div>
 
-                <h3 className="font-medium text-lg mb-1 text-white">{task.title}</h3>
-                <p className="text-sm text-gray-400 mb-3">{task.description}</p>
+                <h3 className="font-medium text-lg mb-1 text-white">{item.title}</h3>
+                {item.ticketNumber && (
+                  <p className="text-xs text-green-400 font-mono mb-1">{item.ticketNumber}</p>
+                )}
+                <p className="text-sm text-gray-400 mb-3">{item.description}</p>
 
                 <div className="flex items-center gap-2 mb-3">
                   <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-                    {getCategoryLabel(task.category)}
+                    {getCategoryLabel(item.category)}
                   </Badge>
-                  <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-                    {task.plateNumber}
-                  </Badge>
+                  {item.plateNumber && (
+                    <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
+                      {item.plateNumber}
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="text-xs text-gray-500 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Vehicle:</span>
-                    <span className="text-gray-400">{task.vehicleInfo}</span>
-                  </div>
+                  {item.vehicleInfo && (
+                    <div className="flex justify-between">
+                      <span>Vehicle:</span>
+                      <span className="text-gray-400">{item.vehicleInfo}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Due Date:</span>
-                    <span className="text-gray-400">{task.dueDate}</span>
+                    <span className="text-gray-400">{item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "Not set"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Assignee:</span>
-                    <span className="text-gray-400">{task.assignee}</span>
+                    <span>Created:</span>
+                    <span className="text-gray-400">{new Date(item.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
               </div>
 
               <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center">
-                <button className="text-xs text-green-400 hover:text-green-300 font-medium">
+                <a 
+                  href={`/vehicle/${item.id}`}
+                  className="text-xs text-green-400 hover:text-green-300 font-medium"
+                >
                   View Details
-                </button>
+                </a>
                 <button 
-                  onClick={() => handleEditTask(task)}
+                  onClick={() => handleEditVehicle(item)}
                   className="text-xs text-gray-400 hover:text-gray-300 font-medium"
                 >
                   Edit
@@ -268,11 +252,11 @@ export function VehiclePage() {
         </div>
       )}
 
-      <VehicleTaskSheet 
+      <VehicleSheet 
         open={isSheetOpen} 
         onOpenChange={setIsSheetOpen} 
-        onSubmit={handleAddTask}
-        task={selectedTask}
+        onSubmit={handleSubmit}
+        vehicle={selectedVehicle}
       />
     </div>
   )

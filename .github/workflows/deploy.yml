@@ -1,0 +1,73 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [master]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 72.62.170.70
+          username: root
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /root/sodo-hospital
+            git pull origin master
+            
+            echo "Login to GHCR..."
+            # Note: You must run 'docker login ghcr.io' on the server manually once!
+            # Or pass secrets here, but manual one-time login is safer for now.
+            
+            echo "Pulling latest image..."
+            docker compose pull app
+            
+            echo "Restarting application..."
+            docker compose up -d app
+            
+            echo "Pruning old images..."
+            docker system prune -f
+            
+            echo "Deployed successfully!"

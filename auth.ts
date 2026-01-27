@@ -43,10 +43,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
+        console.log("LOGIN SUCCESS: User found:", { email: user.email, role: user.role })
+
         return {
           id: user.id,
           email: user.email,
           name: user.name,
+          role: user.role, // Include role in the return
         }
       },
     }),
@@ -58,12 +61,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user, account }) {
-      // Add user ID to the token
+      // Add user ID and role to the token
       if (user) {
+        console.log("JWT CALLBACK: Initial sign in for user:", { id: user.id, role: (user as any).role })
         token.id = user.id
         token.email = user.email
         token.name = user.name
         token.image = user.image
+        token.role = (user as { role?: string }).role || "USER" // Add role to token
       }
       // Add provider info if available
       if (account) {
@@ -79,8 +84,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.name = token.name as string
         session.user.image = token.image as string
         session.user.provider = token.provider as string
+        session.user.role = token.role as string // Add role to session
       }
       return session
     },
   },
 })
+

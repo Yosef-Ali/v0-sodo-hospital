@@ -10,7 +10,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getUsers } from "@/lib/actions/users"
-import { getPeople } from "@/lib/actions/v2/people"
+import { getPeople } from "@/lib/actions/v2/foreigners"
+import { getVehicles } from "@/lib/actions/v2/vehicles"
+import { getImports } from "@/lib/actions/v2/imports"
+import { getCompanies } from "@/lib/actions/v2/companies"
 import { 
   Briefcase, 
   UserCircle, 
@@ -22,8 +25,14 @@ import {
   Car,
   Stethoscope,
   Plane,
-  User
+  User,
+  Check,
+  ChevronsUpDown,
+  Plus
 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 // Define the shape of the task object coming from the database/parent
 interface Task {
@@ -37,10 +46,16 @@ interface Task {
   permitId?: string
   category?: string // Derived or matched
   subType?: string
+  entityType?: string
+  entityId?: string
   permit?: {
     category: string
     subType?: string
     personId?: string
+  }
+  linkedEntity?: {
+    type: string
+    data: any
   }
 }
 
@@ -54,7 +69,10 @@ interface TaskFormData {
   assignee: string
   category: string
   subType: string
-  personId: string
+  // Entity linking (NEW)
+  entityType: string  // 'person', 'vehicle', 'import', 'company'
+  entityId: string    // ID of the linked entity
+  personId: string    // Legacy, will be phased out
 }
 
 interface TaskSheetProps {
@@ -66,9 +84,15 @@ interface TaskSheetProps {
 
 export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps) {
   const [users, setUsers] = useState<{ id: string; name: string | null; email: string }[]>([])
-  const [people, setPeople] = useState<{ id: string; firstName: string; lastName: string }[]>([])
+  const [people, setPeople] = useState<any[]>([])
+  const [vehicles, setVehicles] = useState<any[]>([])
+  const [imports, setImports] = useState<any[]>([])
+  const [companies, setCompanies] = useState<any[]>([])
+  
   const [loadingUsers, setLoadingUsers] = useState(false)
-  const [loadingPeople, setLoadingPeople] = useState(false)
+  const [loadingEntities, setLoadingEntities] = useState(false)
+  
+  const [isTitleOpen, setIsTitleOpen] = useState(false)
   
   const [formData, setFormData] = useState<TaskFormData>({
     title: "",
@@ -79,10 +103,12 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
     assignee: "",
     category: "",
     subType: "",
+    entityType: "",
+    entityId: "",
     personId: ""
   })
 
-  // Fetch users and people on mount
+  // Fetch users and all entities on mount
   useEffect(() => {
     const fetchData = async () => {
       setLoadingUsers(true)
@@ -92,12 +118,30 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
       }
       setLoadingUsers(false)
 
-      setLoadingPeople(true)
-      const peopleResult = await getPeople({ limit: 100 }) // Fetch reasonable limit for dropdown
+      setLoadingEntities(true)
+      
+      // Fetch all entity types in parallel
+      const [peopleResult, vehiclesResult, importsResult, companiesResult] = await Promise.all([
+        getPeople({ limit: 100 }),
+        getVehicles({ limit: 100 }),
+        getImports({ limit: 100 }),
+        getCompanies({ limit: 100 }),
+      ])
+      
       if (peopleResult.success && peopleResult.data) {
         setPeople(peopleResult.data)
       }
-      setLoadingPeople(false)
+      if (vehiclesResult.success && vehiclesResult.data) {
+        setVehicles(vehiclesResult.data)
+      }
+      if (importsResult.success && importsResult.data) {
+        setImports(importsResult.data)
+      }
+      if (companiesResult.success && companiesResult.data) {
+        setCompanies(companiesResult.data)
+      }
+      
+      setLoadingEntities(false)
     }
     fetchData()
   }, [])
@@ -121,10 +165,79 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
       let personId = ""
       
       if (task.permit) {
-        if (!category) category = task.permit.category.toLowerCase()
+        if (!category) category = task.permit.category
         if (task.permit.subType) subType = task.permit.subType
         if (task.permit.personId) personId = task.permit.personId
       }
+      
+      // If no subType from permit, try to derive from linkedEntity
+      if (!subType && task.linkedEntity) {
+        const ent = task.linkedEntity
+        if (ent.type === 'vehicle') subType = ent.data.serviceType || ""
+        else if (ent.type === 'import') subType = ent.data.importType || ""
+        else if (ent.type === 'company') subType = ent.data.registrationType || ""
+        else if (ent.type === 'person') subType = ent.data.workPermitSubType || ""
+      }
+      
+      // If no category from permit, try to derive from entityType
+      if (!category && task.entityType) {
+        const entityTypeToCategory: Record<string, string> = {
+          "person": "work-permit", // Default for person entities
+          "vehicle": "bolo-insurance",
+          "import": "customs",
+          "company": "company-registration",
+        }
+        category = entityTypeToCategory[task.entityType] || ""
+      }
+      
+      // Normalize category to match select options (e.g., "work_permit" or "WORK_PERMIT" -> "work-permit")
+      const normalizeCategory = (cat: string): string => {
+        if (!cat) return ""
+        const normalized = cat.toLowerCase().replace(/_/g, "-")
+        // Map known variations
+        const categoryMap: Record<string, string> = {
+          "work-permit": "work-permit",
+          "workpermit": "work-permit",
+          "residence-id": "residence-id",
+          "residenceid": "residence-id",
+          "moh-licensing": "moh-licensing",
+          "mohlicensing": "moh-licensing",
+          "medical-license": "moh-licensing",
+          "customs": "customs",
+          "pip": "customs",
+          "esw": "customs",
+          "single-window": "customs",
+          "bolo-insurance": "bolo-insurance",
+          "boloinsurance": "bolo-insurance",
+          "car-bolo-insurance": "bolo-insurance",
+          "company-registration": "company-registration",
+          "companyregistration": "company-registration",
+          "govt-affairs": "govt-affairs",
+          "govtaffairs": "govt-affairs",
+        }
+        return categoryMap[normalized] || normalized
+      }
+      
+      category = normalizeCategory(category)
+      
+      // Normalize subType to match select options (uppercase)
+      const normalizeSubType = (st: string): string => {
+        if (!st) return ""
+        const upper = st.toUpperCase()
+        // Map known variations
+        const subTypeMap: Record<string, string> = {
+          "NEW": "NEW",
+          "RENEWAL": "RENEWAL",
+          "OTHER": "OTHER",
+          "TEMPORARY": "TEMPORARY",
+          "RETURN": "RETURN",
+          "PIP": "PIP",
+          "ESW": "ESW",
+        }
+        return subTypeMap[upper] || upper
+      }
+      
+      subType = normalizeSubType(subType)
 
       setFormData({
         id: task.id,
@@ -133,9 +246,11 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
         status: task.status || "pending",
         priority: task.priority || "medium",
         dueDate: formattedDueDate,
-        assignee: task.assigneeId || "", // Use assigneeId from DB
+        assignee: task.assigneeId || "",
         category: category,
         subType: subType,
+        entityType: task.entityType || "",
+        entityId: task.entityId || "",
         personId: personId
       })
     } else if (!task && open) {
@@ -149,6 +264,8 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
         assignee: "",
         category: "",
         subType: "",
+        entityType: "",
+        entityId: "",
         personId: ""
       })
     }
@@ -189,55 +306,131 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
     { value: "RENEWAL", label: "Renewal" },
   ]
 
-  // Mapping simple categories to data keys if needed, 
-  // but for now keeping the quick titles simple
-  const quickTitles: Record<string, string[]> = {
-    "work-permit": [
-      "New Work Permit Application",
-      "Work Permit Renewal",
-      "Collect Required Documents",
-      "Follow up on Work Permit Status",
-      "Submit Physical Documents",
-    ],
-    "residence-id": [
-      "New Residence ID Application",
-      "Residence ID Renewal",
-      "New Residence ID for Wife & Child",
-      "Renewal Residence ID for Dependents",
-      "Submit Document AND Payment",
-    ],
-    "moh-licensing": [
-      "Permanent/New License Application",
-      "Temporary License Application",
-      "License Renewal",
-      "Return Expired License",
-      "Document Preparation",
-    ],
-    "customs": [
-      "Pre Import Permit (PIP)",
-      "Ethiopia Single Window (ESW)",
-      "Submit Customs Declaration",
-      "Collect Cleared Items",
-      "Document Collection for PIP",
-    ],
-    "bolo-insurance": [
-      "Bolo and Insurance Inspection",
-      "Process Road Fund Payment",
-      "Obtain Vehicle Insurance",
-      "Complete Road Transport Requirements",
-    ],
-    "company-registration": [
-      "Company Registration",
-      "Prepare Registration Documents",
-      "Submit Online Application",
-      "Collect Business License",
-    ],
-    "govt-affairs": [
-      "Investment Commission Process",
-      "ETA Requirements",
-      "PACCS Process",
-      "Family Medicine Licensing",
-    ]
+  // Mapping categories and sub-types to specific task titles
+  const quickTitles: Record<string, Record<string, string[]>> = {
+    "work-permit": {
+      "NEW": [
+        "New Work Permit Application",
+        "Collect Documents for New Permit",
+        "Submit New Work Permit Request",
+        "Follow up on New Application",
+        "Collect Issued Work Permit"
+      ],
+      "RENEWAL": [
+        "Work Permit Renewal Application",
+        "Collect Renewal Documents",
+        "Submit Renewal Request",
+        "Follow up on Renewal",
+        "Collect Renewed Work Permit"
+      ],
+      "OTHER": [
+        "Work Permit Adjustment",
+        "Cancellation Request",
+        "Lost Permit Replacement"
+      ],
+      "DEFAULT": [
+        "Work Permit Inquiry",
+        "Document Verification"
+      ]
+    },
+    "residence-id": {
+      "DEFAULT": [
+        "New Residence ID Application",
+        "Residence ID Renewal",
+        "New Residence ID for Wife & Child",
+        "Renewal Residence ID for Dependents",
+        "Submit Document AND Payment",
+        "Collect Residence ID"
+      ]
+    },
+    "moh-licensing": {
+      "NEW": [
+        "New Permanent License Application",
+        "Submit Medical Degree for Verification",
+        "Professional Competency Assessment"
+      ],
+      "TEMPORARY": [
+        "Temporary License Application",
+        "Submit Letter of Intent"
+      ],
+      "RENEWAL": [
+        "License Renewal Application",
+        "Submit CPD Certificates",
+        "Pay Renewal Fees"
+      ],
+      "RETURN": [
+        "Return Expired License",
+        "Clearance Process"
+      ],
+      "DEFAULT": [
+        "MOH License Inquiry",
+        "Document Collection"
+      ]
+    },
+    "customs": {
+      "PIP": [
+        "Apply for Pre Import Permit (PIP)",
+        "Submit Proforma Invoice",
+        "Follow up on PIP Approval"
+      ],
+      "ESW": [
+        "Ethiopia Single Window Submission",
+        "Upload Shipping Documents",
+        "Bank Permit Processing"
+      ],
+      "OTHER": [
+        "General Customs Clearance",
+        "Duty Free Request",
+        "Collect Released Goods"
+      ],
+      "DEFAULT": [
+        "Customs Inquiry",
+        "Document Preparation"
+      ]
+    },
+    "bolo-insurance": {
+      "NEW": [
+        "New Vehicle Inspection (Bolo)",
+        "New Insurance Policy Purchase"
+      ],
+      "RENEWAL": [
+        "Annual Bolo Renewal",
+        "Insurance Policy Renewal",
+        "Road Fund Payment"
+      ],
+      "DEFAULT": [
+        "Vehicle Inspection",
+        "Insurance Inquiry"
+      ]
+    },
+    "company-registration": {
+      "DEFAULT": [
+        "Company Registration Application",
+        "Trade Name Registration",
+        "Tax Identification Number (TIN) Application",
+        "Business License Renewal",
+        "Commercial Registration Amendment"
+      ]
+    },
+    "govt-affairs": {
+      "DEFAULT": [
+        "Investment Commission Inquiry",
+        "Submit Quarterly Report",
+        "Visa Extension Request",
+        "Support Letter Request"
+      ]
+    }
+  }
+
+  // Mapping categories to default entity types
+  const categoryToEntityType: Record<string, string> = {
+    "work-permit": "person",
+    "residence-id": "person",
+    "moh-licensing": "person",
+    "customs": "import",
+    "bolo-insurance": "vehicle",
+    "company-registration": "company",
+    "govt-affairs": "company",
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -255,6 +448,23 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
   // Determine which fields to show based on category
   const showPersonSelector = ["work-permit", "residence-id", "moh-licensing"].includes(formData.category)
   const showSubType = ["work-permit", "moh-licensing", "customs", "bolo-insurance"].includes(formData.category)
+
+  // Get relevant titles based on category and subtype
+  const getRelevantTitles = () => {
+    if (!formData.category) return []
+    const categoryData = quickTitles[formData.category]
+    if (!categoryData) return []
+    
+    // If subType is selected, try to find matching titles
+    if (formData.subType && categoryData[formData.subType]) {
+      return categoryData[formData.subType]
+    }
+    
+    // Fallback to DEFAULT
+    return categoryData["DEFAULT"] || []
+  }
+
+  const relevantTitles = getRelevantTitles()
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -287,7 +497,18 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                 </Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value, title: "", subType: "" })}
+                  onValueChange={(value) => {
+                    const defaultEntityType = categoryToEntityType[value] || ""
+                    setFormData({ 
+                      ...formData, 
+                      category: value, 
+                      title: "", 
+                      subType: "",
+                      entityType: defaultEntityType,
+                      entityId: "", // Reset linked record
+                      personId: ""  // Reset legacy
+                    })
+                  }}
                 >
                   <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
                     <SelectValue placeholder="Select category" />
@@ -313,7 +534,7 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                   </Label>
                   <Select
                     value={formData.subType}
-                    onValueChange={(value) => setFormData({ ...formData, subType: value })}
+                    onValueChange={(value) => setFormData({ ...formData, subType: value, title: "" })}
                   >
                     <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
                       <SelectValue placeholder="Select type" />
@@ -353,34 +574,96 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
               )}
             </div>
 
-            {/* Person Selector (Dynamic) */}
-            {showPersonSelector && (
-              <div className="space-y-2 mt-4 pt-4 border-t border-gray-700/50">
-                <Label htmlFor="personId" className="text-gray-300 flex items-center justify-between">
-                  Subject Person
-                  <span className="text-xs text-gray-500 font-normal">Who is this for?</span>
-                </Label>
-                <Select
-                  value={formData.personId}
-                  onValueChange={(value) => setFormData({ ...formData, personId: value })}
-                  disabled={loadingPeople}
-                >
-                  <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-green-400" />
-                      <SelectValue placeholder={loadingPeople ? "Loading..." : "Link to a person..."} />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent className="bg-gray-700 border-gray-600 max-h-[200px]">
-                    {people.map((p) => (
-                      <SelectItem key={p.id} value={p.id} className="text-white">
-                        {p.firstName} {p.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Entity Selector - Link to existing records */}
+            <div className="space-y-4 mt-4 pt-4 border-t border-gray-700/50">
+              <div className="flex items-center justify-between">
+                <Label className="text-gray-300 font-medium">Link to Entity</Label>
+                <span className="text-xs text-gray-500">Select existing record</span>
               </div>
-            )}
+              
+              <div className="grid grid-cols-2 gap-3">
+                {/* Entity Type Selector */}
+                <div className="space-y-2">
+                  <Label className="text-gray-400 text-xs">Entity Type</Label>
+                  <Select
+                    value={formData.entityType}
+                    onValueChange={(value) => setFormData({ ...formData, entityType: value, entityId: "", personId: "" })}
+                  >
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
+                      <SelectValue placeholder="Select type..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-700 border-gray-600">
+                      <SelectItem value="person" className="text-white">
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-blue-400" />
+                          Foreigner / Person
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="vehicle" className="text-white">
+                        <div className="flex items-center gap-2">
+                          <Car className="w-4 h-4 text-green-400" />
+                          Vehicle
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="import" className="text-white">
+                        <div className="flex items-center gap-2">
+                          <Plane className="w-4 h-4 text-orange-400" />
+                          Import Permit
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="company" className="text-white">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-purple-400" />
+                          Company
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Entity Selector (Dynamic based on type) */}
+                <div className="space-y-2">
+                  <Label className="text-gray-400 text-xs">Select Record</Label>
+                  <Select
+                    value={formData.entityId}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, entityId: value })
+                      // Also set personId for backward compatibility
+                      if (formData.entityType === "person") {
+                        setFormData(prev => ({ ...prev, entityId: value, personId: value }))
+                      }
+                    }}
+                    disabled={!formData.entityType || loadingEntities}
+                  >
+                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
+                      <SelectValue placeholder={loadingEntities ? "Loading..." : "Select record..."} />
+                    </SelectTrigger>
+                    <SelectContent className="bg-gray-700 border-gray-600 max-h-[200px]">
+                      {formData.entityType === "person" && people.map((p) => (
+                        <SelectItem key={p.id} value={p.id} className="text-white">
+                          {p.firstName} {p.lastName}
+                        </SelectItem>
+                      ))}
+                      {formData.entityType === "vehicle" && vehicles.map((v) => (
+                        <SelectItem key={v.id} value={v.id} className="text-white">
+                          {v.plateNumber || v.title} {v.ownerName ? `- ${v.ownerName}` : ""}
+                        </SelectItem>
+                      ))}
+                      {formData.entityType === "import" && imports.map((i) => (
+                        <SelectItem key={i.id} value={i.id} className="text-white">
+                          {i.title} ({i.category?.toUpperCase()})
+                        </SelectItem>
+                      ))}
+                      {formData.entityType === "company" && companies.map((c) => (
+                        <SelectItem key={c.id} value={c.id} className="text-white">
+                          {c.companyName || c.title} {c.tinNumber ? `(TIN: ${c.tinNumber})` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* GROUP 2: DETAILS */}
@@ -397,43 +680,82 @@ export function TaskSheet({ open, onOpenChange, onSubmit, task }: TaskSheetProps
                 </Label>
                 {/* Quick Title Logic */}
                 <div className="flex gap-2 flex-col">
-                  {formData.category && quickTitles[formData.category] && (
-                    <Select
-                      value={quickTitles[formData.category]?.includes(formData.title) ? formData.title : "custom"}
-                      onValueChange={(value) => {
-                        if (value !== "custom") {
-                          setFormData({ ...formData, title: value })
-                        } else {
-                           if (quickTitles[formData.category]?.includes(formData.title)) {
-                              setFormData({ ...formData, title: "" })
-                           }
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600 transition-colors">
-                        <SelectValue placeholder="Select a standard task..." />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-700 border-gray-600">
-                        {quickTitles[formData.category]?.map((title) => (
-                          <SelectItem key={title} value={title} className="text-white">
-                            {title}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="custom" className="text-green-400 font-medium border-t border-gray-600 mt-1 pt-1">
-                          + Create custom title
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
+                  {relevantTitles.length > 0 ? (
+                    <Popover open={isTitleOpen} onOpenChange={setIsTitleOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={isTitleOpen}
+                          className="w-full justify-between bg-gray-700 border-gray-600 text-white hover:bg-gray-600 hover:text-white"
+                        >
+                          {formData.title && relevantTitles.includes(formData.title)
+                            ? formData.title
+                            : formData.title ? formData.title : "Select or type task title..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0 bg-gray-700 border-gray-600">
+                        <Command className="bg-gray-700 text-white">
+                          <CommandInput placeholder="Search or type new title..." className="text-white placeholder:text-gray-400" />
+                          <CommandList>
+                            <CommandEmpty className="py-2 px-4 text-sm text-gray-400">
+                               No preset found. Type custom title.
+                            </CommandEmpty>
+                            <CommandGroup heading="Suggestions">
+                              {relevantTitles.map((title) => (
+                                <CommandItem
+                                  key={title}
+                                  value={title}
+                                  onSelect={(currentValue) => {
+                                    setFormData({ ...formData, title: currentValue })
+                                    setIsTitleOpen(false)
+                                  }}
+                                  className="text-white hover:bg-gray-600 aria-selected:bg-gray-600 aria-selected:text-white"
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      formData.title === title ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  {title}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                            <CommandGroup heading="Custom">
+                                <CommandItem
+                                  value="custom-title-option"
+                                  onSelect={() => {
+                                    setFormData({ ...formData, title: "" }) // Clear to show input
+                                    setIsTitleOpen(false)
+                                  }}
+                                  className="text-green-400 hover:bg-gray-600 aria-selected:bg-gray-600 aria-selected:text-green-400 font-medium"
+                                >
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  Write custom title...
+                                </CommandItem>
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  ) : null}
                   
-                  {/* Custom Input */}
-                  {(!formData.category || !quickTitles[formData.category]?.includes(formData.title)) && (
-                    <Input
-                      value={formData.title}
-                      placeholder="e.g., Renew Medical License for Dr. Smith"
-                      className="bg-gray-700 border-gray-600 text-white"
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    />
+                  {/* Custom Input: Show if explicit custom selection OR no quick titles available OR current title is not in presets */}
+                  {(!formData.category || relevantTitles.length === 0 || (formData.title && !relevantTitles.includes(formData.title)) || formData.title === "") && (
+                     <div className={cn("transition-all duration-200", relevantTitles.length > 0 && "mt-2")}>
+                        {relevantTitles.length > 0 && formData.title && !relevantTitles.includes(formData.title) && (
+                            <Label className="text-xs text-green-400 mb-1.5 block">Custom Title Selected:</Label>
+                        )}
+                        <Input
+                          value={formData.title}
+                          placeholder={relevantTitles.length > 0 ? "Type your custom title here..." : "e.g., Renew Medical License for Dr. Smith"}
+                          className="bg-gray-700 border-gray-600 text-white"
+                          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                          autoFocus={relevantTitles.length > 0 && !relevantTitles.includes(formData.title)}
+                        />
+                     </div>
                   )}
                 </div>
               </div>

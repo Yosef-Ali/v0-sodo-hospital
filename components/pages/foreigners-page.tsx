@@ -9,11 +9,23 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Search, Plus, User, Filter } from "lucide-react"
-import { getPeople, getPeopleStats } from "@/lib/actions/v2/people"
+import { Search, Plus, User, Filter, AlertTriangle } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { getPeople, getPeopleStats } from "@/lib/actions/v2/foreigners"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { PersonSheet } from "@/components/sheets/person-sheet"
+
+import { toast } from "sonner"
 
 interface ForeignersPageProps {
   initialData: {
@@ -23,6 +35,7 @@ interface ForeignersPageProps {
       dependents: number
       withPermits: number
     }
+    error?: string
   }
 }
 
@@ -34,10 +47,14 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
   const [stats, setStats] = useState(initialData.stats)
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(initialData.error || null)
   const [activeStatTab, setActiveStatTab] = useState<"all" | "dependents" | "permits">("all")
   const [sheetOpen, setSheetOpen] = useState(false)
   const [selectedPerson, setSelectedPerson] = useState<any>(null)
+  const [duplicateDialog, setDuplicateDialog] = useState<{
+    open: boolean
+    existingPerson: { id: string; firstName: string; lastName: string; passportNo: string } | null
+  }>({ open: false, existingPerson: null })
 
   const loadPeople = async (query?: string) => {
     setLoading(true)
@@ -73,20 +90,70 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
     return !value || value === key ? fallback : value
   }
 
-  const handleCreatePerson = (personData: any) => {
-    if (personData.id) {
-      // Edit mode
-      console.log("Update person data:", personData)
-      // TODO: Call updatePerson API action
-    } else {
-      // Create mode
-      console.log("New person data:", personData)
-      // TODO: Call createPerson API action
+  const handleCreatePerson = async (personData: any) => {
+    try {
+      if (personData.id) {
+        // Edit mode - call updatePerson
+        const { updatePerson } = await import("@/lib/actions/v2/foreigners")
+        const result = await updatePerson(personData.id, personData)
+        if (result.success) {
+          toast.success("Person updated successfully")
+          setSheetOpen(false)
+        } else {
+          toast.error("Failed to update person", { description: result.error })
+          console.error("Failed to update person:", result.error)
+          return // Don't close sheet on error
+        }
+      } else {
+        // Create mode - call createPerson
+        const { createPerson } = await import("@/lib/actions/v2/foreigners")
+        const result = await createPerson(personData) as any
+
+        if (result.success) {
+          toast.success("Person created successfully")
+          setSheetOpen(false)
+        } else if (result.errorCode === "DUPLICATE_PASSPORT" && result.existingPerson) {
+          // Handle duplicate passport - show dialog to view existing person
+          setDuplicateDialog({
+            open: true,
+            existingPerson: result.existingPerson
+          })
+          return // Don't close sheet
+        } else {
+          toast.error("Failed to create person", { description: result.error })
+          console.error("Failed to create person:", result.error)
+          return // Don't close sheet on error
+        }
+      }
+      // After successful operation, reload the list
+      loadPeople()
+      loadStats()
+      setSelectedPerson(null)
+    } catch (error) {
+      console.error("Error saving person:", error)
+      toast.error("An error occurred while saving")
     }
-    // After successful operation, reload the list
-    loadPeople()
-    loadStats()
-    setSelectedPerson(null)
+  }
+
+  const handleViewExistingPerson = () => {
+    if (duplicateDialog.existingPerson) {
+      setSheetOpen(false)
+      setDuplicateDialog({ open: false, existingPerson: null })
+      router.push(`/foreigners/${duplicateDialog.existingPerson.id}`)
+    }
+  }
+
+  const handleEditExistingPerson = async () => {
+    if (duplicateDialog.existingPerson) {
+      // Load the full person data and open edit sheet
+      const { getPersonById } = await import("@/lib/actions/v2/foreigners")
+      const result = await getPersonById(duplicateDialog.existingPerson.id)
+      if (result.success && result.data) {
+        setSelectedPerson(result.data.person)
+        setDuplicateDialog({ open: false, existingPerson: null })
+        // Sheet stays open with existing person data
+      }
+    }
   }
 
   const handleEditPerson = (person: any) => {
@@ -265,8 +332,12 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
             >
               <div className="p-5 flex-1">
                 <div className="flex justify-between items-start mb-3">
-                  <div className="bg-gray-700 p-2 rounded-md">
-                    <User className="h-5 w-5 text-gray-400" />
+                  <div className="bg-gray-700 rounded-md overflow-hidden h-9 w-9 flex items-center justify-center">
+                    {person.photoUrl ? (
+                      <img src={person.photoUrl} alt="Profile" className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-5 w-5 text-gray-400" />
+                    )}
                   </div>
                   {person.guardianId && (
                     <Badge className="bg-blue-900 text-blue-300 text-xs">
@@ -275,9 +346,12 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
                   )}
                 </div>
 
-                <h3 className="font-medium text-lg mb-2 text-white">
+                <h3 className="font-medium text-lg mb-1 text-white">
                   {person.firstName} {person.lastName}
                 </h3>
+                {person.ticketNumber && (
+                  <p className="text-xs text-green-400 font-mono mb-2">{person.ticketNumber}</p>
+                )}
                 {person.nationality && (
                   <p className="text-sm text-gray-400 mb-4">{person.nationality}</p>
                 )}
@@ -343,6 +417,43 @@ export function ForeignersPage({ initialData }: ForeignersPageProps) {
         onSubmit={handleCreatePerson}
         person={selectedPerson}
       />
+
+      {/* Duplicate Passport Dialog */}
+      <AlertDialog open={duplicateDialog.open} onOpenChange={(open) => !open && setDuplicateDialog({ open: false, existingPerson: null })}>
+        <AlertDialogContent className="bg-gray-800 border-gray-700">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-yellow-400">
+              <AlertTriangle className="h-5 w-5" />
+              Duplicate Passport Found
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
+              A person with passport number <span className="font-mono text-white bg-gray-700 px-2 py-0.5 rounded">{duplicateDialog.existingPerson?.passportNo}</span> already exists in the system.
+              <div className="mt-3 p-3 bg-gray-700/50 rounded-lg border border-gray-600">
+                <p className="text-white font-medium">
+                  {duplicateDialog.existingPerson?.firstName} {duplicateDialog.existingPerson?.lastName}
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleEditExistingPerson}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Edit Existing Record
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={handleViewExistingPerson}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              View Record
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

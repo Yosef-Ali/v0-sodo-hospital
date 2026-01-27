@@ -78,15 +78,16 @@ export function CalendarPage() {
   useEffect(() => {
     async function fetchEvents() {
       setIsLoading(true)
-      const startDate = view === "year" 
+      const startDate = view === "year"
         ? new Date(currentDate.getFullYear(), 0, 1)
         : new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-      
+
       const endDate = view === "year"
         ? new Date(currentDate.getFullYear(), 11, 31, 23, 59, 59)
         : new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0, 23, 59, 59)
 
       const result = await getCalendarEvents({ startDate, endDate })
+
       if (result.success && result.data) {
         setEvents(result.data)
       }
@@ -125,7 +126,22 @@ export function CalendarPage() {
     eventsByDay[day].push(event)
   })
 
-  const getEventColor = (type: string) => {
+  const getEventColor = (type: string, title?: string) => {
+    // Check if it's an urgent task by title
+    const isUrgent = title?.includes("URGENT") || title?.includes("🚨")
+    const isHighPriority = title?.includes("HIGH") || title?.includes("⚠️")
+    const isExpired = title?.includes("EXPIRED")
+
+    if (isExpired) {
+      return "bg-red-600/40 text-red-300 border-red-500 animate-pulse"
+    }
+    if (isUrgent) {
+      return "bg-orange-500/30 text-orange-300 border-orange-500 ring-1 ring-orange-500/50"
+    }
+    if (isHighPriority) {
+      return "bg-amber-500/30 text-amber-300 border-amber-500"
+    }
+
     switch (type) {
       case "permit":
         return "bg-blue-500/20 text-blue-400 border-blue-500/50"
@@ -297,7 +313,8 @@ export function CalendarPage() {
                           <div
                             key={event.id}
                             className={`text-xs p-1.5 rounded border ${getEventColor(
-                              event.type
+                              event.type,
+                              event.title
                             )} cursor-pointer hover:opacity-80 transition-opacity`}
                             title={event.description || "Click to edit"}
                             onClick={(e) => {
@@ -410,6 +427,18 @@ export function CalendarPage() {
       <div className="border-t border-gray-700 bg-gray-800/50 p-2 md:p-3">
         <div className="flex items-center gap-2 md:gap-4 text-xs overflow-x-auto pb-1">
           <span className="text-gray-400 whitespace-nowrap">Events:</span>
+          <div className="flex items-center gap-1 whitespace-nowrap">
+            <div className="w-3 h-3 rounded bg-orange-500/40 border border-orange-500 ring-1 ring-orange-500/50" />
+            <span className="text-orange-300">Urgent</span>
+          </div>
+          <div className="flex items-center gap-1 whitespace-nowrap">
+            <div className="w-3 h-3 rounded bg-amber-500/40 border border-amber-500" />
+            <span className="text-amber-300">High Priority</span>
+          </div>
+          <div className="flex items-center gap-1 whitespace-nowrap">
+            <div className="w-3 h-3 rounded bg-red-600/40 border border-red-500 animate-pulse" />
+            <span className="text-red-300">Expired</span>
+          </div>
           <div className="flex items-center gap-1 whitespace-nowrap">
             <div className="w-3 h-3 rounded bg-blue-500/40 border border-blue-500/50" />
             <span className="text-gray-300">Permit</span>

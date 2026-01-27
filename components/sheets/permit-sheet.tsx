@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Copy, Check } from "lucide-react"
 
 interface PermitFormData {
   id?: string
@@ -17,6 +18,7 @@ interface PermitFormData {
   dueDate: string
   checklistId?: string
   notes: string
+  ticketNumber?: string
 }
 
 interface PermitSheetProps {
@@ -34,7 +36,9 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit, people = [] 
     dueDate: "",
     checklistId: "",
     notes: "",
+    ticketNumber: "",
   })
+  const [copied, setCopied] = useState(false)
 
   // Populate form when editing
   useEffect(() => {
@@ -46,6 +50,7 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit, people = [] 
         dueDate: permit.dueDate || "",
         checklistId: permit.checklistId || "",
         notes: permit.notes || "",
+        ticketNumber: (permit as any).ticketNumber || "",
       })
     } else {
       // Reset for create mode - set default due date to 30 days from now
@@ -58,6 +63,7 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit, people = [] 
         dueDate: defaultDueDate.toISOString().split('T')[0],
         checklistId: "",
         notes: "",
+        ticketNumber: "",
       })
     }
   }, [permit, open])
@@ -79,6 +85,14 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit, people = [] 
     e.preventDefault()
     onSubmit(formData)
     onOpenChange(false)
+  }
+
+  const copyTicketNumber = async () => {
+    if (formData.ticketNumber) {
+      await navigator.clipboard.writeText(formData.ticketNumber)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   const isEditMode = !!permit
@@ -182,14 +196,32 @@ export function PermitSheet({ open, onOpenChange, onSubmit, permit, people = [] 
           </div>
 
           {/* Ticket Number Info */}
-          <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
-            <p className="text-sm text-green-300">
-              ✓ A unique ticket number will be automatically generated upon creation
-            </p>
-            <p className="text-xs text-gray-400 mt-1">
-              Format: {formData.category ? formData.category.substring(0, 3).toUpperCase() : "XXX"}-2025-####
-            </p>
-          </div>
+          {isEditMode && formData.ticketNumber ? (
+            <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+              <Label className="text-gray-400 text-xs">Ticket Number</Label>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-green-300 font-mono text-lg">{formData.ticketNumber}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={copyTicketNumber}
+                  className="h-7 px-2 text-gray-400 hover:text-green-400 hover:bg-green-500/10"
+                >
+                  {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+              <p className="text-sm text-green-300">
+                ✓ A unique ticket number will be automatically generated upon creation
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Format: {formData.category ? formData.category.substring(0, 3).toUpperCase() : "XXX"}-2026-####
+              </p>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">

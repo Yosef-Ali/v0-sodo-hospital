@@ -1,51 +1,90 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Workflow & Chat Features', () => {
+test.describe('Task Workflow Automation', () => {
+  
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    // 1. Login
+    await page.goto('/login');
+    await page.fill('input#email', 'admin@example.org');
+    await page.fill('input#password', 'Admin123!');
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/\/dashboard/);
+
+    // 2. Navigate to Tasks
+    await page.goto('/tasks');
+    await expect(page).toHaveURL(/\/tasks/);
   });
 
-  test('Open Chat Widget and verify Quick Actions', async ({ page }) => {
-    // 1. Locate the floating chat button
-    const chatButton = page.locator('button:has(.lucide-message-circle)');
-    await expect(chatButton).toBeVisible();
-    await chatButton.click();
+  test('Smartly selects Entity Type based on Workflow Category', async ({ page }) => {
+    // Open "Create Task" sheet
+    await page.getByRole('button', { name: 'New Task' }).click();
+    await expect(page.getByText('Create New Task')).toBeVisible();
 
-    // 2. Chat window should open
-    const chatWindow = page.locator('text=Support Assistant');
-    await expect(chatWindow).toBeVisible();
+    // Helper to select category and check entity type
+    const checkSmartSelection = async (categoryName: string, expectedEntityType: string) => {
+      // Select Category
+      // Locate the container that has the label "Workflow Category"
+      await page.locator('div.space-y-2').filter({ has: page.locator('label', { hasText: 'Workflow Category' }) }).getByRole('combobox').click();
+      await page.getByRole('option', { name: categoryName }).click();
 
-    // 3. Verify Quick Actions (Suggested Actions) are present
-    const suggestedActionsHeader = page.locator('text=Suggested Actions');
-    await expect(suggestedActionsHeader).toBeVisible();
+      // Check Entity Type
+      // The Entity Type select should now show the expected text value
+      const entityTypeSelect = page.locator('div.space-y-2').filter({ has: page.locator('label', { hasText: 'Entity Type' }) }).getByRole('combobox');
+      await expect(entityTypeSelect).toContainText(expectedEntityType);
+    };
 
-    // 4. Click a Quick Action (e.g. "Register Patient" or checking icon)
-    // We look for button inside the suggested actions area
-    const actionButton = page.locator('text=Suggested Actions').locator('..').locator('button').first();
-    await expect(actionButton).toBeVisible();
-    await actionButton.click();
-
-    // 5. Verify input field is populated or message is sent
-    // Assuming clicking sends immediately or populates input
-    // We check if a message appeared in the chat list
-    const messageList = page.locator('.space-y-4');
-    await expect(messageList).toContainText(/Register/i);
+    // Test Cases
+    await checkSmartSelection('Work Permit', 'Foreigner / Person');
+    await checkSmartSelection('Vehicle Bolo & Insurance', 'Vehicle');
+    await checkSmartSelection('Customs / PIP / ESW', 'Import Permit');
+    await checkSmartSelection('Company Registration', 'Company');
+    await checkSmartSelection('Residence ID', 'Foreigner / Person');
   });
 
-  test('Open and Close Sheet via Quick Action', async ({ page }) => {
-    // Note: If Quick Actions open Sheets directly, we test that here.
-    // If they just send a chat message, we verify the chat response.
-    // Assuming for now they trigger workflows or chat responses.
+  test('Create a full Work Permit task', async ({ page }) => {
+    await page.getByRole('button', { name: 'New Task' }).click();
 
-    const chatButton = page.locator('button:has(.lucide-message-circle)');
-    await chatButton.click();
+    // 1. Select Category: Work Permit
+    await page.locator('div.space-y-2').filter({ has: page.locator('label', { hasText: 'Workflow Category' }) }).getByRole('combobox').click();
+    await page.getByRole('option', { name: 'Work Permit' }).first().click();
 
-    // Find an action that might open a sheet (e.g. "Check In")
-    // If unavailable, we'll just verify the chat interaction for now.
+    // 2. Select Sub-Type: New Work Permit
+    await page.locator('div.space-y-2').filter({ has: page.locator('label', { hasText: 'Specific Type' }) }).getByRole('combobox').click();
+    await page.getByRole('option', { name: 'New Work Permit' }).click();
 
-    // Let's verify we can close the chat
-    const closeButton = page.locator('button[title="Close"]');
-    await closeButton.click();
-    await expect(page.locator('text=Support Assistant')).not.toBeVisible();
+    // 3. Entity Type should be Person (verified above), now Select Record
+    // Wait for People to load
+    const recordSelect = page.locator('div.space-y-2').filter({ has: page.locator('label', { hasText: 'Select Record' }) }).getByRole('combobox');
+    await expect(recordSelect).toBeEnabled();
+    await recordSelect.click();
+    // Select the first person available
+    await page.getByRole('option').first().click();
+
+    // 4. Task Title (Quick Select)
+    await page.locator('div.space-y-2').filter({ has: page.locator('label', { hasText: 'Task Title' }) }).getByRole('combobox').click();
+    await page.getByRole('option').first().click(); // Pick first suggestion
+
+    // 5. Description
+    await page.fill('textarea[name="description"]', 'E2E Test Description for Work Permit');
+
+    // 6. Assignee
+    await page.locator('div.space-y-2').filter({ has: page.locator('label', { hasText: 'Assign To' }) }).getByRole('combobox').click();
+    await page.getByRole('option').first().click(); // Pick first user
+
+    // 7. Submit
+    const submitButton = page.locator('button[type="submit"]').filter({ hasText: 'Create Task' });
+    await expect(submitButton).toBeEnabled();
+    await submitButton.click();
+
+    // 8. Verify Success
+    // Wait for the success toast
+    await expect(page.getByText('Task Created', { exact: true })).toBeVisible({ timeout: 15000 });
+    
+    // The sheet should close
+    await expect(page.getByText('Create New Task')).not.toBeVisible();
+    
+    // Verify it appears in the list
+    await expect(page.getByText('E2E Test Description for Work Permit').first()).toBeVisible();
   });
+
 });

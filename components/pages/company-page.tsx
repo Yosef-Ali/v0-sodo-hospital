@@ -6,103 +6,90 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import { Search, Filter, Plus, Building2, FileText, Clock, CheckCircle2, AlertCircle } from "lucide-react"
+import { Search, Filter, Plus, Building2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { CompanyTaskSheet } from "@/components/sheets/company-task-sheet"
+import { CompanySheet } from "@/components/sheets/company-sheet"
+import { getCompanies, getCompanyStats, createCompany, updateCompany, deleteCompany, getCompanyById } from "@/lib/actions/v2/companies"
 
-interface CompanyTask {
-  id: string
-  title: string
-  description: string
-  stage: "document_prep" | "apply_online" | "approval" | "completed"
-  status: "pending" | "in-progress" | "completed" | "urgent"
-  dueDate: string
-  assignee: string
-  companyName: string
-  registrationType: string
-  documents: string[]
-  createdAt: string
+interface CompanyPageProps {
+  initialData: {
+    companies: any[]
+    stats: {
+      total: number
+      documentPrep: number
+      applyOnline: number
+      approval: number
+      completed: number
+    }
+  }
 }
 
-// Sample data
-const sampleTasks: CompanyTask[] = [
-  {
-    id: "1",
-    title: "Business License Renewal",
-    description: "Annual business license renewal for Soddo Christian Hospital",
-    stage: "document_prep",
-    status: "pending",
-    dueDate: "2026-01-30",
-    assignee: "Niccodimos Ezechiel",
-    companyName: "Soddo Christian Hospital",
-    registrationType: "License Renewal",
-    documents: ["Official Letter", "Current License", "COC"],
-    createdAt: "2026-01-01",
-  },
-  {
-    id: "2",
-    title: "TIN Registration Update",
-    description: "Update TIN registration details",
-    stage: "apply_online",
-    status: "in-progress",
-    dueDate: "2026-01-25",
-    assignee: "Bethel Ayalew",
-    companyName: "Soddo Christian Hospital",
-    registrationType: "TIN Update",
-    documents: ["Business Registration", "ID Documents"],
-    createdAt: "2026-01-02",
-  },
-]
-
-export function CompanyPage() {
-  const [tasks, setTasks] = useState<CompanyTask[]>(sampleTasks)
+export function CompanyPage({ initialData }: CompanyPageProps) {
+  const [companies, setCompanies] = useState<any[]>(initialData.companies)
+  const [stats, setStats] = useState(initialData.stats)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedTask, setSelectedTask] = useState<CompanyTask | null>(null)
+  const [selectedCompany, setSelectedCompany] = useState<any | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  // Filter tasks
-  const filteredTasks = tasks.filter((task) => {
-    if (activeTab !== "all" && activeTab !== task.stage && activeTab !== task.status) {
+  // Load companies with optional filters
+  const loadCompanies = async (query?: string) => {
+    setLoading(true)
+    const result = await getCompanies({ query, limit: 100 })
+    if (result.success && result.data) {
+      setCompanies(result.data)
+    }
+    const statsResult = await getCompanyStats()
+    if (statsResult.success && statsResult.data) {
+      setStats(statsResult.data)
+    }
+    setLoading(false)
+  }
+
+  // Filter companies based on current tab and search
+  const filteredCompanies = companies.filter((item) => {
+    if (activeTab !== "all" && activeTab !== item.stage && activeTab !== item.status) {
       return false
     }
-    if (searchQuery && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+    if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false
     }
     return true
   })
 
-  // Count tasks
-  const taskCounts = {
-    all: tasks.length,
-    document_prep: tasks.filter((t) => t.stage === "document_prep").length,
-    apply_online: tasks.filter((t) => t.stage === "apply_online").length,
-    approval: tasks.filter((t) => t.stage === "approval").length,
-    completed: tasks.filter((t) => t.stage === "completed").length,
-  }
-
   const handleCreateNew = () => {
-    setSelectedTask(null)
+    setSelectedCompany(null)
     setIsSheetOpen(true)
   }
 
-  const handleEditTask = (task: CompanyTask) => {
-    setSelectedTask(task)
+  const handleEditCompany = async (item: any) => {
+    // Optimistically select item, but fetch fresh data
+    setSelectedCompany(item)
     setIsSheetOpen(true)
+    
+    // Fetch fresh data
+    const freshData = await getCompanyById(item.id)
+    if (freshData.success && freshData.data) {
+      setSelectedCompany(freshData.data)
+    }
   }
 
-  const handleAddTask = (taskData: any) => {
-    if (taskData.id) {
-      setTasks(tasks.map((t) => (t.id === taskData.id ? { ...t, ...taskData } : t)))
-    } else {
-      const newTask: CompanyTask = {
-        id: Date.now().toString(),
-        ...taskData,
-        createdAt: new Date().toISOString().split("T")[0],
+  const handleSubmit = async (data: any) => {
+    if (selectedCompany?.id) {
+      // Update existing - use selectedCompany.id since form doesn't include it
+      const result = await updateCompany(selectedCompany.id, data)
+      if (result.success) {
+        loadCompanies()
       }
-      setTasks([newTask, ...tasks])
+    } else {
+      const result = await createCompany(data)
+      if (result.success) {
+        loadCompanies()
+      }
     }
     setIsSheetOpen(false)
+    setSelectedCompany(null)
   }
 
   const getStatusColor = (status: string) => {
@@ -147,19 +134,19 @@ export function CompanyPage() {
           <div className="w-full overflow-x-auto">
             <TabsList className="bg-gray-800 border border-gray-700 inline-flex min-w-max gap-2 rounded-md">
               <TabsTrigger value="all" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                All <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">{taskCounts.all}</Badge>
+                All <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">{stats.total}</Badge>
               </TabsTrigger>
               <TabsTrigger value="document_prep" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                Document Prep <Badge className="ml-1 bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30">{taskCounts.document_prep}</Badge>
+                Document Prep <Badge className="ml-1 bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30">{stats.documentPrep}</Badge>
               </TabsTrigger>
               <TabsTrigger value="apply_online" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                Apply Online <Badge className="ml-1 bg-cyan-500/20 text-cyan-300 text-xs border border-cyan-500/30">{taskCounts.apply_online}</Badge>
+                Apply Online <Badge className="ml-1 bg-cyan-500/20 text-cyan-300 text-xs border border-cyan-500/30">{stats.applyOnline}</Badge>
               </TabsTrigger>
               <TabsTrigger value="approval" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                Approval <Badge className="ml-1 bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">{taskCounts.approval}</Badge>
+                Approval <Badge className="ml-1 bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">{stats.approval}</Badge>
               </TabsTrigger>
               <TabsTrigger value="completed" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                Completed <Badge className="ml-1 bg-green-500/20 text-green-300 text-xs border border-green-500/30">{taskCounts.completed}</Badge>
+                Completed <Badge className="ml-1 bg-green-500/20 text-green-300 text-xs border border-green-500/30">{stats.completed}</Badge>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -184,67 +171,77 @@ export function CompanyPage() {
         </div>
       </div>
 
-      {/* Task Cards */}
-      {filteredTasks.length === 0 ? (
+      {/* Company Cards */}
+      {filteredCompanies.length === 0 ? (
         <div className="bg-gray-800/60 rounded-lg border border-gray-700 p-8 text-center">
           <Building2 className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No registration tasks found</h3>
+          <h3 className="text-lg font-medium text-white mb-2">No registration records found</h3>
           <p className="text-gray-400 mb-4">
-            {searchQuery ? "No tasks match your search." : "Create a new registration task to get started."}
+            {searchQuery ? "No registrations match your search." : "Create a new registration to get started."}
           </p>
           <Button className="bg-green-600 hover:bg-green-700" onClick={handleCreateNew}>
-            <Plus className="h-4 w-4 mr-2" /> Create Registration Task
+            <Plus className="h-4 w-4 mr-2" /> Create Registration
           </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTasks.map((task) => (
-            <Card key={task.id} className="bg-gray-800 border-gray-700 overflow-hidden hover:border-gray-600 transition-all">
+          {filteredCompanies.map((item) => (
+            <Card key={item.id} className="bg-gray-800 border-gray-700 overflow-hidden hover:border-gray-600 transition-all">
               <div className="p-5">
                 <div className="flex justify-between items-start mb-3">
                   <div className="bg-gray-700 p-2 rounded-md">
                     <Building2 className="h-5 w-5 text-blue-400" />
                   </div>
-                  <Badge className={`text-xs border ${getStatusColor(task.status)}`}>
-                    {task.status.replace("-", " ")}
+                  <Badge className={`text-xs border ${getStatusColor(item.status)}`}>
+                    {item.status.replace("-", " ")}
                   </Badge>
                 </div>
 
-                <h3 className="font-medium text-lg mb-1 text-white">{task.title}</h3>
-                <p className="text-sm text-gray-400 mb-3">{task.description}</p>
+                <h3 className="font-medium text-lg mb-1 text-white">{item.title}</h3>
+                {item.ticketNumber && (
+                  <p className="text-xs text-green-400 font-mono mb-1">{item.ticketNumber}</p>
+                )}
+                <p className="text-sm text-gray-400 mb-3">{item.description}</p>
 
                 <div className="flex items-center gap-2 mb-3">
-                  <Badge className={`text-xs border ${getStageColor(task.stage)}`}>
-                    {getStageLabel(task.stage)}
+                  <Badge className={`text-xs border ${getStageColor(item.stage)}`}>
+                    {getStageLabel(item.stage)}
                   </Badge>
                 </div>
 
                 <div className="text-xs text-gray-500 space-y-1">
-                  <div className="flex justify-between">
-                    <span>Company:</span>
-                    <span className="text-gray-400">{task.companyName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Type:</span>
-                    <span className="text-gray-400">{task.registrationType}</span>
-                  </div>
+                  {item.companyName && (
+                    <div className="flex justify-between">
+                      <span>Company:</span>
+                      <span className="text-gray-400">{item.companyName}</span>
+                    </div>
+                  )}
+                  {item.registrationType && (
+                    <div className="flex justify-between">
+                      <span>Type:</span>
+                      <span className="text-gray-400">{item.registrationType}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Due Date:</span>
-                    <span className="text-gray-400">{task.dueDate}</span>
+                    <span className="text-gray-400">{item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "Not set"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Documents:</span>
-                    <span className="text-gray-400">{task.documents.length} required</span>
+                    <span className="text-gray-400">{(item.documents || []).length} attached</span>
                   </div>
                 </div>
               </div>
 
               <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center">
-                <button className="text-xs text-green-400 hover:text-green-300 font-medium">
+                <a 
+                  href={`/company/${item.id}`}
+                  className="text-xs text-green-400 hover:text-green-300 font-medium"
+                >
                   View Details
-                </button>
+                </a>
                 <button 
-                  onClick={() => handleEditTask(task)}
+                  onClick={() => handleEditCompany(item)}
                   className="text-xs text-gray-400 hover:text-gray-300 font-medium"
                 >
                   Edit
@@ -255,11 +252,11 @@ export function CompanyPage() {
         </div>
       )}
 
-      <CompanyTaskSheet 
+      <CompanySheet 
         open={isSheetOpen} 
         onOpenChange={setIsSheetOpen} 
-        onSubmit={handleAddTask}
-        task={selectedTask}
+        onSubmit={handleSubmit}
+        company={selectedCompany}
       />
     </div>
   )

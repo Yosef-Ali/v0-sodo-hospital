@@ -2,9 +2,10 @@
 
 import React from "react"
 import { format } from "date-fns"
+import ReactMarkdown from "react-markdown"
 import type { ReportData } from "@/lib/types/reports"
 
-export type { ReportData }
+
 
 interface ReportTemplateA4Props {
   report: ReportData
@@ -66,7 +67,9 @@ export const ReportTemplateA4 = React.forwardRef<HTMLDivElement, ReportTemplateA
         <section className="mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-2">{report.title}</h2>
           {report.description && (
-            <p className="text-sm text-gray-600 mb-4">{report.description}</p>
+            <div className="prose prose-sm max-w-none text-gray-600 mb-4">
+              <ReactMarkdown>{report.description}</ReactMarkdown>
+            </div>
           )}
 
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -370,13 +373,8 @@ function OperationsReportContent({ report, data }: { report: ReportData; data?: 
 function GenericReportContent({ report, data }: { report: ReportData; data?: any }) {
   return (
     <div>
-      <h3 className="text-lg font-bold text-gray-900 mb-4">Report Content</h3>
+      <h3 className="text-lg font-bold text-gray-900 mb-4">Report Details</h3>
       <div className="bg-gray-50 border border-gray-300 rounded p-4">
-        <p className="text-sm text-gray-600 mb-3">
-          This is a sample report preview. The actual report will contain data based on the
-          configured parameters and filters.
-        </p>
-
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="font-semibold text-gray-700">Report Period:</span>
@@ -392,12 +390,6 @@ function GenericReportContent({ report, data }: { report: ReportData; data?: any
             <span className="font-semibold text-gray-700">Status:</span>
             <span className="text-gray-600">{report.status}</span>
           </div>
-        </div>
-
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded">
-          <p className="text-xs text-blue-700">
-            <strong>Note:</strong> This is a preview. Generate the report to see actual data.
-          </p>
         </div>
       </div>
     </div>

@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -27,21 +26,22 @@ export function SignupForm() {
     setMessage(null)
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signUp({
+      const { createUser } = await import("@/lib/actions/users")
+      const result = await createUser({
+        name: fullName,
         email,
         password,
-        options: {
-          data: {
-            full_name: fullName,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
+        role: "USER"
       })
 
-      if (error) throw error
+      if (!result.success) {
+        throw new Error(result.error)
+      }
 
-      setMessage("Check your email for the confirmation link!")
+      setMessage("Account created successfully! Redirecting to login...")
+      setTimeout(() => {
+        router.push("/login")
+      }, 2000)
     } catch (error: any) {
       setError(error.message)
     } finally {
@@ -54,15 +54,8 @@ export function SignupForm() {
     setError(null)
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-
-      if (error) throw error
+        // Not implemented for VPS setup yet
+        setError("Google signup not configured for this environment")
     } catch (error: any) {
       setError(error.message)
       setLoading(false)
@@ -95,7 +88,7 @@ export function SignupForm() {
           </div>
           <CardTitle className="text-2xl font-bold text-center text-white">Create Account</CardTitle>
           <CardDescription className="text-center text-gray-400">
-            Join SODDO Hospital's document management system
+            Join SODO Hospital's document management system
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

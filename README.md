@@ -1,30 +1,118 @@
-# Convert to React
+# Sodo Christian Hospital - Permit Management System
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+A modern, full-stack web application for managing work permits, residence IDs, and medical licenses for foreign workers at Sodo Christian Hospital, Ethiopia.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/yosefalis-projects-4b42ed9b/v0-convert-to-react)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/0Y4P06l801N)
+![Homepage](docs/screenshot-homepage.png)
 
-## Overview
+## 🌐 Live Demo
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+**Production:** [https://sch-addis.org](https://sch-addis.org)
 
-## Deployment
+## ✨ Features
 
-Your project is live at:
+- **👥 Foreigner Management** - Track foreign workers, their documents, and permit status
+- **📋 Permit Tracking** - Manage Work Permits, Residence IDs, and Medical Licenses
+- **📄 Document Management** - Upload, organize, and track required documents
+- **🔄 Workflow Stages** - Track permit applications through each stage
+- **📊 Dashboard** - Real-time statistics and overview
+- **🤖 AI Assistant** - Built-in chatbot for permit inquiries
+- **📱 Responsive Design** - Works on desktop and mobile
+- **🔐 Role-Based Access** - Admin, HR Manager, HR Staff, and Logistics roles
 
-**[https://vercel.com/yosefalis-projects-4b42ed9b/v0-convert-to-react](https://vercel.com/yosefalis-projects-4b42ed9b/v0-convert-to-react)**
+## 🖼️ Screenshots
 
-## Build your app
+### Login Page
+![Login](docs/screenshot-login.png)
 
-Continue building your app on:
+## 🛠️ Tech Stack
 
-**[https://v0.dev/chat/projects/0Y4P06l801N](https://v0.dev/chat/projects/0Y4P06l801N)**
+- **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS
+- **Backend:** Next.js API Routes, Server Actions
+- **Database:** PostgreSQL with Drizzle ORM
+- **Authentication:** NextAuth.js v5
+- **File Storage:** MinIO (S3-compatible)
+- **Caching:** Redis
+- **Deployment:** Docker, Nginx, Let's Encrypt SSL
 
-## How It Works
+## 🚀 Quick Start
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+### Prerequisites
+
+- Node.js 20+
+- Docker & Docker Compose
+- PostgreSQL (or use Docker)
+
+### Local Development
+
+```bash
+# Clone the repository
+git clone https://github.com/Yosef-Ali/v0-sodo-hospital.git
+cd v0-sodo-hospital
+
+# Install dependencies
+pnpm install
+
+# Set up environment variables
+cp .env.example .env.local
+
+# Run database migrations
+pnpm db:push
+
+# Start development server
+pnpm dev
+```
+
+### Docker Deployment
+
+```bash
+# Start all services
+docker compose up -d
+
+# View logs
+docker compose logs -f app
+```
+
+## 📁 Project Structure
+
+```
+├── app/                  # Next.js App Router
+│   ├── api/             # API routes
+│   ├── dashboard/       # Dashboard pages
+│   ├── login/           # Authentication
+│   └── ...
+├── components/          # React components
+│   ├── ui/              # UI components
+│   ├── sheets/          # Side panel forms
+│   └── pages/           # Page components
+├── lib/                 # Utilities
+│   ├── db/              # Database schema & migrations
+│   ├── actions/         # Server actions
+│   └── hooks/           # Custom hooks
+└── docs/                # Documentation & screenshots
+```
+
+## 🔐 Default Credentials
+
+| Email | Password | Role |
+|-------|----------|------|
+| admin@sodohospital.com | Admin@123 | Admin |
+| hr.manager@sodohospital.com | Admin@123 | HR Manager |
+| hr.staff@sodohospital.com | Admin@123 | HR Staff |
+| logistics@sodohospital.com | Admin@123 | Logistics |
+
+## 📖 Documentation
+
+- [Deployment Guide](DEPLOYMENT.md)
+- [API Documentation](docs/API.md)
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is proprietary software for Sodo Christian Hospital.
+
+---
+
+Built with ❤️ for Sodo Christian Hospital, Ethiopia

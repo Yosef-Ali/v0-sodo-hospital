@@ -19,51 +19,41 @@ export type UserRoleType = (typeof UserRole)[keyof typeof UserRole]
 
 // Permission checks for checklists
 export function canViewChecklistTemplates(role: string): boolean {
-  return [UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR, UserRole.LOGISTICS].includes(
-    role as UserRoleType,
-  )
+  return ([UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR, UserRole.LOGISTICS] as string[]).includes(role)
 }
 
 export function canManageChecklistTemplates(role: string): boolean {
-  return [UserRole.ADMIN].includes(role as UserRoleType)
+  return role === UserRole.ADMIN
 }
 
 export function canViewPermitChecklist(role: string): boolean {
-  return [UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR, UserRole.LOGISTICS].includes(
-    role as UserRoleType,
-  )
+  return ([UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR, UserRole.LOGISTICS] as string[]).includes(role)
 }
 
 export function canEditPermitChecklistItems(role: string): boolean {
-  return [UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR, UserRole.LOGISTICS].includes(
-    role as UserRoleType,
-  )
+  return ([UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR, UserRole.LOGISTICS] as string[]).includes(role)
 }
 
 // Permission checks for permits
 export function canViewPermits(role: string): boolean {
-  return [UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR, UserRole.LOGISTICS].includes(
-    role as UserRoleType,
-  )
+  return ([UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR, UserRole.LOGISTICS] as string[]).includes(role)
 }
 
 export function canCreatePermits(role: string): boolean {
-  return [UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR].includes(role as UserRoleType)
+  return ([UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR] as string[]).includes(role)
 }
 
 export function canApprovePermits(role: string): boolean {
-  return [UserRole.ADMIN, UserRole.HR_MANAGER].includes(role as UserRoleType)
+  return ([UserRole.ADMIN, UserRole.HR_MANAGER] as string[]).includes(role)
 }
 
 // Permission checks for people
 export function canViewPeople(role: string): boolean {
-  return [UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR, UserRole.LOGISTICS].includes(
-    role as UserRoleType,
-  )
+  return ([UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR, UserRole.LOGISTICS] as string[]).includes(role)
 }
 
 export function canManagePeople(role: string): boolean {
-  return [UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR].includes(role as UserRoleType)
+  return ([UserRole.ADMIN, UserRole.HR_MANAGER, UserRole.HR] as string[]).includes(role)
 }
 
 // Get current user with role from database
@@ -81,8 +71,13 @@ export async function getCurrentUser() {
       .limit(1)
 
     return dbUser || null
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error getting current user:", error)
+    const isConnError = error.code === 'ECONNREFUSED' || error.message?.includes('connection')
+    if (isConnError) {
+      // Return a special object or log clearly to avoid mysterious crashes
+      console.error("CRITICAL: Database connection failed during auth check.")
+    }
     return null
   }
 }
@@ -130,5 +125,5 @@ export function isAdmin(role: string): boolean {
 
 // Check if user is admin or HR manager
 export function isAdminOrHRManager(role: string): boolean {
-  return [UserRole.ADMIN, UserRole.HR_MANAGER].includes(role as UserRoleType)
+  return ([UserRole.ADMIN, UserRole.HR_MANAGER] as string[]).includes(role)
 }

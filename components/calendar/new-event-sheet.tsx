@@ -20,7 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Plus, Loader2 } from "lucide-react"
+import { Plus, Loader2, Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { createCalendarEvent } from "@/lib/actions/v2/calendar-events"
 import { toast } from "sonner"
 
@@ -33,6 +36,7 @@ interface NewEventSheetProps {
 export function NewEventSheet({ selectedDate, open: controlledOpen, onOpenChange }: NewEventSheetProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isTitleOpen, setIsTitleOpen] = useState(false)
   
   // Use controlled state if provided, otherwise use internal state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
@@ -64,6 +68,7 @@ export function NewEventSheet({ selectedDate, open: controlledOpen, onOpenChange
     { value: "meeting", label: "Meeting" },
     { value: "interview", label: "Interview" },
     { value: "training", label: "Training" },
+    { value: "other", label: "Other" },
   ]
 
   const quickTitles = {
@@ -209,32 +214,81 @@ export function NewEventSheet({ selectedDate, open: controlledOpen, onOpenChange
               <Label htmlFor="title" className="text-gray-300">
                 Event Title *
               </Label>
-              <Select
-                value={formData.title}
-                onValueChange={(value) => setFormData({ ...formData, title: value })}
-              >
-                <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                  <SelectValue placeholder="Select or type custom title" />
-                </SelectTrigger>
-                <SelectContent className="bg-gray-700 border-gray-600">
-                  {quickTitles[formData.type as keyof typeof quickTitles]?.map((title) => (
-                    <SelectItem key={title} value={title} className="text-white">
-                      {title}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="custom" className="text-white">
-                    + Custom Title
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              
+              <Popover open={isTitleOpen} onOpenChange={setIsTitleOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={isTitleOpen}
+                    className="w-full justify-between bg-gray-700 border-gray-600 text-white hover:bg-gray-600 hover:text-white"
+                  >
+                    {formData.title && quickTitles[formData.type as keyof typeof quickTitles]?.includes(formData.title)
+                      ? formData.title
+                      : formData.title ? formData.title : "Select or type custom title..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0 bg-gray-700 border-gray-600">
+                  <Command className="bg-gray-700 text-white">
+                    <CommandInput placeholder="Search or type new title..." className="text-white placeholder:text-gray-400" />
+                    <CommandList>
+                      <CommandEmpty className="py-2 px-4 text-sm text-gray-400">
+                         No preset found. Type custom title.
+                      </CommandEmpty>
+                      <CommandGroup heading="Suggestions">
+                        {quickTitles[formData.type as keyof typeof quickTitles]?.map((title) => (
+                          <CommandItem
+                            key={title}
+                            value={title}
+                            onSelect={(currentValue) => {
+                              setFormData({ ...formData, title: currentValue })
+                              setIsTitleOpen(false)
+                            }}
+                            className="text-white hover:bg-gray-600 aria-selected:bg-gray-600 aria-selected:text-white"
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.title === title ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {title}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                      <CommandGroup heading="Custom">
+                          <CommandItem
+                            value="custom-title-option"
+                            onSelect={() => {
+                              setFormData({ ...formData, title: "" }) // Clear to show input
+                              setIsTitleOpen(false)
+                            }}
+                            className="text-green-400 hover:bg-gray-600 aria-selected:bg-gray-600 aria-selected:text-green-400 font-medium"
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Write custom title...
+                          </CommandItem>
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
 
-              {/* Custom title input */}
-              {formData.title === "custom" && (
-                <Input
-                  placeholder="Enter custom title"
-                  className="bg-gray-700 border-gray-600 text-white mt-2"
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                />
+              {/* Custom title input: Show if title is not in presets or is explicitly cleared for custom entry */}
+              {(!quickTitles[formData.type as keyof typeof quickTitles]?.includes(formData.title) || formData.title === "") && (
+                 <div className="mt-2 transition-all duration-200">
+                    {formData.title && !quickTitles[formData.type as keyof typeof quickTitles]?.includes(formData.title) && (
+                         <Label className="text-xs text-green-400 mb-1.5 block">Custom Title Selected:</Label>
+                    )}
+                    <Input
+                      value={formData.title}
+                      placeholder="Enter custom title"
+                      className="bg-gray-700 border-gray-600 text-white"
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      autoFocus={!quickTitles[formData.type as keyof typeof quickTitles]?.includes(formData.title)}
+                    />
+                 </div>
               )}
             </div>
           )}

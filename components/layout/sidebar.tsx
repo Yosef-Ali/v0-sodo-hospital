@@ -48,7 +48,7 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
           >
             <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
           </svg>
-          <span className="font-bold text-lg text-white">SODDO HOSPITAL</span>
+          <span className="font-bold text-lg text-white">SODO HOSPITAL</span>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
           <NavItem href="/company" icon={<Building2 size={20} />} label="Company Reg." active={pathname === "/company"} />
           <NavItem href="/calendar" icon={<Calendar size={20} />} label="Calendar" active={pathname === "/calendar"} />
           <NavItem href="/reports" icon={<BarChart size={20} />} label="Reports" active={pathname === "/reports"} />
-          <NavItem href="/settings" icon={<Settings size={20} />} label="Settings" active={pathname === "/settings"} />
+          <NavItem href="/dashboard/settings" icon={<Settings size={20} />} label="Settings" active={pathname === "/dashboard/settings"} />
         </ul>
       </nav>
 

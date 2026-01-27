@@ -2,9 +2,6 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter, Outfit } from "next/font/google"
 import "@/app/globals.css"
-import { NextSSRPlugin } from "@uploadthing/react/next-ssr-plugin"
-import { extractRouterConfig } from "uploadthing/server"
-import { ourFileRouter } from "@/lib/uploadthing"
 import { SessionProvider } from "@/components/providers/session-provider"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
@@ -24,9 +21,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased ${inter.variable} ${outfit.variable}`}>
-        <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
+    <html lang="en" suppressHydrationWarning>
+      <body className={`font-sans antialiased ${inter.variable} ${outfit.variable}`} suppressHydrationWarning>
         <SessionProvider>
           {children}
         </SessionProvider>

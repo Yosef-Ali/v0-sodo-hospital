@@ -32,7 +32,7 @@ async function seedTasks() {
     await db.delete(tasksV2)
     console.log("✓ Cleared existing tasks")
 
-    const createdTasks = []
+    const createdTasks: any[] = []
     const workflows = getAllWorkflows()
 
     console.log(`Creating tasks for ${workflows.length} workflows...`)

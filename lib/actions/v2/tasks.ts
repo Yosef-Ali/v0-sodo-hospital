@@ -1,10 +1,11 @@
 "use server"
 
-import { db, tasksV2, users, permits, people, permitChecklistItems, checklists, documentsV2 } from "@/lib/db"
+import { db, tasksV2, users, permits, people, permitChecklistItems, checklists, documentsV2, vehicles, importPermits, companyRegistrations } from "@/lib/db"
 import { eq, desc, and, gte, lte, sql, or, isNull, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { gregorianToEC, formatEC } from "@/lib/dates/ethiopian"
 import { hospitalTaskCategories, getAllWorkflows, TaskWorkflow, DocumentItem } from "@/lib/data/hospital-tasks"
+import { syncTaskToCalendar, deleteEntityFromCalendar } from "@/lib/actions/v2/calendar-events"
 
 /**
  * Get all tasks with optional filters and pagination
@@ -85,9 +86,13 @@ export async function getTasks(params?: {
       .offset(offset)
 
     return { success: true, data: result }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching tasks:", error)
-    return { success: false, error: "Failed to fetch tasks" }
+    const isConnError = error.code === 'ECONNREFUSED' || error.message?.includes('connection')
+    return {
+      success: false,
+      error: isConnError ? "Database connection failed. Please ensure the SSH tunnel is running." : "Failed to fetch tasks"
+    }
   }
 }
 
@@ -114,7 +119,28 @@ export async function getTaskById(taskId: string) {
       return { success: false, error: "Task not found" }
     }
 
-    return { success: true, data: result[0] }
+    const taskData = result[0]
+    let entityData = null
+
+    // Fetch linked entity if available
+    if (taskData.task.entityType && taskData.task.entityId) {
+      if (taskData.task.entityType === 'vehicle') {
+        const vehicleRes = await db.select().from(vehicles).where(eq(vehicles.id, taskData.task.entityId)).limit(1)
+        if (vehicleRes.length > 0) entityData = { type: 'vehicle', data: vehicleRes[0] }
+      } else if (taskData.task.entityType === 'import') {
+        const importRes = await db.select().from(importPermits).where(eq(importPermits.id, taskData.task.entityId)).limit(1)
+        if (importRes.length > 0) entityData = { type: 'import', data: importRes[0] }
+      } else if (taskData.task.entityType === 'company') {
+        const companyRes = await db.select().from(companyRegistrations).where(eq(companyRegistrations.id, taskData.task.entityId)).limit(1)
+        if (companyRes.length > 0) entityData = { type: 'company', data: companyRes[0] }
+      } else if (taskData.task.entityType === 'person' && !taskData.person) {
+        // If linked as 'person' but not via permit (fallback)
+        const personRes = await db.select().from(people).where(eq(people.id, taskData.task.entityId)).limit(1)
+        if (personRes.length > 0) entityData = { type: 'person', data: personRes[0] }
+      }
+    }
+
+    return { success: true, data: { ...taskData, linkedEntity: entityData } }
   } catch (error) {
     console.error("Error fetching task:", error)
     return { success: false, error: "Failed to fetch task details" }
@@ -132,6 +158,8 @@ export async function createTask(data: {
   dueDate?: Date
   assigneeId?: string
   permitId?: string
+  entityType?: string  // 'person', 'vehicle', 'import', 'company'
+  entityId?: string    // ID of the linked entity
   notes?: string
 }) {
   try {
@@ -176,6 +204,8 @@ export async function createTask(data: {
         dueDate: data.dueDate,
         assigneeId: data.assigneeId,
         permitId: data.permitId,
+        entityType: data.entityType,
+        entityId: data.entityId,
         notes: data.notes,
       })
       .returning()
@@ -184,6 +214,24 @@ export async function createTask(data: {
     revalidatePath("/dashboard")
     if (data.permitId) {
       revalidatePath(`/permits/${data.permitId}`)
+    }
+    // Revalidate linked entity page
+    if (data.entityType && data.entityId) {
+      const entityRoutes: Record<string, string> = {
+        person: "foreigners",
+        vehicle: "vehicle",
+        import: "import",
+        company: "company",
+      }
+      const route = entityRoutes[data.entityType]
+      if (route) {
+        revalidatePath(`/${route}/${data.entityId}`)
+      }
+    }
+
+    // Sync to calendar
+    if (data.dueDate) {
+      await syncTaskToCalendar(result[0].id)
     }
 
     return { success: true, data: result[0] }
@@ -206,12 +254,19 @@ export async function updateTask(
     dueDate: Date
     assigneeId: string
     notes: string
+    entityType: string
+    entityId: string
   }>
 ) {
   try {
     // Check if task exists
     const existing = await db
-      .select({ id: tasksV2.id, permitId: tasksV2.permitId })
+      .select({
+        id: tasksV2.id,
+        permitId: tasksV2.permitId,
+        entityType: tasksV2.entityType,
+        entityId: tasksV2.entityId
+      })
       .from(tasksV2)
       .where(eq(tasksV2.id, taskId))
       .limit(1)
@@ -226,7 +281,7 @@ export async function updateTask(
     }
 
     // Validate assignee if provided
-    if (data.assigneeId !== undefined) {
+    if (data.assigneeId !== undefined && data.assigneeId !== "") {
       const assigneeExists = await db
         .select({ id: users.id })
         .from(users)
@@ -258,6 +313,37 @@ export async function updateTask(
     if (existing[0].permitId) {
       revalidatePath(`/permits/${existing[0].permitId}`)
     }
+
+    // Revalidate old entity path
+    if (existing[0].entityType && existing[0].entityId) {
+      const entityRoutes: Record<string, string> = {
+        person: "foreigners",
+        vehicle: "vehicle",
+        import: "import",
+        company: "company",
+      }
+      const route = entityRoutes[existing[0].entityType]
+      if (route) {
+        revalidatePath(`/${route}/${existing[0].entityId}`)
+      }
+    }
+
+    // Revalidate new entity path if different
+    if (data.entityType && data.entityId && (data.entityType !== existing[0].entityType || data.entityId !== existing[0].entityId)) {
+      const entityRoutes: Record<string, string> = {
+        person: "foreigners",
+        vehicle: "vehicle",
+        import: "import",
+        company: "company",
+      }
+      const route = entityRoutes[data.entityType]
+      if (route) {
+        revalidatePath(`/${route}/${data.entityId}`)
+      }
+    }
+
+    // Sync to calendar
+    await syncTaskToCalendar(result[0].id)
 
     return { success: true, data: result[0] }
   } catch (error) {
@@ -354,6 +440,9 @@ export async function deleteTask(taskId: string, options?: { deletePermit?: bool
 
     revalidatePath("/tasks")
     revalidatePath("/dashboard")
+    // Delete from Calendar
+    await deleteEntityFromCalendar("task", taskId)
+
     if (result[0].permitId) {
       revalidatePath(`/permits/${result[0].permitId}`)
     }
@@ -407,13 +496,15 @@ export async function getTaskStats() {
 
     // Aggregate by status
     const byStatus = stats.reduce((acc, stat) => {
-      acc[stat.status] = (acc[stat.status] || 0) + stat.count
+      const statusStr = stat.status as string
+      acc[statusStr] = (acc[statusStr] || 0) + stat.count
       return acc
     }, {} as Record<string, number>)
 
     // Aggregate by priority
     const byPriority = stats.reduce((acc, stat) => {
-      acc[stat.priority] = (acc[stat.priority] || 0) + stat.count
+      const priorityStr = stat.priority as string
+      acc[priorityStr] = (acc[priorityStr] || 0) + stat.count
       return acc
     }, {} as Record<string, number>)
 
@@ -436,8 +527,15 @@ export async function getTaskStats() {
         },
       },
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching task stats:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running."
+      }
+    }
     return { success: false, error: "Failed to fetch task statistics" }
   }
 }
@@ -485,8 +583,15 @@ export async function getOverdueTasks() {
       .orderBy(tasksV2.dueDate)
 
     return { success: true, data: result }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching overdue tasks:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running."
+      }
+    }
     return { success: false, error: "Failed to fetch overdue tasks" }
   }
 }
@@ -633,8 +738,15 @@ export async function getUpcomingTasks(daysAhead: number = 7) {
       .orderBy(tasksV2.dueDate)
 
     return { success: true, data: result }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching upcoming tasks:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running."
+      }
+    }
     return { success: false, error: "Failed to fetch upcoming tasks" }
   }
 }
@@ -702,13 +814,11 @@ export async function createTaskWithWorkflow(data: {
 
         // 3. Create Checklist Items & Smart Document Linking
         // Check what docs the person ALREADY has
-        const personDocs = await db.query.documentsV2.findMany({
-          where: eq(documentsV2.personId, data.personId)
-        })
+        const personDocs = await db.select().from(documentsV2).where(eq(documentsV2.personId, data.personId))
 
-        const personRecord = await db.query.people.findFirst({
-          where: eq(people.id, data.personId)
-        })
+        const personRes = await db.select().from(people).where(eq(people.id, data.personId)).limit(1)
+        const personRecord = personRes.length > 0 ? personRes[0] : null
+
 
         if (workflow.documents.length > 0) {
           for (const doc of workflow.documents) {
@@ -733,10 +843,11 @@ export async function createTaskWithWorkflow(data: {
             if (!isCompleted) {
               // Fuzzy match document type/title
               // e.g. doc.name="Passport Copy" matches existing doc with title="Passport"
-              const matchingDoc = personDocs.find(d =>
+              const matchingDoc = personDocs.find((d: any) =>
                 (d.title && doc.name.toLowerCase().includes(d.title.toLowerCase())) ||
                 (d.type && doc.name.toLowerCase().includes(d.type.toLowerCase()))
               )
+
               if (matchingDoc && matchingDoc.fileUrl) {
                 isCompleted = true
                 fileUrls = [matchingDoc.fileUrl]
@@ -776,6 +887,11 @@ export async function createTaskWithWorkflow(data: {
     revalidatePath("/dashboard")
     if (permitId) {
       revalidatePath(`/permits/${permitId}`)
+    }
+
+    // Sync to calendar
+    if (data.dueDate) {
+      await syncTaskToCalendar(result[0].id)
     }
 
     return { success: true, data: result[0] }

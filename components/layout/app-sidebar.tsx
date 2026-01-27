@@ -14,6 +14,10 @@ import {
   Calendar,
   Sparkles,
   BookOpen,
+  Package,
+  Car,
+  Building2,
+  Users,
 } from "lucide-react"
 
 import {
@@ -32,21 +36,42 @@ import {
 } from "@/components/ui/sidebar"
 import { UserButton } from "@/components/auth/user-button"
 
-const menuItems = [
+type MenuItem = {
+  title: string
+  url: string
+  icon: React.ComponentType<{ className?: string }>
+  roles?: string[] // If undefined, visible to all roles
+}
+
+const menuItems: MenuItem[] = [
   {
     title: "Dashboard",
     url: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "People",
-    url: "/people",
-    icon: UserCircle,
+    title: "Foreigners",
+    url: "/foreigners",
+    icon: Users,
+    roles: ["ADMIN", "HR_MANAGER", "HR"],
   },
   {
-    title: "Permits",
-    url: "/permits",
-    icon: ClipboardCheck,
+    title: "Import",
+    url: "/import",
+    icon: Package,
+    roles: ["ADMIN", "HR_MANAGER", "LOGISTICS"],
+  },
+  {
+    title: "Vehicle",
+    url: "/vehicle",
+    icon: Car,
+    roles: ["ADMIN", "HR_MANAGER", "LOGISTICS"],
+  },
+  {
+    title: "Company",
+    url: "/company",
+    icon: Building2,
+    roles: ["ADMIN", "HR_MANAGER"],
   },
   {
     title: "Tasks",
@@ -67,16 +92,25 @@ const menuItems = [
     title: "Admin Guide",
     url: "/admin-guide",
     icon: BookOpen,
+    roles: ["ADMIN"],
   },
   {
     title: "Widgets Demo",
     url: "/widgets-demo",
     icon: Sparkles,
+    roles: ["ADMIN"],
+  },
+  {
+    title: "Users",
+    url: "/users",
+    icon: UserCircle,
+    roles: ["ADMIN"],
   },
   {
     title: "Settings",
     url: "/settings",
     icon: Settings,
+    roles: ["ADMIN"],
   },
 ]
 
@@ -84,6 +118,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const { isMobile, setOpenMobile } = useSidebar()
   const { data: session } = useSession()
+
+  // Get user role from session
+  const userRole = (session?.user as { role?: string })?.role || "USER"
+
+  console.log("Current User Role:", userRole)
+  console.log("Session:", session)
+
+  // Filter menu items based on user role
+  const filteredMenuItems = menuItems.filter((item) => {
+    // If no roles specified, item is visible to all
+    if (!item.roles) return true
+    
+    // Check if user's role is in the allowed roles
+    const hasAccess = item.roles.includes(userRole)
+    if (!hasAccess && item.roles) {
+      console.log(`Hiding ${item.title} (Requires: ${item.roles.join(", ")})`)
+    }
+    return hasAccess
+  })
+
+  console.log("Visible Menu Items:", filteredMenuItems.map(i => i.title))
 
   const handleNavClick = () => {
     if (isMobile) {
@@ -113,7 +168,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   </svg>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Soddo Christian Hospital</span>
+                  <span className="truncate font-semibold">Soddo</span>
                   <span className="truncate text-xs text-muted-foreground">Permit Management</span>
                 </div>
               </Link>
@@ -127,7 +182,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {menuItems.map((item) => (
+              {filteredMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
                     <Link href={item.url} className="flex items-center" onClick={handleNavClick}>
@@ -144,6 +199,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       <SidebarFooter>
         {session?.user && <UserButton user={session.user} />}
+        <div className="px-4 py-2 text-xs text-muted-foreground border-t border-border/50">
+          Debug Role: <span className="font-mono font-bold text-yellow-500">{userRole}</span>
+        </div>
       </SidebarFooter>
 
       <SidebarRail />

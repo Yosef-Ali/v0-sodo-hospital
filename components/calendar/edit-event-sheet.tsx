@@ -19,9 +19,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2, Trash2 } from "lucide-react"
+import { Loader2, Trash2, AlertTriangle, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 import type { CalendarEvent } from "@/lib/db/schema"
+import { updateCalendarEvent, deleteCalendarEvent } from "@/lib/actions/v2/calendar-events"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface EditEventSheetProps {
   event: CalendarEvent | null
@@ -67,15 +69,30 @@ export function EditEventSheet({ event, open, onOpenChange, onEventUpdated }: Ed
     "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM", "5:00 PM",
   ]
 
+  const isManagedEvent = event?.entityType === "task" || event?.entityType === "permit_expiry" || event?.relatedPermitId || event?.relatedPersonId
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!event) return
+    
     setIsLoading(true)
 
     try {
-      // TODO: Implement update event API call
-      toast.success("Event updated successfully!")
-      onOpenChange(false)
-      onEventUpdated?.()
+      const result = await updateCalendarEvent(event.id, {
+        title: formData.title,
+        type: formData.type as any,
+        startDate: new Date(`${formData.date}T${formData.time === "all-day" ? "00:00:00" : "09:00:00"}`), // Simplified time handling
+        allDay: formData.time === "all-day",
+        description: formData.notes,
+      })
+
+      if (result.success) {
+        toast.success("Event updated successfully!")
+        onOpenChange(false)
+        onEventUpdated?.()
+      } else {
+        toast.error(result.error || "Failed to update event")
+      }
     } catch (error) {
       console.error("Error updating event:", error)
       toast.error("Failed to update event")
@@ -85,16 +102,22 @@ export function EditEventSheet({ event, open, onOpenChange, onEventUpdated }: Ed
   }
 
   const handleDelete = async () => {
+    if (!event) return
     if (!window.confirm("Are you sure you want to delete this event?")) {
       return
     }
 
     setIsLoading(true)
     try {
-      // TODO: Implement delete event API call
-      toast.success("Event deleted successfully!")
-      onOpenChange(false)
-      onEventUpdated?.()
+      const result = await deleteCalendarEvent(event.id)
+      
+      if (result.success) {
+        toast.success("Event deleted successfully!")
+        onOpenChange(false)
+        onEventUpdated?.()
+      } else {
+        toast.error(result.error || "Failed to delete event")
+      }
     } catch (error) {
       console.error("Error deleting event:", error)
       toast.error("Failed to delete event")
@@ -116,6 +139,16 @@ export function EditEventSheet({ event, open, onOpenChange, onEventUpdated }: Ed
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-6">
+          {isManagedEvent && (
+            <Alert className="bg-yellow-900/20 border-yellow-500/50 text-yellow-200">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Synced Event</AlertTitle>
+              <AlertDescription>
+                This event is synced from a {event?.entityType || "system entity"}. 
+                Changes should be made to the original record to ensure consistency.
+              </AlertDescription>
+            </Alert>
+          )}
           {/* Event Type */}
           <div className="space-y-2">
             <Label htmlFor="type" className="text-gray-300">
@@ -208,16 +241,18 @@ export function EditEventSheet({ event, open, onOpenChange, onEventUpdated }: Ed
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleDelete}
-              className="bg-red-900/20 border-red-500/50 hover:bg-red-900/40 text-red-400"
-              disabled={isLoading}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
-            </Button>
+             {!isManagedEvent && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDelete}
+                className="bg-red-900/20 border-red-500/50 hover:bg-red-900/40 text-red-400"
+                disabled={isLoading}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
+              </Button>
+            )}
             <div className="flex-1" />
             <Button
               type="button"
@@ -228,20 +263,22 @@ export function EditEventSheet({ event, open, onOpenChange, onEventUpdated }: Ed
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              className="bg-primary hover:bg-primary/90"
-              disabled={!formData.type || !formData.title || !formData.date || !formData.time || isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
-            </Button>
+            {!isManagedEvent && (
+              <Button
+                type="submit"
+                className="bg-primary hover:bg-primary/90"
+                disabled={!formData.type || !formData.title || !formData.date || !formData.time || isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </Button>
+            )}
           </div>
         </form>
       </SheetContent>

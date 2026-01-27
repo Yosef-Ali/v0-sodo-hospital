@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { PageHeader } from "@/components/ui/page-header"
 import { cn } from "@/lib/utils"
-import { Building2, Users, ClipboardList, FileText } from "lucide-react"
+import { Building2, Users, ClipboardList, FileText, Key } from "lucide-react"
 
 const settingsNavItems = [
   {
@@ -28,6 +28,12 @@ const settingsNavItems = [
     title: "Templates",
     href: "/settings/templates",
     icon: FileText,
+  },
+  {
+    title: "API Keys",
+    href: "/settings/api-keys",
+    icon: Key,
+    adminOnly: true,
   },
 ]
 

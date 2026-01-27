@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { PageHeader } from "@/components/ui/page-header"
 import { TaskCard } from "@/components/ui/task-card"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/ui/toaster"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
-import { createTaskWithWorkflow } from "@/lib/actions/v2/tasks"
+import { createTaskWithWorkflow, getTaskById, updateTask } from "@/lib/actions/v2/tasks"
 import { useRouter } from "next/navigation"
 
 // Task type definition
@@ -26,6 +26,12 @@ export interface Task {
   category: string
   priority: "low" | "medium" | "high"
   createdAt: string
+  // New fields for deep editing
+  entityType?: string
+  entityId?: string
+  subType?: string
+  permitId?: string
+  assigneeId?: string
 }
 
 interface TasksPageProps {
@@ -47,10 +53,22 @@ export function TasksPage({ initialData }: TasksPageProps) {
       category: item.permit?.category ? item.permit.category.replace(/_/g, " ") : "General",
       priority: item.task.priority,
       createdAt: new Date(item.task.createdAt).toISOString().split("T")[0],
+      // Map extra fields if available in initial data
+      entityType: item.task.entityType,
+      entityId: item.task.entityId,
+      subType: item.task.subType,
+      permitId: item.task.permitId,
+      assigneeId: item.task.assigneeId
     }))
   }, [initialData.tasks])
-
+  
   const [tasks, setTasks] = useState<Task[]>(mappedTasks)
+  
+  // Sync state with server data updates (important for realtime feel after router.refresh())
+  useEffect(() => {
+    setTasks(mappedTasks)
+  }, [mappedTasks])
+
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
@@ -90,26 +108,49 @@ export function TasksPage({ initialData }: TasksPageProps) {
 
   // Handle adding or updating a task
   const handleAddTask = async (taskData: any) => {
-    if (taskData.id) {
-      // Edit mode - update existing task (TODO: Use update action)
-      setTasks(tasks.map(task => task.id === taskData.id ? { ...task, ...taskData } : task))
-      toast({
-        title: "Task Updated",
-        description: `"${taskData.title}" has been updated successfully.`,
-      })
-    } else {
-      // Create mode - add new task via Server Action
-      try {
+    try {
+      if (taskData.id) {
+        // Edit mode - update existing task
+        const result = await updateTask(taskData.id, {
+          title: taskData.title,
+          description: taskData.description,
+          status: taskData.status,
+          priority: taskData.priority,
+          dueDate: taskData.dueDate ? new Date(taskData.dueDate) : undefined,
+          assigneeId: taskData.assigneeId,
+          notes: taskData.notes, // Pass notes if available in form
+          entityType: taskData.entityType, // Allow re-linking
+          entityId: taskData.entityId,
+        })
+        
+        if (result.success) {
+          toast({
+            title: "Task Updated",
+            description: `"${taskData.title}" has been updated successfully.`,
+          })
+          setIsSheetOpen(false)
+          setSelectedTask(null)
+          router.refresh()
+        } else {
+          toast({
+            title: "Update Failed",
+            description: result.error || "Failed to update task",
+            variant: "destructive"
+          })
+        }
+      } else {
+        // Create mode - add new task via Server Action
         const result = await createTaskWithWorkflow({
           title: taskData.title,
           description: taskData.description,
           status: taskData.status,
           priority: taskData.priority,
-          dueDate: taskData.dueDate ? new Date(taskData.dueDate) : undefined, // Check if TaskSheet sends string or Date
-          assigneeId: taskData.assigneeId, // TaskSheet might not send this yet, or sends string
+          dueDate: taskData.dueDate ? new Date(taskData.dueDate) : undefined,
+          assigneeId: taskData.assigneeId,
           personId: taskData.personId,
           category: taskData.category,
           subType: taskData.subType,
+          notes: taskData.notes,
         })
 
         if (result.success) {
@@ -117,30 +158,55 @@ export function TasksPage({ initialData }: TasksPageProps) {
             title: "Task Created",
             description: `"${taskData.title}" has been created successfully.`,
           })
+          setIsSheetOpen(false)
+          setSelectedTask(null)
           router.refresh()
         } else {
            toast({
-            title: "Error",
+            title: "Creation Failed",
             description: result.error || "Failed to create task",
             variant: "destructive"
           })
         }
-      } catch (e) {
-         toast({
-            title: "Error",
-            description: "Something went wrong",
-            variant: "destructive"
-          })
       }
+    } catch (e) {
+       console.error("Task operation error:", e)
+       toast({
+          title: "System Error",
+          description: "An unexpected error occurred. Please try again.",
+          variant: "destructive"
+        })
     }
-    setIsSheetOpen(false)
-    setSelectedTask(null)
   }
 
   // Handle editing a task
-  const handleEditTask = (task: Task) => {
+  const handleEditTask = async (task: Task) => {
+    // Optimistically set selected task
     setSelectedTask(task)
     setIsSheetOpen(true)
+
+    // Fetch fresh details (especially for entity links and category)
+    const freshResult = await getTaskById(task.id)
+    if (freshResult.success && freshResult.data) {
+      const item = freshResult.data
+      const freshTask: Task = {
+        id: item.task.id,
+        title: item.task.title,
+        description: item.task.description || "",
+        status: item.task.status as any,
+        dueDate: item.task.dueDate ? new Date(item.task.dueDate).toISOString().split("T")[0] : "",
+        assignee: item.assignee?.name || "Unassigned",
+        category: (item.task as any).category || (item.permit?.category ? item.permit.category.toLowerCase() : ""),
+        priority: item.task.priority as any,
+        createdAt: new Date(item.task.createdAt).toISOString().split("T")[0],
+        entityType: item.task.entityType || undefined,
+        entityId: item.task.entityId || undefined,
+        subType: (item.task as any).subType || undefined,
+        permitId: item.task.permitId || undefined,
+        assigneeId: item.task.assigneeId || undefined
+      }
+      setSelectedTask(freshTask)
+    }
   }
 
   // Handle creating a new task

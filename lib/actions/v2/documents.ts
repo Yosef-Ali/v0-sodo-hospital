@@ -71,12 +71,134 @@ export async function createDocument(data: {
       return { success: false, error: "Document type is required" }
     }
 
-    // Check if person exists if personId is provided
-    if (data.personId) {
+    let finalPersonId = data.personId
+
+    // 1. If personId is missing but we have a ticket number, try to resolve the entity
+    if (data.number) {
+      const ticket = data.number.toUpperCase()
+
+      // -- CASE 1: Generic Permits (Person based) --
+      const permitPattern = /^[A-Z]{3}-\d{4}-\d{4}$/
+      if (!finalPersonId && permitPattern.test(ticket)) {
+        // Try to find a permit with this ticket number
+        const permitMatch = await db
+          .select({ personId: permits.personId, id: permits.id })
+          .from(permits)
+          .where(eq(permits.ticketNumber, ticket))
+          .limit(1)
+
+        if (permitMatch.length > 0) {
+          finalPersonId = permitMatch[0].personId
+
+          // CRITICAL: Automatically update permit status to 'SUBMITTED'
+          try {
+            const { transitionPermitStatus } = await import("./permits")
+            await transitionPermitStatus(
+              permitMatch[0].id,
+              "SUBMITTED",
+              "system",
+              "Document uploaded via Chat Assistant: " + (data.title || data.type)
+            )
+          } catch (statusErr) {
+            console.warn("Failed to auto-update permit status:", statusErr)
+          }
+        }
+      }
+
+      // -- CASE 2: Vehicles (VEH-...) --
+      else if (ticket.startsWith("VEH-")) {
+        const { vehicles } = await import("@/lib/db") // Dynamic import to avoid circular dep issues
+
+        // Find vehicle
+        const vehicleMatch = await db
+          .select({ id: vehicles.id, documents: vehicles.documents })
+          .from(vehicles)
+          .where(eq(vehicles.ticketNumber, ticket))
+          .limit(1)
+
+        if (vehicleMatch.length > 0 && data.fileUrl) {
+          // Update vehicle documents list
+          const currentDocs = (vehicleMatch[0].documents as string[]) || []
+          // Append new file Url
+          const newDocs = [...currentDocs, data.fileUrl]
+
+          await db
+            .update(vehicles)
+            .set({
+              documents: newDocs,
+              updatedAt: new Date()
+              // Optional: Update status if needed, e.g., status: "in_review"
+            })
+            .where(eq(vehicles.id, vehicleMatch[0].id))
+
+          revalidatePath("/vehicles")
+          revalidatePath(`/vehicles/${ticket}`)
+        }
+      }
+
+      // -- CASE 3: Import Permits (IMP-...) --
+      else if (ticket.startsWith("IMP-")) {
+        const { importPermits } = await import("@/lib/db")
+
+        const impMatch = await db
+          .select({ id: importPermits.id, documents: importPermits.documents })
+          .from(importPermits)
+          .where(eq(importPermits.ticketNumber, ticket))
+          .limit(1)
+
+        if (impMatch.length > 0 && data.fileUrl) {
+          const currentDocs = (impMatch[0].documents as string[]) || []
+          const newDocs = [...currentDocs, data.fileUrl]
+
+          await db
+            .update(importPermits)
+            .set({
+              documents: newDocs,
+              updatedAt: new Date(),
+              status: "processing" // Auto-update status for import permits
+            })
+            .where(eq(importPermits.id, impMatch[0].id))
+
+          revalidatePath("/import-permits")
+          revalidatePath(`/import-permits/${ticket}`)
+        }
+      }
+
+      // -- CASE 4: Company Registrations (CMP-...) --
+      else if (ticket.startsWith("CMP-")) {
+        const { companyRegistrations } = await import("@/lib/db")
+
+        const cmpMatch = await db
+          .select({ id: companyRegistrations.id, documents: companyRegistrations.documents })
+          .from(companyRegistrations)
+          .where(eq(companyRegistrations.ticketNumber, ticket))
+          .limit(1)
+
+        if (cmpMatch.length > 0 && data.fileUrl) {
+          const currentDocs = (cmpMatch[0].documents as string[]) || []
+          const newDocs = [...currentDocs, data.fileUrl]
+
+          await db
+            .update(companyRegistrations)
+            .set({
+              documents: newDocs,
+              updatedAt: new Date(),
+              status: "in_review" // Auto-update status
+            })
+            .where(eq(companyRegistrations.id, cmpMatch[0].id))
+
+          revalidatePath("/companies")
+          revalidatePath(`/companies/${ticket}`)
+        }
+      }
+    }
+
+    // Check if person exists if personId is provided (or resolved)
+    if (finalPersonId) {
       const personExists = await db
         .select({ id: people.id })
         .from(people)
-        .where(eq(people.id, data.personId))
+        .where(eq(people.id, finalPersonId))
         .limit(1)
 
       if (personExists.length === 0) {
@@ -86,11 +208,14 @@ export async function createDocument(data: {
 
     const result = await db
       .insert(documentsV2)
-      .values(data)
+      .values({
+        ...data,
+        personId: finalPersonId // Use resolved ID
+      })
       .returning()
 
-    if (data.personId) {
-      revalidatePath(`/people/${data.personId}`)
+    if (finalPersonId) {
+      revalidatePath(`/people/${finalPersonId}`)
     }
     revalidatePath("/documents")
 

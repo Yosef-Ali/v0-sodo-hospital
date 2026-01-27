@@ -8,105 +8,92 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Search, Filter, Plus, Package, FileText, Clock, CheckCircle2, AlertCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { ImportTaskSheet } from "@/components/sheets/import-task-sheet"
+import { ImportSheet } from "@/components/sheets/import-sheet"
+import { getImports, getImportStats, createImport, updateImport, deleteImport, getImportById } from "@/lib/actions/v2/imports"
 
-interface ImportTask {
-  id: string
-  title: string
-  description: string
-  category: "pip" | "single_window"
-  status: "pending" | "in-progress" | "completed" | "urgent"
-  dueDate: string
-  assignee: string
-  documents: string[]
-  createdAt: string
+interface ImportPageProps {
+  initialData: {
+    imports: any[]
+    stats: {
+      total: number
+      pip: number
+      singleWindow: number
+      pending: number
+      completed: number
+    }
+  }
 }
 
-// Sample data - will be replaced with database data
-const sampleTasks: ImportTask[] = [
-  {
-    id: "1",
-    title: "PIP Application - Medical Equipment",
-    description: "Pre Import Permit for hospital medical equipment",
-    category: "pip",
-    status: "pending",
-    dueDate: "2026-01-15",
-    assignee: "Niccodimos Ezechiel",
-    documents: ["Support Letter", "Official Letter", "Proforma Invoice"],
-    createdAt: "2026-01-01",
-  },
-  {
-    id: "2",
-    title: "Single Window - Pharmaceutical Import",
-    description: "Customs clearance for pharmaceutical supplies",
-    category: "single_window",
-    status: "in-progress",
-    dueDate: "2026-01-20",
-    assignee: "Bethel Ayalew",
-    documents: ["PIP Certificate", "Commercial Invoice", "Packing List"],
-    createdAt: "2026-01-02",
-  },
-]
-
-export function ImportPage() {
-  const [tasks, setTasks] = useState<ImportTask[]>(sampleTasks)
+export function ImportPage({ initialData }: ImportPageProps) {
+  const [imports, setImports] = useState<any[]>(initialData.imports)
+  const [stats, setStats] = useState(initialData.stats)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedTask, setSelectedTask] = useState<ImportTask | null>(null)
+  const [selectedImport, setSelectedImport] = useState<any | null>(null)
+  const [loading, setLoading] = useState(false)
 
-  // Filter tasks
-  const filteredTasks = tasks.filter((task) => {
-    if (activeTab !== "all" && activeTab !== task.category && activeTab !== task.status) {
+  // Load imports with optional filters
+  const loadImports = async (query?: string) => {
+    setLoading(true)
+    const result = await getImports({ query, limit: 100 })
+    if (result.success && result.data) {
+      setImports(result.data)
+    }
+    const statsResult = await getImportStats()
+    if (statsResult.success && statsResult.data) {
+      setStats(statsResult.data)
+    }
+    setLoading(false)
+  }
+
+  // Filter imports based on current tab and search
+  const filteredImports = imports.filter((item) => {
+    if (activeTab !== "all" && activeTab !== item.category && activeTab !== item.status) {
       return false
     }
-    if (searchQuery && !task.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+    if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false
     }
     return true
   })
 
-  // Count tasks
-  const taskCounts = {
-    all: tasks.length,
-    pip: tasks.filter((t) => t.category === "pip").length,
-    single_window: tasks.filter((t) => t.category === "single_window").length,
-    pending: tasks.filter((t) => t.status === "pending").length,
-    completed: tasks.filter((t) => t.status === "completed").length,
-  }
-
   const handleCreateNew = () => {
-    setSelectedTask(null)
+    setSelectedImport(null)
     setIsSheetOpen(true)
   }
 
-  const handleEditTask = (task: ImportTask) => {
-    setSelectedTask(task)
+  const handleEditImport = async (item: any) => {
+    // Optimistically select item, but fetch fresh data
+    setSelectedImport(item)
     setIsSheetOpen(true)
+    
+    // Fetch fresh data
+    const freshData = await getImportById(item.id)
+    if (freshData.success && freshData.data) {
+      setSelectedImport(freshData.data)
+    }
   }
 
-  const handleAddTask = (taskData: any) => {
-    if (taskData.id) {
-      setTasks(tasks.map((t) => (t.id === taskData.id ? { ...t, ...taskData } : t)))
-    } else {
-      const newTask: ImportTask = {
-        id: Date.now().toString(),
-        ...taskData,
-        createdAt: new Date().toISOString().split("T")[0],
+  const handleSubmit = async (data: any) => {
+    if (selectedImport?.id) {
+      // Update existing - use selectedImport.id since form doesn't include it
+      const result = await updateImport(selectedImport.id, data)
+      if (result.success) {
+        loadImports()
       }
-      setTasks([newTask, ...tasks])
+    } else {
+      // Create new
+      const result = await createImport({
+        ...data,
+        category: data.importType || "pip", // Map importType to category
+      })
+      if (result.success) {
+        loadImports()
+      }
     }
     setIsSheetOpen(false)
-  }
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "pending": return <Clock className="h-4 w-4 text-amber-400" />
-      case "in-progress": return <AlertCircle className="h-4 w-4 text-blue-400" />
-      case "completed": return <CheckCircle2 className="h-4 w-4 text-green-400" />
-      case "urgent": return <AlertCircle className="h-4 w-4 text-red-400" />
-      default: return <Clock className="h-4 w-4 text-gray-400" />
-    }
+    setSelectedImport(null)
   }
 
   const getStatusColor = (status: string) => {
@@ -135,19 +122,19 @@ export function ImportPage() {
           <div className="w-full overflow-x-auto">
             <TabsList className="bg-gray-800 border border-gray-700 inline-flex min-w-max gap-2 rounded-md">
               <TabsTrigger value="all" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                All <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">{taskCounts.all}</Badge>
+                All <Badge className="ml-1 bg-slate-500/20 text-slate-300 text-xs border border-slate-500/30">{stats.total}</Badge>
               </TabsTrigger>
               <TabsTrigger value="pip" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                PIP <Badge className="ml-1 bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30">{taskCounts.pip}</Badge>
+                PIP <Badge className="ml-1 bg-purple-500/20 text-purple-300 text-xs border border-purple-500/30">{stats.pip}</Badge>
               </TabsTrigger>
               <TabsTrigger value="single_window" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                Single Window <Badge className="ml-1 bg-cyan-500/20 text-cyan-300 text-xs border border-cyan-500/30">{taskCounts.single_window}</Badge>
+                Single Window <Badge className="ml-1 bg-cyan-500/20 text-cyan-300 text-xs border border-cyan-500/30">{stats.singleWindow}</Badge>
               </TabsTrigger>
               <TabsTrigger value="pending" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                Pending <Badge className="ml-1 bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">{taskCounts.pending}</Badge>
+                Pending <Badge className="ml-1 bg-amber-500/20 text-amber-300 text-xs border border-amber-500/30">{stats.pending}</Badge>
               </TabsTrigger>
               <TabsTrigger value="completed" className="text-sm whitespace-nowrap data-[state=active]:bg-gray-700">
-                Completed <Badge className="ml-1 bg-green-500/20 text-green-300 text-xs border border-green-500/30">{taskCounts.completed}</Badge>
+                Completed <Badge className="ml-1 bg-green-500/20 text-green-300 text-xs border border-green-500/30">{stats.completed}</Badge>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -172,67 +159,73 @@ export function ImportPage() {
         </div>
       </div>
 
-      {/* Task Cards */}
-      {filteredTasks.length === 0 ? (
+      {/* Import Cards */}
+      {filteredImports.length === 0 ? (
         <div className="bg-gray-800/60 rounded-lg border border-gray-700 p-8 text-center">
           <Package className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No import tasks found</h3>
+          <h3 className="text-lg font-medium text-white mb-2">No import permits found</h3>
           <p className="text-gray-400 mb-4">
-            {searchQuery ? "No tasks match your search." : "Create a new import task to get started."}
+            {searchQuery ? "No permits match your search." : "Create a new import permit to get started."}
           </p>
           <Button className="bg-green-600 hover:bg-green-700" onClick={handleCreateNew}>
-            <Plus className="h-4 w-4 mr-2" /> Create Import Task
+            <Plus className="h-4 w-4 mr-2" /> Create Import Permit
           </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTasks.map((task) => (
-            <Card key={task.id} className="bg-gray-800 border-gray-700 overflow-hidden hover:border-gray-600 transition-all">
+          {filteredImports.map((item) => (
+            <Card key={item.id} className="bg-gray-800 border-gray-700 overflow-hidden hover:border-gray-600 transition-all">
               <div className="p-5">
                 <div className="flex justify-between items-start mb-3">
                   <div className="bg-gray-700 p-2 rounded-md">
-                    {task.category === "pip" ? (
+                    {item.category === "pip" ? (
                       <FileText className="h-5 w-5 text-purple-400" />
                     ) : (
                       <Package className="h-5 w-5 text-cyan-400" />
                     )}
                   </div>
-                  <Badge className={`text-xs border ${getStatusColor(task.status)}`}>
-                    {task.status.replace("-", " ")}
+                  <Badge className={`text-xs border ${getStatusColor(item.status)}`}>
+                    {item.status.replace("-", " ")}
                   </Badge>
                 </div>
 
-                <h3 className="font-medium text-lg mb-1 text-white">{task.title}</h3>
-                <p className="text-sm text-gray-400 mb-3">{task.description}</p>
+                <h3 className="font-medium text-lg mb-1 text-white">{item.title}</h3>
+                {item.ticketNumber && (
+                  <p className="text-xs text-green-400 font-mono mb-1">{item.ticketNumber}</p>
+                )}
+                <p className="text-sm text-gray-400 mb-3">{item.description}</p>
 
                 <div className="flex items-center gap-2 mb-3">
                   <Badge variant="outline" className="text-xs border-gray-600 text-gray-300">
-                    {getCategoryLabel(task.category)}
+                    {getCategoryLabel(item.category)}
                   </Badge>
                 </div>
 
                 <div className="text-xs text-gray-500 space-y-1">
                   <div className="flex justify-between">
                     <span>Due Date:</span>
-                    <span className="text-gray-400">{task.dueDate}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Assignee:</span>
-                    <span className="text-gray-400">{task.assignee}</span>
+                    <span className="text-gray-400">{item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "Not set"}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Documents:</span>
-                    <span className="text-gray-400">{task.documents.length} required</span>
+                    <span className="text-gray-400">{(item.documents || []).length} attached</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Created:</span>
+                    <span className="text-gray-400">{new Date(item.createdAt).toLocaleDateString()}</span>
                   </div>
                 </div>
               </div>
 
               <div className="px-5 py-3 border-t border-gray-700 flex justify-between items-center">
-                <button className="text-xs text-green-400 hover:text-green-300 font-medium">
+                <a 
+                  href={`/import/${item.id}`}
+                  className="text-xs text-green-400 hover:text-green-300 font-medium"
+                >
                   View Details
-                </button>
+                </a>
                 <button 
-                  onClick={() => handleEditTask(task)}
+                  onClick={() => handleEditImport(item)}
                   className="text-xs text-gray-400 hover:text-gray-300 font-medium"
                 >
                   Edit
@@ -243,11 +236,11 @@ export function ImportPage() {
         </div>
       )}
 
-      <ImportTaskSheet 
+      <ImportSheet 
         open={isSheetOpen} 
         onOpenChange={setIsSheetOpen} 
-        onSubmit={handleAddTask}
-        task={selectedTask}
+        onSubmit={handleSubmit}
+        permit={selectedImport}
       />
     </div>
   )

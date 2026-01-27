@@ -5,10 +5,22 @@ import { StatusCard } from "@/components/ui/status-card"
 import { MetricCard } from "@/components/ui/metric-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FileText, AlertCircle, ArrowRight } from "lucide-react"
+import { FileText, AlertCircle, ArrowRight, User, Clock, Calendar } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+
+interface ExpiringItem {
+  id: string
+  type: "permit" | "passport" | "work_permit" | "residence_id" | "medical_license" | "vehicle" | "import" | "company"
+  title: string
+  entityName: string
+  expiryDate: Date
+  daysRemaining: number
+  status: "expired" | "urgent" | "warning" | "upcoming"
+  entityId?: string
+  personId?: string
+}
 
 interface DashboardPageProps {
   initialData: {
@@ -17,33 +29,40 @@ interface DashboardPageProps {
     permits: any[]
     overdueCount: number
     myTasks: any[]
+    expiringItems: ExpiringItem[]
     currentUser: { id: string; name: string | null } | null
+    error?: string
   }
 }
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
-  const { taskStats, permitStats, permits, overdueCount, myTasks, currentUser } = initialData
+  const { taskStats, permitStats, permits, overdueCount, myTasks, expiringItems, currentUser, error } = initialData
+  const router = useRouter()
+  const { toast } = useToast()
 
-  const pendingTasks = taskStats.byStatus?.pending || 0
-  const inProgressTasks = taskStats.byStatus?.["in-progress"] || 0
-  const completedTasks = taskStats.byStatus?.completed || 0
-  const urgentTasks = taskStats.byStatus?.urgent || 0
-  const totalTasks = taskStats.total || pendingTasks + inProgressTasks + completedTasks + urgentTasks
+  // Count expiring items by status
+  const expiredCount = expiringItems?.filter((i: ExpiringItem) => i.status === "expired").length || 0
+  const urgentExpiryCount = expiringItems?.filter((i: ExpiringItem) => i.status === "urgent").length || 0
+  const warningExpiryCount = expiringItems?.filter((i: ExpiringItem) => i.status === "warning").length || 0
+  const totalExpiringCount = expiringItems?.length || 0
 
-  const highPriorityTasks = taskStats.byPriority?.high || 0
-  const mediumPriorityTasks = taskStats.byPriority?.medium || 0
-  const lowPriorityTasks = taskStats.byPriority?.low || 0
+  const pendingTasks = taskStats?.byStatus?.pending || 0
+  const inProgressTasks = taskStats?.byStatus?.["in-progress"] || 0
+  const completedTasks = taskStats?.byStatus?.completed || 0
+  const urgentTasks = taskStats?.byStatus?.urgent || 0
+  const totalTasks = taskStats?.total || pendingTasks + inProgressTasks + completedTasks + urgentTasks
+
+  const highPriorityTasks = taskStats?.byPriority?.high || 0
+  const mediumPriorityTasks = taskStats?.byPriority?.medium || 0
+  const lowPriorityTasks = taskStats?.byPriority?.low || 0
 
   const openTasks = pendingTasks + inProgressTasks + urgentTasks
   const completionRate = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0
 
-  const totalPermits = permitStats.total || 0
-  const pendingPermits = permitStats.byStatus?.PENDING || 0
-  const submittedPermits = permitStats.byStatus?.SUBMITTED || 0
-  const approvedPermits = permitStats.byStatus?.APPROVED || 0
-
-  const router = useRouter()
-  const { toast } = useToast()
+  const totalPermits = permitStats?.total || 0
+  const pendingPermits = permitStats?.byStatus?.PENDING || 0
+  const submittedPermits = permitStats?.byStatus?.SUBMITTED || 0
+  const approvedPermits = permitStats?.byStatus?.APPROVED || 0
 
   return (
     <div className="p-8">
@@ -52,8 +71,25 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
         description="A quick overview of tasks, permits, and recent activity."
       />
 
+      {error && (
+        <div className="mb-8 p-6 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col md:flex-row items-center gap-6 fade-in shadow-lg shadow-amber-500/5">
+          <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="h-6 w-6 text-amber-500" />
+          </div>
+          <div className="flex-1 text-center md:text-left">
+            <h3 className="text-lg font-semibold text-amber-400 mb-1">Database Connection Required</h3>
+            <p className="text-slate-400 text-sm mb-4 md:mb-0">
+              {error.includes("SSH") ? "The SSH tunnel is likely down. Please restore it to see your data." : error}
+            </p>
+          </div>
+          <div className="bg-slate-900/50 rounded-lg px-4 py-2 border border-slate-700 font-mono text-xs text-slate-300">
+            ./scripts/start-db-tunnel.sh
+          </div>
+        </div>
+      )}
+
       {/* Overdue tasks strip */}
-      <div className="mt-4 mb-6 flex items-center justify-between rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+      <div className="mt-4 mb-4 flex items-center justify-between rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3">
         <div className="flex items-center gap-2 text-sm text-amber-100">
           <AlertCircle className="h-4 w-4" />
           <span>
@@ -73,6 +109,68 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           </Button>
         )}
       </div>
+
+      {/* Expiring items notification */}
+      {totalExpiringCount > 0 && (
+        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-red-100">
+              <Clock className="h-4 w-4" />
+              <span>
+                {expiredCount > 0 && (
+                  <span className="font-semibold text-red-400">{expiredCount} expired</span>
+                )}
+                {expiredCount > 0 && urgentExpiryCount > 0 && ", "}
+                {urgentExpiryCount > 0 && (
+                  <span className="font-semibold text-orange-400">{urgentExpiryCount} urgent (within 7 days)</span>
+                )}
+                {(expiredCount > 0 || urgentExpiryCount > 0) && warningExpiryCount > 0 && ", "}
+                {warningExpiryCount > 0 && (
+                  <span className="text-yellow-400">{warningExpiryCount} expiring soon</span>
+                )}
+                <span className="ml-1">- documents/permits need attention</span>
+              </span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs font-normal border-red-500/60 text-red-100 hover:bg-red-500/20 hover:text-white"
+              onClick={() => router.push("/calendar")}
+            >
+              <Calendar className="h-3 w-3 mr-1" />
+              View in Calendar
+            </Button>
+          </div>
+
+          {/* Quick list of most urgent items */}
+          {(expiredCount > 0 || urgentExpiryCount > 0) && expiringItems && (
+            <div className="mt-3 pt-3 border-t border-red-500/20">
+              <p className="text-xs text-red-200 mb-2">Most urgent:</p>
+              <ul className="space-y-1">
+                {expiringItems
+                  .filter((i: ExpiringItem) => i.status === "expired" || i.status === "urgent")
+                  .slice(0, 5)
+                  .map((item: ExpiringItem) => (
+                    <li key={item.id} className="flex items-center justify-between text-xs">
+                      <span className="text-gray-300">
+                        <span className={item.status === "expired" ? "text-red-400" : "text-orange-400"}>
+                          {item.status === "expired" ? "EXPIRED" : `${item.daysRemaining}d left`}
+                        </span>
+                        {" "}- {item.title} ({item.entityName})
+                      </span>
+                      <Link
+                        href={item.personId ? `/foreigners/${item.personId}` : item.entityId ? `/${item.type}/${item.entityId}` : "#"}
+                        className="text-blue-400 hover:text-blue-300"
+                      >
+                        View
+                      </Link>
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* High-level task snapshot */}
       <div className="mt-8 md:mt-10 lg:mt-12 mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -107,25 +205,25 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
               subtext="Across all categories"
               change={`${pendingPermits} pending review`}
               changeType={pendingPermits > 0 ? "negative" : "positive"}
-              items={[
-                {
-                  label: "Work Permits",
-                  value: String(permitStats.byCategory?.WORK_PERMIT || 0),
-                  action: { text: "View", link: "/permits?category=WORK_PERMIT" },
-                },
-                {
-                  label: "Residence IDs",
-                  value: String(permitStats.byCategory?.RESIDENCE_ID || 0),
-                  action: { text: "View", link: "/permits?category=RESIDENCE_ID" },
-                },
-                {
-                  label: "Licenses",
-                  value: String(permitStats.byCategory?.LICENSE || 0),
-                  action: { text: "View", link: "/permits?category=LICENSE" },
-                },
-              ]}
-              footer={`${submittedPermits} submitted, ${approvedPermits} approved`}
-              buttonText="Open permits workspace"
+                items={[
+                  {
+                    label: "Work Permits",
+                    value: String(permitStats?.byCategory?.WORK_PERMIT || 0),
+                    action: { text: "View", link: "/permits?category=WORK_PERMIT" },
+                  },
+                  {
+                    label: "Vehicles",
+                    value: String(permitStats?.byCategory?.VEHICLE || 0),
+                    action: { text: "View", link: "/vehicle" },
+                  },
+                  {
+                    label: "Imports",
+                    value: String(permitStats?.byCategory?.IMPORT || 0),
+                    action: { text: "View", link: "/import" },
+                  },
+                ]}
+                footer={`${submittedPermits} submitted, ${approvedPermits} approved`}
+                buttonText="Open permits workspace"
               buttonLink="/permits"
               onChartClick={() => {
                 toast({
@@ -208,6 +306,15 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
+                      {item.person?.photoUrl ? (
+                        <div className="h-8 w-8 rounded-full overflow-hidden border border-gray-600 flex-shrink-0">
+                          <img src={item.person.photoUrl} alt="Avatar" className="h-full w-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-500 border border-gray-600 flex-shrink-0">
+                          <User className="h-4 w-4" />
+                        </div>
+                      )}
                       <Badge variant="outline" className="bg-gray-700/60 text-gray-200 border-gray-600">
                         {item.permit.status}
                       </Badge>

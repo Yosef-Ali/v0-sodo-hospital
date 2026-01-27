@@ -11,6 +11,7 @@ export const workPermitSubTypeEnum = pgEnum("work_permit_sub_type", ["NEW", "REN
 export const genderEnum = pgEnum("gender", ["MALE", "FEMALE"])
 export const familyStatusEnum = pgEnum("family_status", ["MARRIED", "UNMARRIED"])
 export const permitStatusEnum = pgEnum("permit_status", ["PENDING", "SUBMITTED", "APPROVED", "REJECTED", "EXPIRED"])
+export const permitStageEnum = pgEnum("permit_stage", ["SUPPORT_LETTER", "DOCUMENT_ARRANGEMENT", "APPLY_ONLINE", "SUBMIT_DOCUMENT", "PAYMENT", "PICK_ID", "COMPLETED"])
 export const eventTypeEnum = pgEnum("event_type", ["permit", "deadline", "meeting", "interview", "other"])
 export const reportStatusEnum = pgEnum("report_status", ["DRAFT", "GENERATED", "PUBLISHED", "ARCHIVED"])
 export const reportFrequencyEnum = pgEnum("report_frequency", ["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "YEARLY", "ON_DEMAND"])
@@ -134,44 +135,56 @@ export const teamMembers = pgTable("team_members", {
 // People table (hospital staff, patients, dependents)
 export const people = pgTable("people", {
   id: uuid("id").primaryKey().defaultRandom(),
+  ticketNumber: varchar("ticket_number", { length: 50 }).unique(), // Unique Foreigner ID (e.g., FOR-001)
   firstName: varchar("first_name", { length: 255 }).notNull(),
   lastName: varchar("last_name", { length: 255 }).notNull(),
   nationality: varchar("nationality", { length: 100 }),
   dateOfBirth: timestamp("date_of_birth"),
   gender: genderEnum("gender"),
   familyStatus: familyStatusEnum("family_status"),
-  
+
   // Profile photo
   photoUrl: text("photo_url"),
-  
+
   // Passport details
   passportNo: varchar("passport_no", { length: 100 }),
   passportIssueDate: timestamp("passport_issue_date"),
   passportExpiryDate: timestamp("passport_expiry_date"),
   passportDocuments: jsonb("passport_documents").$type<string[]>().default([]),
-  
+
   // Medical License details
   medicalLicenseNo: varchar("medical_license_no", { length: 100 }),
   medicalLicenseIssueDate: timestamp("medical_license_issue_date"),
   medicalLicenseExpiryDate: timestamp("medical_license_expiry_date"),
   medicalLicenseDocuments: jsonb("medical_license_documents").$type<string[]>().default([]),
-  
+
   // Work Permit details
   workPermitNo: varchar("work_permit_no", { length: 100 }),
   workPermitSubType: workPermitSubTypeEnum("work_permit_sub_type"), // NEW, RENEWAL, OTHER
   workPermitIssueDate: timestamp("work_permit_issue_date"),
   workPermitExpiryDate: timestamp("work_permit_expiry_date"),
   workPermitDocuments: jsonb("work_permit_documents").$type<string[]>().default([]),
-  
+
   // Residence ID details
   residenceIdNo: varchar("residence_id_no", { length: 100 }),
   residenceIdIssueDate: timestamp("residence_id_issue_date"),
   residenceIdExpiryDate: timestamp("residence_id_expiry_date"),
   residenceIdDocuments: jsonb("residence_id_documents").$type<string[]>().default([]),
-  
+
   phone: varchar("phone", { length: 50 }),
   email: varchar("email", { length: 255 }),
+  familyDetails: jsonb("family_details").$type<{
+    spouseName?: string;
+    spousePhone?: string;
+    children?: { name: string; age?: string; gender?: string }[];
+  }>().default({}),
   guardianId: uuid("guardian_id").references((): any => people.id), // self-reference for dependents
+  documentSections: jsonb("document_sections").$type<any[]>().default([]),
+
+  // Permit workflow tracking (v2 redesign)
+  permitType: permitCategoryEnum("permit_type"), // WORK_PERMIT, RESIDENCE_ID, MEDICAL_LICENSE
+  applicationType: workPermitSubTypeEnum("application_type"), // NEW, RENEWAL
+  currentStage: permitStageEnum("current_stage").default("SUPPORT_LETTER"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -232,7 +245,7 @@ export const permitHistory = pgTable("permit_history", {
   changedAt: timestamp("changed_at").defaultNow().notNull(),
 })
 
-// Update Tasks to link to permits
+// Update Tasks to link to permits and entities
 export const tasksV2 = pgTable("tasks_v2", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title", { length: 500 }).notNull(),
@@ -241,7 +254,12 @@ export const tasksV2 = pgTable("tasks_v2", {
   priority: taskPriorityEnum("priority").default("medium").notNull(),
   dueDate: timestamp("due_date"),
   assigneeId: uuid("assignee_id").references(() => users.id),
-  permitId: uuid("permit_id").references(() => permits.id), // NEW: link to permit
+  permitId: uuid("permit_id").references(() => permits.id), // Link to permit (for foreigner workflows)
+
+  // NEW: Link to any entity (Foreigner/Vehicle/Import/Company)
+  entityType: varchar("entity_type", { length: 50 }), // 'person', 'vehicle', 'import', 'company'
+  entityId: uuid("entity_id"), // ID of the linked entity
+
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -278,6 +296,11 @@ export const calendarEvents = pgTable("calendar_events", {
   location: varchar("location", { length: 255 }),
   relatedPersonId: uuid("related_person_id").references(() => people.id), // optional link to person
   relatedPermitId: uuid("related_permit_id").references(() => permits.id), // optional link to permit
+
+  // Generic Entity Linking
+  entityType: varchar("entity_type", { length: 50 }), // 'task', 'vehicle', 'import', 'company'
+  entityId: uuid("entity_id"),
+
   createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -299,6 +322,82 @@ export const reports = pgTable("reports", {
   fileSize: integer("file_size"), // bytes
   parameters: jsonb("parameters").$type<Record<string, any>>().default({}), // filter/query params
   createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// ============ IMPORT, VEHICLE, COMPANY ENTITIES ============
+
+// Import Permits (PIP & Single Window)
+export const importPermits = pgTable("import_permits", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ticketNumber: varchar("ticket_number", { length: 50 }).unique(), // Unique Import ID (e.g., IMP-001)
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 50 }).notNull(), // "pip" | "single_window" | "customs_clearance"
+  status: varchar("status", { length: 50 }).default("pending").notNull(),
+  dueDate: timestamp("due_date"),
+  assigneeId: uuid("assignee_id").references(() => users.id),
+  documents: jsonb("documents").$type<string[]>().default([]), // flattened list for easy access
+  documentSections: jsonb("document_sections").$type<any[]>().default([]), // detailed structure for UI
+
+  // Specific Fields
+  supplierName: varchar("supplier_name", { length: 255 }),
+  supplierCountry: varchar("supplier_country", { length: 100 }),
+  itemDescription: text("item_description"),
+  estimatedValue: varchar("estimated_value", { length: 100 }),
+  currency: varchar("currency", { length: 10 }).default("USD"),
+  importType: varchar("import_type", { length: 50 }), // Explicit type if different from category
+  currentStage: varchar("current_stage", { length: 50 }).default("SUPPORT_LETTER"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Vehicles
+export const vehicles = pgTable("vehicles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ticketNumber: varchar("ticket_number", { length: 50 }).unique(), // Unique Vehicle ID (e.g., VEH-001)
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 50 }).notNull(), // inspection/road_fund/insurance/road_transport
+  status: varchar("status", { length: 50 }).default("pending").notNull(),
+  vehicleInfo: varchar("vehicle_info", { length: 255 }),
+  plateNumber: varchar("plate_number", { length: 50 }),
+
+  // Specific Fields
+  vehicleType: varchar("vehicle_type", { length: 50 }), // Car, Truck, etc.
+  vehicleModel: varchar("vehicle_model", { length: 100 }),
+  vehicleYear: varchar("vehicle_year", { length: 10 }),
+  ownerName: varchar("owner_name", { length: 255 }),
+  currentMileage: varchar("current_mileage", { length: 50 }),
+  chassisNumber: varchar("chassis_number", { length: 100 }),
+  engineNumber: varchar("engine_number", { length: 100 }),
+  serviceType: varchar("service_type", { length: 50 }), // Explicit type if different from category
+  currentStage: varchar("current_stage", { length: 50 }).default("DOCUMENT_PREP"),
+
+  dueDate: timestamp("due_date"),
+  assigneeId: uuid("assignee_id").references(() => users.id),
+  documents: jsonb("documents").$type<string[]>().default([]),
+  documentSections: jsonb("document_sections").$type<any[]>().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
+// Company Registrations
+export const companyRegistrations = pgTable("company_registrations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ticketNumber: varchar("ticket_number", { length: 50 }).unique(), // Unique Company ID (e.g., CMP-001)
+  title: varchar("title", { length: 500 }).notNull(),
+  description: text("description"),
+  stage: varchar("stage", { length: 50 }).default("document_prep").notNull(),
+  status: varchar("status", { length: 50 }).default("pending").notNull(),
+  companyName: varchar("company_name", { length: 255 }),
+  registrationType: varchar("registration_type", { length: 100 }),
+  dueDate: timestamp("due_date"),
+  assigneeId: uuid("assignee_id").references(() => users.id),
+  documents: jsonb("documents").$type<string[]>().default([]),
+  documentSections: jsonb("document_sections").$type<any[]>().default([]),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
@@ -564,6 +663,19 @@ export const complaintUpdates = pgTable("complaint_updates", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
 
+// System Settings (API Keys, Configuration)
+export const systemSettings = pgTable("system_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  value: text("value"), // encrypted for sensitive data
+  description: text("description"),
+  category: varchar("category", { length: 50 }).default("general").notNull(),
+  isSecret: boolean("is_secret").default(false).notNull(), // if true, value should be masked in UI
+  updatedBy: uuid("updated_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+})
+
 // Type exports
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -611,3 +723,15 @@ export type Testimonial = typeof testimonials.$inferSelect
 export type NewTestimonial = typeof testimonials.$inferInsert
 export type ComplaintUpdate = typeof complaintUpdates.$inferSelect
 export type NewComplaintUpdate = typeof complaintUpdates.$inferInsert
+
+// Import, Vehicle, Company Type exports
+export type ImportPermit = typeof importPermits.$inferSelect
+export type NewImportPermit = typeof importPermits.$inferInsert
+export type Vehicle = typeof vehicles.$inferSelect
+export type NewVehicle = typeof vehicles.$inferInsert
+export type CompanyRegistration = typeof companyRegistrations.$inferSelect
+export type NewCompanyRegistration = typeof companyRegistrations.$inferInsert
+
+// Settings Type exports
+export type SystemSetting = typeof systemSettings.$inferSelect
+export type NewSystemSetting = typeof systemSettings.$inferInsert

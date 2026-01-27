@@ -1,6 +1,6 @@
 "use server"
 
-import { db, permits, people, checklists, permitHistory, tasksV2, users, documentsV2, type Permit, type NewPermit, type PermitHistory } from "@/lib/db"
+import { db, permits, people, checklists, permitHistory, tasksV2, users, documentsV2, vehicles, importPermits, type Permit, type NewPermit, type PermitHistory } from "@/lib/db"
 import { eq, desc, and, gte, lte, sql, or, like } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { gregorianToEC, formatEC } from "@/lib/dates/ethiopian"
@@ -10,15 +10,17 @@ import { gregorianToEC, formatEC } from "@/lib/dates/ethiopian"
  * Format: {PREFIX}-{YEAR}-{SEQUENCE}
  * Example: WRK-2025-0001, RES-2025-0002, LIC-2025-0003, PIP-2025-0001
  */
-async function generateTicketNumber(category: "WORK_PERMIT" | "RESIDENCE_ID" | "LICENSE" | "PIP"): Promise<string> {
+async function generateTicketNumber(category: "WORK_PERMIT" | "RESIDENCE_ID" | "MEDICAL_LICENSE" | "PIP" | "CUSTOMS" | "CAR_BOLO_INSURANCE"): Promise<string> {
   // Get prefix based on category
-  const prefixMap = {
+  const prefixMap: Record<string, string> = {
     WORK_PERMIT: "WRK",
     RESIDENCE_ID: "RES",
-    LICENSE: "LIC",
+    MEDICAL_LICENSE: "LIC",
     PIP: "PIP",
+    CUSTOMS: "CUS",
+    CAR_BOLO_INSURANCE: "CAR",
   }
-  const prefix = prefixMap[category]
+  const prefix = prefixMap[category] || "GEN"
 
   // Get current year
   const year = new Date().getFullYear()
@@ -52,7 +54,7 @@ async function generateTicketNumber(category: "WORK_PERMIT" | "RESIDENCE_ID" | "
  * Get all permits with optional filters and pagination
  */
 export async function getPermits(params?: {
-  category?: "WORK_PERMIT" | "RESIDENCE_ID" | "LICENSE" | "PIP"
+  category?: "WORK_PERMIT" | "RESIDENCE_ID" | "MEDICAL_LICENSE" | "PIP" | "CUSTOMS" | "CAR_BOLO_INSURANCE"
   status?: "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED" | "EXPIRED"
   personId?: string
   dueBefore?: Date
@@ -181,10 +183,10 @@ export async function getPermitById(permitIdOrTicket: string) {
     const ticketNumber = permitResult[0].permit.ticketNumber
     const documents = ticketNumber
       ? await db
-          .select()
-          .from(documentsV2)
-          .where(eq(documentsV2.number, ticketNumber))
-          .orderBy(desc(documentsV2.createdAt))
+        .select()
+        .from(documentsV2)
+        .where(eq(documentsV2.number, ticketNumber))
+        .orderBy(desc(documentsV2.createdAt))
       : []
 
     return {
@@ -206,7 +208,7 @@ export async function getPermitById(permitIdOrTicket: string) {
  * Create a new permit
  */
 export async function createPermit(data: {
-  category: "WORK_PERMIT" | "RESIDENCE_ID" | "LICENSE" | "PIP"
+  category: "WORK_PERMIT" | "RESIDENCE_ID" | "MEDICAL_LICENSE" | "PIP" | "CUSTOMS" | "CAR_BOLO_INSURANCE"
   personId: string
   dueDate?: Date
   checklistId?: string
@@ -216,13 +218,51 @@ export async function createPermit(data: {
   try {
     // Validate person exists
     const personExists = await db
-      .select({ id: people.id })
+      .select({
+        id: people.id,
+        firstName: people.firstName,
+        lastName: people.lastName
+      })
       .from(people)
       .where(eq(people.id, data.personId))
       .limit(1)
 
     if (personExists.length === 0) {
       return { success: false, error: "Person not found" }
+    }
+
+    // Check for existing active permit of same category for this person
+    const existingPermit = await db
+      .select({
+        id: permits.id,
+        ticketNumber: permits.ticketNumber,
+        category: permits.category,
+        status: permits.status,
+        createdAt: permits.createdAt
+      })
+      .from(permits)
+      .where(
+        and(
+          eq(permits.personId, data.personId),
+          eq(permits.category, data.category),
+          or(
+            eq(permits.status, "PENDING"),
+            eq(permits.status, "SUBMITTED")
+          )
+        )
+      )
+      .limit(1)
+
+    if (existingPermit.length > 0) {
+      return {
+        success: false,
+        error: `This person already has an active ${data.category.replace(/_/g, ' ').toLowerCase()} application`,
+        errorCode: "DUPLICATE_PERMIT",
+        existingPermit: {
+          ...existingPermit[0],
+          person: personExists[0]
+        }
+      }
     }
 
     // Validate checklist exists if provided
@@ -299,7 +339,7 @@ export async function updatePermit(
   try {
     // Check if permit exists
     const existing = await db
-      .select({ id: permits.id, personId: permits.personId })
+      .select({ id: permits.id, personId: permits.personId, ticketNumber: permits.ticketNumber, category: permits.category })
       .from(permits)
       .where(eq(permits.id, permitId))
       .limit(1)
@@ -323,6 +363,12 @@ export async function updatePermit(
 
     // Convert due date to Ethiopian calendar if provided
     const updateData: any = { ...data, updatedAt: new Date() }
+
+    // Generate ticket number if missing
+    if (!existing[0].ticketNumber && existing[0].category) {
+      updateData.ticketNumber = await generateTicketNumber(existing[0].category as any)
+    }
+
     if (data.dueDate) {
       const ec = gregorianToEC(data.dueDate)
       updateData.dueDateEC = formatEC(ec, 'en', 'iso')
@@ -507,11 +553,12 @@ export async function getExpiringPermits(daysAhead: number = 30) {
 }
 
 /**
- * Get permit statistics
+ * Get permit statistics (including Vehicles and Import Permits)
  */
 export async function getPermitStats() {
   try {
-    const stats = await db
+    // Query permits table
+    const permitStats = await db
       .select({
         status: permits.status,
         category: permits.category,
@@ -520,19 +567,34 @@ export async function getPermitStats() {
       .from(permits)
       .groupBy(permits.status, permits.category)
 
+    // Query vehicles table
+    const vehicleCount = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(vehicles)
+
+    // Query import_permits table
+    const importCount = await db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(importPermits)
+
     // Aggregate by status
-    const byStatus = stats.reduce((acc, stat) => {
-      acc[stat.status] = (acc[stat.status] || 0) + stat.count
-      return acc
-    }, {} as Record<string, number>)
+    const byStatus: Record<string, number> = {}
+
+    permitStats.forEach(stat => {
+      byStatus[stat.status] = (byStatus[stat.status] || 0) + stat.count
+    })
 
     // Aggregate by category
-    const byCategory = stats.reduce((acc, stat) => {
-      acc[stat.category] = (acc[stat.category] || 0) + stat.count
-      return acc
-    }, {} as Record<string, number>)
+    const byCategory: Record<string, number> = {}
 
-    const total = stats.reduce((sum, stat) => sum + stat.count, 0)
+    permitStats.forEach(stat => {
+      byCategory[stat.category] = (byCategory[stat.category] || 0) + stat.count
+    })
+
+    const vehicleTotal = vehicleCount[0]?.count || 0
+    const importTotal = importCount[0]?.count || 0
+    const permitTotal = Object.values(byCategory).reduce((sum, n) => sum + n, 0)
+    const total = permitTotal + vehicleTotal + importTotal
 
     return {
       success: true,
@@ -544,17 +606,28 @@ export async function getPermitStats() {
           APPROVED: byStatus.APPROVED || 0,
           REJECTED: byStatus.REJECTED || 0,
           EXPIRED: byStatus.EXPIRED || 0,
+          // Add lowercase fallbacks just in case UI uses them
+          pending: byStatus.PENDING || 0,
         },
         byCategory: {
           WORK_PERMIT: byCategory.WORK_PERMIT || 0,
           RESIDENCE_ID: byCategory.RESIDENCE_ID || 0,
           LICENSE: byCategory.LICENSE || 0,
           PIP: byCategory.PIP || 0,
+          VEHICLE: vehicleTotal,
+          IMPORT: importTotal,
         },
       },
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching permit stats:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return {
+        success: false,
+        error: "Database connection failed. Please ensure the SSH tunnel is running."
+      }
+    }
     return { success: false, error: "Failed to fetch permit statistics" }
   }
 }
@@ -582,5 +655,48 @@ export async function getPermitHistory(permitId: string) {
   } catch (error) {
     console.error("Error fetching permit history:", error)
     return { success: false, error: "Failed to fetch permit history" }
+  }
+}
+
+/**
+ * Backfill missing ticket numbers for all permit records
+ */
+export async function backfillPermitTicketNumbers() {
+  try {
+    const permitsWithoutTickets = await db
+      .select({ id: permits.id, category: permits.category })
+      .from(permits)
+      .where(sql`${permits.ticketNumber} IS NULL`)
+
+    if (permitsWithoutTickets.length === 0) {
+      return { success: true, message: "All permits already have ticket numbers", updated: 0 }
+    }
+
+    let updated = 0
+    for (const permit of permitsWithoutTickets) {
+      try {
+        if (permit.category) {
+          const ticketNumber = await generateTicketNumber(permit.category as any)
+          await db
+            .update(permits)
+            .set({ ticketNumber, updatedAt: new Date() })
+            .where(eq(permits.id, permit.id))
+          updated++
+        }
+      } catch (err) {
+        console.error(`Failed to update permit ${permit.id}:`, err)
+      }
+    }
+
+    revalidatePath("/permits")
+    return {
+      success: true,
+      message: `Updated ${updated} of ${permitsWithoutTickets.length} permits`,
+      updated,
+      total: permitsWithoutTickets.length
+    }
+  } catch (error) {
+    console.error("Error backfilling permit ticket numbers:", error)
+    return { success: false, error: "Failed to backfill ticket numbers" }
   }
 }
