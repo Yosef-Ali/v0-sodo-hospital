@@ -243,6 +243,22 @@ export async function createPerson(data: {
       })
       .returning()
 
+    // NEW: Create document record for profile photo
+    if (data.photoUrl) {
+      try {
+        await db.insert(documentsV2).values({
+          personId: result[0].id,
+          type: "PROFILE_PHOTO",
+          title: "Profile Photo",
+          fileUrl: data.photoUrl,
+          fileSize: 0,
+          mimeType: "image/jpeg",
+        })
+      } catch (docErr) {
+        console.error("Failed to create profile photo document:", docErr)
+      }
+    }
+
     revalidatePath("/foreigners")
     revalidatePath("/dashboard")
 
@@ -297,7 +313,7 @@ export async function updatePerson(
   try {
     // Check if person exists and get current ticket number
     const existing = await db
-      .select({ id: people.id, ticketNumber: people.ticketNumber })
+      .select({ id: people.id, ticketNumber: people.ticketNumber, photoUrl: people.photoUrl })
       .from(people)
       .where(eq(people.id, personId))
       .limit(1)
@@ -349,6 +365,22 @@ export async function updatePerson(
       .set({ ...updateData, updatedAt: new Date() })
       .where(eq(people.id, personId))
       .returning()
+
+    // NEW: Create document record if photo URL changed
+    if (updateData.photoUrl && updateData.photoUrl !== existing[0].photoUrl) {
+      try {
+        await db.insert(documentsV2).values({
+          personId: personId,
+          type: "PROFILE_PHOTO",
+          title: "Updated Profile Photo",
+          fileUrl: updateData.photoUrl,
+          fileSize: 0,
+          mimeType: "image/jpeg",
+        })
+      } catch (docErr) {
+        console.error("Failed to create profile photo document:", docErr)
+      }
+    }
 
     revalidatePath("/foreigners")
     revalidatePath(`/foreigners/${personId}`)
