@@ -40,10 +40,10 @@ export async function uploadFile(
     })
   )
 
-  // Return public URL
-  const publicUrl = `${process.env.S3_PUBLIC_URL || process.env.S3_ENDPOINT}/${BUCKET_NAME}/${key}`
-  
-  return { url: publicUrl, key }
+  // Return URL via API proxy (MinIO is internal, not browser-accessible)
+  const url = `/api/files/${key}`
+
+  return { url, key }
 }
 
 // Delete file from S3/MinIO
@@ -80,7 +80,7 @@ export async function getSignedUploadUrl(
   })
   
   const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
-  const publicUrl = `${process.env.S3_PUBLIC_URL || process.env.S3_ENDPOINT}/${BUCKET_NAME}/${key}`
-  
+  const publicUrl = `/api/files/${key}`
+
   return { uploadUrl, key, publicUrl }
 }

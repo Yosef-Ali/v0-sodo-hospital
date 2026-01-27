@@ -4,8 +4,8 @@ import { auth } from "@/auth"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
 
-// Check if S3 is configured
-const isS3Configured = !!process.env.S3_ENDPOINT && process.env.S3_ENDPOINT !== "http://minio:9000"
+// S3/MinIO is configured if endpoint exists (includes docker internal minio:9000)
+const isS3Configured = !!process.env.S3_ENDPOINT
 
 // Allow uploads without auth in development
 const REQUIRE_AUTH = process.env.NODE_ENV === "production"
