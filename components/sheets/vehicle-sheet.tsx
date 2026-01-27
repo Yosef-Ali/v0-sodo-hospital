@@ -307,6 +307,17 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="mt-6">
+          {/* OCR Progress Banner - visible on all tabs */}
+          {isOcrLoading && (
+            <div className="mb-4 p-3 rounded-lg border border-blue-500/50 bg-blue-500/10 flex items-center gap-3 animate-pulse">
+              <Loader2 className="h-5 w-5 text-blue-400 animate-spin flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-blue-300">Scanning document...</p>
+                <p className="text-xs text-blue-400/70">AI is extracting vehicle details from the uploaded Libre</p>
+              </div>
+            </div>
+          )}
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-700/50 mb-4">
               <TabsTrigger value="vehicle" className="data-[state=active]:bg-green-600 text-xs">
@@ -462,8 +473,10 @@ export function VehicleSheet({ open, onOpenChange, onSubmit, vehicle }: VehicleS
               Cancel
             </Button>
             <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!formData.plateNumber}>
-              {isEditMode ? "Update Vehicle" : "Confirm & Save Vehicle"}
+              disabled={!formData.plateNumber || isOcrLoading}>
+              {isOcrLoading ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scanning...</>
+              ) : isEditMode ? "Update Vehicle" : "Confirm & Save Vehicle"}
             </Button>
           </div>
         </form>
