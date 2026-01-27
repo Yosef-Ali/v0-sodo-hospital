@@ -1,5 +1,6 @@
 "use server"
 
+import { uploadFile } from "@/lib/s3"
 import { db, documentsV2, people, permits, type DocumentV2, type NewDocumentV2 } from "@/lib/db"
 import { eq, desc, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -366,9 +367,10 @@ export async function uploadDocument(formData: FormData) {
       }
     }
 
-    // TODO: Implement actual file upload to S3 or local storage
-    // For now, we'll create a placeholder file URL
-    const fileUrl = `/uploads/${Date.now()}-${file.name}`
+    // Upload to MinIO
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const { url: fileUrl } = await uploadFile(buffer, file.name, file.type, "documents")
+
     const fileSize = file.size
     const mimeType = file.type
 

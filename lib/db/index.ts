@@ -10,6 +10,10 @@ const isNeon = process.env.DATABASE_URL?.includes("neon.tech")
 
 let db: ReturnType<typeof drizzle> | ReturnType<typeof drizzlePg>
 
+const globalForDb = globalThis as unknown as {
+  conn: NeonPool | PgPool | undefined
+}
+
 if (isNeon) {
   // Configure WebSocket for Neon
   if (process.env.NODE_ENV === "development") {
@@ -19,8 +23,11 @@ if (isNeon) {
   db = drizzle(pool, { schema })
 } else {
   // Use standard PostgreSQL driver for Docker/local
-  const pool = new PgPool({ connectionString: process.env.DATABASE_URL! })
-  db = drizzlePg(pool, { schema }) as any
+  // Use global cache to prevent connection exhaustion in dev
+  const conn = globalForDb.conn ?? new PgPool({ connectionString: process.env.DATABASE_URL! })
+  if (process.env.NODE_ENV !== "production") globalForDb.conn = conn
+
+  db = drizzlePg(conn, { schema }) as any
 }
 
 export { db }

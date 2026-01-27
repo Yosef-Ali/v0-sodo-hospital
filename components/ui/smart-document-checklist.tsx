@@ -140,7 +140,7 @@ export function SmartDocumentChecklist({
 }) {
   const [activeUpload, setActiveUpload] = useState<string | null>(null)
   const [ocrDocType, setOcrDocType] = useState<string | null>(null)
-  const [showCompleted, setShowCompleted] = useState(false)
+  const [showCompleted, setShowCompleted] = useState(true)
   const [showRemaining, setShowRemaining] = useState(true)
   const [customTitle, setCustomTitle] = useState("")
   const [showCustomInput, setShowCustomInput] = useState(false)

@@ -109,6 +109,14 @@ export async function createVehicle(data: {
       return { success: false, error: "Category is required" }
     }
 
+    console.log("[createVehicle] Received data:", {
+      title: data.title,
+      category: data.category,
+      documentsCount: data.documents?.length,
+      documentSectionsCount: data.documentSections?.length,
+      params: data // Log full object for debugging
+    })
+
     // Check for duplicate plate number
     if (data.plateNumber) {
       const existingVehicle = await db
