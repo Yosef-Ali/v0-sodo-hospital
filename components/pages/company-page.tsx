@@ -10,6 +10,8 @@ import { Search, Filter, Plus, Building2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { CompanySheet } from "@/components/sheets/company-sheet"
 import { getCompanies, getCompanyStats, createCompany, updateCompany, deleteCompany, getCompanyById } from "@/lib/actions/v2/companies"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface CompanyPageProps {
   initialData: {
@@ -25,6 +27,7 @@ interface CompanyPageProps {
 }
 
 export function CompanyPage({ initialData }: CompanyPageProps) {
+  const router = useRouter()
   const [companies, setCompanies] = useState<any[]>(initialData.companies)
   const [stats, setStats] = useState(initialData.stats)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
@@ -77,19 +80,28 @@ export function CompanyPage({ initialData }: CompanyPageProps) {
 
   const handleSubmit = async (data: any) => {
     if (selectedCompany?.id) {
-      // Update existing - use selectedCompany.id since form doesn't include it
       const result = await updateCompany(selectedCompany.id, data)
       if (result.success) {
+        toast.success("Company registration updated successfully")
+        setIsSheetOpen(false)
+        setSelectedCompany(null)
         loadCompanies()
+        router.refresh()
+      } else {
+        toast.error(result.error || "Failed to update company registration")
       }
     } else {
       const result = await createCompany(data)
       if (result.success) {
+        toast.success("Company registration created successfully")
+        setIsSheetOpen(false)
+        setSelectedCompany(null)
         loadCompanies()
+        router.refresh()
+      } else {
+        toast.error(result.error || "Failed to create company registration")
       }
     }
-    setIsSheetOpen(false)
-    setSelectedCompany(null)
   }
 
   const getStatusColor = (status: string) => {

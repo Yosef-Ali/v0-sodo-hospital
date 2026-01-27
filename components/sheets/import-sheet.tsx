@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Package, FileText, ClipboardList, Globe, CheckCircle, Copy, Check, Sparkles, CheckCircle2, RefreshCw } from "lucide-react"
+import { Package, FileText, CheckCircle, Globe, RefreshCw, Copy, Check, AlertCircle, Loader2 } from "lucide-react"
 import { SmartDocumentChecklist, StageProgress, DocumentSection as DocSection } from "@/components/ui/smart-document-checklist"
 import { useOcrAutoFill, mapOcrToImportForm } from "@/lib/hooks/use-ocr-autofill"
 import { toast } from "sonner"
@@ -95,11 +93,16 @@ interface DocumentSection {
   files: string[]
 }
 
+interface FormErrors {
+  title?: string
+  importType?: string
+}
+
 // ===================== MAIN COMPONENT =====================
 
 export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportSheetProps) {
   const [activeTab, setActiveTab] = useState("basic")
-  
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -112,17 +115,14 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
     currentStage: "SUPPORT_LETTER",
     notes: "",
   })
-  
+
   const [documentSections, setDocumentSections] = useState<DocumentSection[]>([])
   const [ticketCopied, setTicketCopied] = useState(false)
-  
-  // OCR Preview state
-  const [ocrPreview, setOcrPreview] = useState<{
-    isOpen: boolean
-    data: Record<string, string>
-    editedData: Record<string, string>
-    docType: string
-  } | null>(null)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Track auto-filled fields for visual highlighting
+  const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set())
 
   // Get ticket number from permit prop
   const ticketNumber = permit?.ticketNumber || ""
@@ -130,62 +130,58 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
   // OCR Auto-fill hook
   const { extractFromImage, isLoading: isOcrLoading } = useOcrAutoFill()
 
-  // OCR extraction handler for Bill of Lading / AWB - now shows preview
+  // OCR extraction handler for Bill of Lading / AWB - Inline Autofill
   const handleOcrExtract = async (docType: string, imageUrl: string) => {
     if (docType !== "bill_of_lading") return
 
     const result = await extractFromImage(imageUrl, "bill_of_lading")
-    
+
     if (result.success && result.data) {
-      const mappedFields = mapOcrToImportForm(result.data)
-      
-      if (Object.keys(mappedFields).length > 0) {
-        setOcrPreview({
-          isOpen: true,
-          data: mappedFields,
-          editedData: { ...mappedFields },
-          docType: docType
+      // Check if the response contains rawText (unstructured) or warning
+      if (result.data.rawText || result.warning) {
+        toast.warning("Could not extract import details", {
+          description: "The uploaded document doesn't appear to be a Bill of Lading / AWB. Please upload a valid shipping document.",
+          duration: 6000,
         })
-        toast.success('Document scanned successfully!', {
-          description: 'Please review and confirm the extracted data'
+        return
+      }
+
+      const mappedFields = mapOcrToImportForm(result.data)
+
+      if (Object.keys(mappedFields).length > 0) {
+        setFormData(prev => ({ ...prev, ...mappedFields }))
+
+        const newAutoFilledFields = new Set(autoFilledFields)
+        Object.keys(mappedFields).forEach(field => newAutoFilledFields.add(field))
+        setAutoFilledFields(newAutoFilledFields)
+
+        // Clear errors for auto-filled fields
+        if (mappedFields.title) {
+          setErrors(prev => ({ ...prev, title: undefined }))
+        }
+
+        setTimeout(() => setAutoFilledFields(new Set()), 5000)
+        setActiveTab("basic")
+
+        toast.success("Document scanned successfully", {
+          description: `Auto-filled ${Object.keys(mappedFields).length} fields from Bill of Lading`,
+        })
+      } else {
+        toast.warning("Unrecognized document", {
+          description: "No import information found. Make sure you uploaded a Bill of Lading or AWB document.",
+          duration: 6000,
         })
       }
     } else if (result.error) {
-      toast.error('OCR extraction failed', { description: result.error })
+      toast.error("Document scan failed", {
+        description: result.error,
+        duration: 5000,
+      })
     }
   }
 
-  // Apply OCR data after user confirmation
-  const handleApplyOcrData = () => {
-    if (ocrPreview?.editedData) {
-      setFormData(prev => ({ ...prev, ...ocrPreview.editedData }))
-      toast.success(`Applied ${Object.keys(ocrPreview.editedData).length} fields from document`)
-      setOcrPreview(null)
-    }
-  }
-
-  // Edit field in preview
-  const handlePreviewFieldEdit = (field: string, value: string) => {
-    if (ocrPreview) {
-      setOcrPreview({ ...ocrPreview, editedData: { ...ocrPreview.editedData, [field]: value } })
-    }
-  }
-
-  // Reset field to original
-  const handleResetField = (field: string) => {
-    if (ocrPreview && ocrPreview.data[field]) {
-      setOcrPreview({ ...ocrPreview, editedData: { ...ocrPreview.editedData, [field]: ocrPreview.data[field] } })
-    }
-  }
-
-  // Get field label
-  const getFieldLabel = (field: string): string => {
-    const labels: Record<string, string> = {
-      title: 'Title', supplierName: 'Supplier Name', supplierCountry: 'Supplier Country',
-      itemDescription: 'Item Description', estimatedValue: 'Estimated Value', currency: 'Currency'
-    }
-    return labels[field] || field
-  }
+  // Check if a field is auto-filled for styling
+  const isAutoFilled = (fieldName: string) => autoFilledFields.has(fieldName)
 
   useEffect(() => {
     if (permit) {
@@ -210,6 +206,7 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
       })
       setDocumentSections([])
     }
+    setErrors({})
     setActiveTab("basic")
   }, [permit, open])
 
@@ -225,14 +222,20 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
     return STAGES[formData.importType as keyof typeof STAGES] || []
   }
 
-  // Handlers
+  // Clear field error on change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }))
+    }
   }
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }))
+    }
     if (name === "importType") {
       setDocumentSections([])
       let firstStage = "DOCUMENT_ARRANGEMENT"
@@ -254,7 +257,7 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
   }
 
   const handleRemoveFile = (docType: string, fileIndex: number) => {
-    setDocumentSections(prev => prev.map(s => 
+    setDocumentSections(prev => prev.map(s =>
       s.type === docType ? { ...s, files: s.files.filter((_, i) => i !== fileIndex) } : s
     ))
   }
@@ -267,16 +270,47 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
     ])
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const submissionData = {
-      ...formData,
-      category: formData.importType, // Map importType to category for the action
-      documentSections,
-      documents: documentSections.flatMap(s => s.files),
+  // Validate form
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {}
+
+    if (!formData.title.trim()) {
+      newErrors.title = "Title is required"
     }
-    onSubmit(submissionData)
-    // Don't close here - parent handles closing after async operation completes
+    if (!formData.importType) {
+      newErrors.importType = "Please select an import type"
+    }
+
+    setErrors(newErrors)
+
+    if (Object.keys(newErrors).length > 0) {
+      if (newErrors.title) {
+        setActiveTab("basic")
+      } else if (newErrors.importType) {
+        setActiveTab("process")
+      }
+      return false
+    }
+    return true
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validate()) return
+
+    setIsSubmitting(true)
+    try {
+      const submissionData = {
+        ...formData,
+        category: formData.importType || "pip",
+        documentSections,
+        documents: documentSections.flatMap(s => s.files),
+      }
+      await onSubmit(submissionData)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const isEditMode = !!permit
@@ -284,7 +318,6 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
   const countries = ["China", "USA", "Germany", "India", "Japan", "UAE", "Kenya", "Other"]
 
   return (
-    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="bg-gray-800 border-gray-700 w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader>
@@ -316,34 +349,62 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="mt-6">
+          {/* OCR Progress Banner - visible on all tabs */}
+          {isOcrLoading && (
+            <div className="mb-4 p-3 rounded-lg border border-blue-500/50 bg-blue-500/10 flex items-center gap-3 animate-pulse">
+              <Loader2 className="h-5 w-5 text-blue-400 animate-spin flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-blue-300">Scanning document...</p>
+                <p className="text-xs text-blue-400/70">AI is extracting import details from the uploaded document</p>
+              </div>
+            </div>
+          )}
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-700/50 mb-4">
               <TabsTrigger value="basic" className="data-[state=active]:bg-green-600 text-xs">
                 <Package className="h-3 w-3 mr-1" /> Basic Info
+                {errors.title && <AlertCircle className="h-3 w-3 ml-1 text-red-400" />}
               </TabsTrigger>
               <TabsTrigger value="process" className="data-[state=active]:bg-green-600 text-xs">
                 <FileText className="h-3 w-3 mr-1" /> Process & Docs
+                {errors.importType && <AlertCircle className="h-3 w-3 ml-1 text-red-400" />}
               </TabsTrigger>
             </TabsList>
 
             {/* ===================== BASIC TAB ===================== */}
             <TabsContent value="basic" className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-gray-300">Title *</Label>
+                <Label className={`${errors.title ? 'text-red-400' : 'text-gray-300'}`}>
+                  Title <span className="text-red-400">*</span>
+                </Label>
                 <Input name="title" value={formData.title} onChange={handleChange}
-                  placeholder="Import permit title" className="bg-gray-700 border-gray-600 text-white" required />
+                  placeholder="Import permit title"
+                  className={`bg-gray-700 text-white ${
+                    errors.title
+                      ? 'border-red-500 ring-1 ring-red-500 focus-visible:ring-red-500'
+                      : isAutoFilled('title')
+                        ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500'
+                        : 'border-gray-600'
+                  }`} />
+                {errors.title && (
+                  <p className="text-xs text-red-400 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> {errors.title}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-gray-300">Supplier Name</Label>
                   <Input name="supplierName" value={formData.supplierName} onChange={handleChange}
-                    placeholder="Supplier name" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="Supplier name"
+                    className={`bg-gray-700 text-white ${isAutoFilled('supplierName') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-300">Supplier Country</Label>
                   <Select value={formData.supplierCountry} onValueChange={(v) => handleSelectChange("supplierCountry", v)}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className={`bg-gray-700 text-white ${isAutoFilled('supplierCountry') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`}>
                       <SelectValue placeholder="Select country" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-700 border-gray-600">
@@ -356,19 +417,21 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
               <div className="space-y-2">
                 <Label className="text-gray-300">Item Description</Label>
                 <Textarea name="itemDescription" value={formData.itemDescription} onChange={handleChange}
-                  placeholder="Describe the items being imported..." className="bg-gray-700 border-gray-600 text-white min-h-[80px]" />
+                  placeholder="Describe the items being imported..."
+                  className={`bg-gray-700 text-white min-h-[80px] ${isAutoFilled('itemDescription') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-gray-300">Estimated Value</Label>
                   <Input name="estimatedValue" value={formData.estimatedValue} onChange={handleChange}
-                    placeholder="10,000" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="10,000"
+                    className={`bg-gray-700 text-white ${isAutoFilled('estimatedValue') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-300">Currency</Label>
                   <Select value={formData.currency} onValueChange={(v) => handleSelectChange("currency", v)}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className={`bg-gray-700 text-white ${isAutoFilled('currency') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-700 border-gray-600">
@@ -382,21 +445,28 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
             {/* ===================== PROCESS TAB ===================== */}
             <TabsContent value="process" className="space-y-4">
               {/* Import Type Selection */}
-              <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-700">
-                <h4 className="text-sm font-medium text-green-400 mb-3">Select Import Type</h4>
+              <div className={`bg-gray-700/30 rounded-lg p-4 border ${errors.importType ? 'border-red-500' : 'border-gray-700'}`}>
+                <h4 className={`text-sm font-medium mb-3 ${errors.importType ? 'text-red-400' : 'text-green-400'}`}>
+                  Select Import Type <span className="text-red-400">*</span>
+                </h4>
                 <div className="grid grid-cols-2 gap-2">
                   {IMPORT_TYPES.map(type => (
                     <button key={type.value} type="button"
                       onClick={() => handleSelectChange("importType", type.value)}
                       className={`p-3 rounded-lg border-2 transition-all flex items-center gap-2
-                        ${formData.importType === type.value 
-                          ? 'border-green-500 bg-green-500/20 text-green-400' 
+                        ${formData.importType === type.value
+                          ? 'border-green-500 bg-green-500/20 text-green-400'
                           : 'border-gray-600 hover:border-gray-500 text-gray-400'}`}>
                       <type.icon className="h-4 w-4" />
                       <span className="text-xs">{type.label}</span>
                     </button>
                   ))}
                 </div>
+                {errors.importType && (
+                  <p className="text-xs text-red-400 flex items-center gap-1 mt-2">
+                    <AlertCircle className="h-3 w-3" /> {errors.importType}
+                  </p>
+                )}
               </div>
 
               {/* Stage Progress */}
@@ -413,8 +483,8 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
                       </SelectContent>
                     </Select>
                   </div>
-                  <StageProgress 
-                    stages={getStages()} 
+                  <StageProgress
+                    stages={getStages()}
                     currentStage={formData.currentStage}
                     onStageChange={(stage) => handleSelectChange("currentStage", stage)}
                   />
@@ -449,65 +519,17 @@ export function ImportSheet({ open, onOpenChange, onSubmit, permit }: ImportShee
               Cancel
             </Button>
             <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!formData.title}>
-              {isEditMode ? "Update Import" : "Add Import"}
+              disabled={isOcrLoading || isSubmitting}>
+              {isOcrLoading ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scanning...</>
+              ) : isSubmitting ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
+              ) : isEditMode ? "Update Import" : "Confirm & Save Import"}
             </Button>
           </div>
         </form>
       </SheetContent>
     </Sheet>
-
-    {/* OCR Preview Dialog */}
-    <Dialog open={ocrPreview?.isOpen || false} onOpenChange={(open) => !open && setOcrPreview(null)}>
-      <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-green-400" />
-            AI Scanned Data Preview
-          </DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Review and edit the extracted data below. Click "Apply" to fill the form.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3 py-4 max-h-80 overflow-y-auto">
-          {Object.entries(ocrPreview?.editedData || {}).map(([field, value]) => {
-            const isEdited = value !== ocrPreview?.data[field]
-            return (
-              <div key={field} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs text-gray-400 font-medium">{getFieldLabel(field)}</label>
-                  {isEdited && (
-                    <button type="button" onClick={() => handleResetField(field)}
-                      className="p-1 text-gray-500 hover:text-amber-400 transition-colors" title="Reset">
-                      <RefreshCw className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-                <Input value={value} onChange={(e) => handlePreviewFieldEdit(field, e.target.value)}
-                  className={`bg-gray-600 border-gray-500 text-white h-9 text-sm ${isEdited ? 'border-amber-500/50' : ''}`} />
-              </div>
-            )
-          })}
-        </div>
-
-        {Object.keys(ocrPreview?.editedData || {}).length > 0 && (
-          <div className="flex items-center gap-3 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
-            <CheckCircle2 className="h-5 w-5 text-green-400" />
-            <p className="text-sm text-green-300">Ready to apply {Object.keys(ocrPreview?.editedData || {}).length} fields</p>
-          </div>
-        )}
-
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => setOcrPreview(null)} className="bg-gray-700 border-gray-600">Cancel</Button>
-          <Button onClick={handleApplyOcrData} className="bg-green-600 hover:bg-green-700"
-            disabled={Object.keys(ocrPreview?.editedData || {}).length === 0}>
-            <Check className="h-4 w-4 mr-2" /> Apply {Object.keys(ocrPreview?.editedData || {}).length} Fields
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-    </>
   )
 }
 

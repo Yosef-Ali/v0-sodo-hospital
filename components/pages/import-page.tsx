@@ -10,6 +10,8 @@ import { Search, Filter, Plus, Package, FileText, Clock, CheckCircle2, AlertCirc
 import { Input } from "@/components/ui/input"
 import { ImportSheet } from "@/components/sheets/import-sheet"
 import { getImports, getImportStats, createImport, updateImport, deleteImport, getImportById } from "@/lib/actions/v2/imports"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface ImportPageProps {
   initialData: {
@@ -25,6 +27,7 @@ interface ImportPageProps {
 }
 
 export function ImportPage({ initialData }: ImportPageProps) {
+  const router = useRouter()
   const [imports, setImports] = useState<any[]>(initialData.imports)
   const [stats, setStats] = useState(initialData.stats)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
@@ -77,23 +80,31 @@ export function ImportPage({ initialData }: ImportPageProps) {
 
   const handleSubmit = async (data: any) => {
     if (selectedImport?.id) {
-      // Update existing - use selectedImport.id since form doesn't include it
       const result = await updateImport(selectedImport.id, data)
       if (result.success) {
+        toast.success("Import permit updated successfully")
+        setIsSheetOpen(false)
+        setSelectedImport(null)
         loadImports()
+        router.refresh()
+      } else {
+        toast.error(result.error || "Failed to update import permit")
       }
     } else {
-      // Create new
       const result = await createImport({
         ...data,
-        category: data.importType || "pip", // Map importType to category
+        category: data.importType || "pip",
       })
       if (result.success) {
+        toast.success("Import permit created successfully")
+        setIsSheetOpen(false)
+        setSelectedImport(null)
         loadImports()
+        router.refresh()
+      } else {
+        toast.error(result.error || "Failed to create import permit")
       }
     }
-    setIsSheetOpen(false)
-    setSelectedImport(null)
   }
 
   const getStatusColor = (status: string) => {

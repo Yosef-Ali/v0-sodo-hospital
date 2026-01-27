@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Building2, FileText, BadgeCheck, RefreshCw, Copy, Check, Sparkles, CheckCircle2 } from "lucide-react"
+import { Building2, FileText, BadgeCheck, RefreshCw, Copy, Check, AlertCircle, Loader2 } from "lucide-react"
 import { SmartDocumentChecklist, StageProgress, DocumentSection as DocSection } from "@/components/ui/smart-document-checklist"
 import { useOcrAutoFill, mapOcrToCompanyForm } from "@/lib/hooks/use-ocr-autofill"
 import { toast } from "sonner"
@@ -79,11 +77,16 @@ interface DocumentSection {
   files: string[]
 }
 
+interface FormErrors {
+  companyName?: string
+  registrationType?: string
+}
+
 // ===================== MAIN COMPONENT =====================
 
 export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanySheetProps) {
   const [activeTab, setActiveTab] = useState("company")
-  
+
   const [formData, setFormData] = useState({
     companyName: "",
     businessType: "",
@@ -97,17 +100,14 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
     currentStage: "DOCUMENT_PREP",
     notes: "",
   })
-  
+
   const [documentSections, setDocumentSections] = useState<DocumentSection[]>([])
   const [ticketCopied, setTicketCopied] = useState(false)
-  
-  // OCR Preview state
-  const [ocrPreview, setOcrPreview] = useState<{
-    isOpen: boolean
-    data: Record<string, string>
-    editedData: Record<string, string>
-    docType: string
-  } | null>(null)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Track auto-filled fields for visual highlighting
+  const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set())
 
   // Get ticket number from company prop
   const ticketNumber = company?.ticketNumber || ""
@@ -115,62 +115,58 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
   // OCR Auto-fill hook
   const { extractFromImage, isLoading: isOcrLoading } = useOcrAutoFill()
 
-  // OCR extraction handler for Business License
+  // OCR extraction handler for Business License - Inline Autofill
   const handleOcrExtract = async (docType: string, imageUrl: string) => {
     if (docType !== "business_license") return
 
     const result = await extractFromImage(imageUrl, "business_license")
-    
+
     if (result.success && result.data) {
-      const mappedFields = mapOcrToCompanyForm(result.data)
-      
-      if (Object.keys(mappedFields).length > 0) {
-        setOcrPreview({
-          isOpen: true,
-          data: mappedFields,
-          editedData: { ...mappedFields },
-          docType: docType
+      // Check if the response contains rawText (unstructured) or warning
+      if (result.data.rawText || result.warning) {
+        toast.warning("Could not extract company details", {
+          description: "The uploaded document doesn't appear to be a business license. Please upload a valid business license document.",
+          duration: 6000,
         })
-        toast.success('Business license scanned successfully!', {
-          description: 'Please review and confirm the extracted data'
+        return
+      }
+
+      const mappedFields = mapOcrToCompanyForm(result.data)
+
+      if (Object.keys(mappedFields).length > 0) {
+        setFormData(prev => ({ ...prev, ...mappedFields }))
+
+        const newAutoFilledFields = new Set(autoFilledFields)
+        Object.keys(mappedFields).forEach(field => newAutoFilledFields.add(field))
+        setAutoFilledFields(newAutoFilledFields)
+
+        // Clear errors for auto-filled fields
+        if (mappedFields.companyName) {
+          setErrors(prev => ({ ...prev, companyName: undefined }))
+        }
+
+        setTimeout(() => setAutoFilledFields(new Set()), 5000)
+        setActiveTab("company")
+
+        toast.success("Document scanned successfully", {
+          description: `Auto-filled ${Object.keys(mappedFields).length} fields from Business License`,
+        })
+      } else {
+        toast.warning("Unrecognized document", {
+          description: "No company information found. Make sure you uploaded a business license document.",
+          duration: 6000,
         })
       }
     } else if (result.error) {
-      toast.error('OCR extraction failed', { description: result.error })
+      toast.error("Document scan failed", {
+        description: result.error,
+        duration: 5000,
+      })
     }
   }
 
-  // Apply OCR data after user confirmation
-  const handleApplyOcrData = () => {
-    if (ocrPreview?.editedData) {
-      setFormData(prev => ({ ...prev, ...ocrPreview.editedData }))
-      toast.success(`Applied ${Object.keys(ocrPreview.editedData).length} fields from document`)
-      setOcrPreview(null)
-    }
-  }
-
-  // Edit field in preview
-  const handlePreviewFieldEdit = (field: string, value: string) => {
-    if (ocrPreview) {
-      setOcrPreview({ ...ocrPreview, editedData: { ...ocrPreview.editedData, [field]: value } })
-    }
-  }
-
-  // Reset field to original
-  const handleResetField = (field: string) => {
-    if (ocrPreview && ocrPreview.data[field]) {
-      setOcrPreview({ ...ocrPreview, editedData: { ...ocrPreview.editedData, [field]: ocrPreview.data[field] } })
-    }
-  }
-
-  // Get field label
-  const getFieldLabel = (field: string): string => {
-    const labels: Record<string, string> = {
-      companyName: 'Company Name', tinNumber: 'TIN Number', licenseNumber: 'License Number',
-      businessType: 'Business Type', address: 'Address', contactPerson: 'Contact Person'
-    }
-    return labels[field] || field
-  }
+  // Check if a field is auto-filled for styling
+  const isAutoFilled = (fieldName: string) => autoFilledFields.has(fieldName)
 
   useEffect(() => {
     if (company) {
@@ -196,6 +192,7 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
       })
       setDocumentSections([])
     }
+    setErrors({})
     setActiveTab("company")
   }, [company, open])
 
@@ -211,14 +208,20 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
     return STAGES[formData.registrationType as keyof typeof STAGES] || []
   }
 
-  // Handlers
+  // Clear field error on change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }))
+    }
   }
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }))
+    }
     if (name === "registrationType") {
       setDocumentSections([])
       setFormData(prev => ({ ...prev, currentStage: "DOCUMENT_PREP" }))
@@ -237,7 +240,7 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
   }
 
   const handleRemoveFile = (docType: string, fileIndex: number) => {
-    setDocumentSections(prev => prev.map(s => 
+    setDocumentSections(prev => prev.map(s =>
       s.type === docType ? { ...s, files: s.files.filter((_, i) => i !== fileIndex) } : s
     ))
   }
@@ -250,22 +253,66 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
     ])
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const submissionData = {
-      ...formData,
-      documentSections,
-      documents: documentSections.flatMap(s => s.files),
+  // Validate form
+  const validate = (): boolean => {
+    const newErrors: FormErrors = {}
+
+    if (!formData.companyName.trim()) {
+      newErrors.companyName = "Company name is required"
     }
-    onSubmit(submissionData)
-    // Don't close here - parent handles closing after async operation completes
+    if (!formData.registrationType) {
+      newErrors.registrationType = "Please select a registration type"
+    }
+
+    setErrors(newErrors)
+
+    if (Object.keys(newErrors).length > 0) {
+      if (newErrors.companyName) {
+        setActiveTab("company")
+      } else if (newErrors.registrationType) {
+        setActiveTab("registration")
+      }
+      return false
+    }
+    return true
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validate()) return
+
+    setIsSubmitting(true)
+    try {
+      const submissionData = {
+        title: formData.companyName || "Company Registration",
+        companyName: formData.companyName,
+        registrationType: formData.registrationType,
+        stage: formData.currentStage || "document_prep",
+        status: "pending",
+        description: [
+          formData.businessType && `Type: ${formData.businessType}`,
+          formData.tinNumber && `TIN: ${formData.tinNumber}`,
+          formData.licenseNumber && `License: ${formData.licenseNumber}`,
+          formData.address && `Address: ${formData.address}`,
+          formData.contactPerson && `Contact: ${formData.contactPerson}`,
+          formData.contactPhone && `Phone: ${formData.contactPhone}`,
+          formData.contactEmail && `Email: ${formData.contactEmail}`,
+          formData.notes,
+        ].filter(Boolean).join(" | "),
+        documentSections,
+        documents: documentSections.flatMap(s => s.files),
+      }
+      await onSubmit(submissionData)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const isEditMode = !!company
   const businessTypes = ["PLC", "Share Company", "Sole Proprietorship", "Partnership", "NGO", "Other"]
 
   return (
-    <>
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="bg-gray-800 border-gray-700 w-full sm:max-w-2xl overflow-y-auto">
         <SheetHeader>
@@ -297,29 +344,56 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="mt-6">
+          {/* OCR Progress Banner - visible on all tabs */}
+          {isOcrLoading && (
+            <div className="mb-4 p-3 rounded-lg border border-blue-500/50 bg-blue-500/10 flex items-center gap-3 animate-pulse">
+              <Loader2 className="h-5 w-5 text-blue-400 animate-spin flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-blue-300">Scanning document...</p>
+                <p className="text-xs text-blue-400/70">AI is extracting company details from the uploaded Business License</p>
+              </div>
+            </div>
+          )}
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-700/50 mb-4">
               <TabsTrigger value="company" className="data-[state=active]:bg-green-600 text-xs">
                 <Building2 className="h-3 w-3 mr-1" /> Company Info
+                {errors.companyName && <AlertCircle className="h-3 w-3 ml-1 text-red-400" />}
               </TabsTrigger>
               <TabsTrigger value="registration" className="data-[state=active]:bg-green-600 text-xs">
                 <FileText className="h-3 w-3 mr-1" /> Registration & Docs
+                {errors.registrationType && <AlertCircle className="h-3 w-3 ml-1 text-red-400" />}
               </TabsTrigger>
             </TabsList>
 
             {/* ===================== COMPANY TAB ===================== */}
             <TabsContent value="company" className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-gray-300">Company Name *</Label>
+                <Label className={`${errors.companyName ? 'text-red-400' : 'text-gray-300'}`}>
+                  Company Name <span className="text-red-400">*</span>
+                </Label>
                 <Input name="companyName" value={formData.companyName} onChange={handleChange}
-                  placeholder="Company name" className="bg-gray-700 border-gray-600 text-white" required />
+                  placeholder="Company name"
+                  className={`bg-gray-700 text-white ${
+                    errors.companyName
+                      ? 'border-red-500 ring-1 ring-red-500 focus-visible:ring-red-500'
+                      : isAutoFilled('companyName')
+                        ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500'
+                        : 'border-gray-600'
+                  }`} />
+                {errors.companyName && (
+                  <p className="text-xs text-red-400 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> {errors.companyName}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-gray-300">Business Type</Label>
                   <Select value={formData.businessType} onValueChange={(v) => handleSelectChange("businessType", v)}>
-                    <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
+                    <SelectTrigger className={`bg-gray-700 text-white ${isAutoFilled('businessType') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`}>
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent className="bg-gray-700 border-gray-600">
@@ -330,7 +404,8 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
                 <div className="space-y-2">
                   <Label className="text-gray-300">TIN Number</Label>
                   <Input name="tinNumber" value={formData.tinNumber} onChange={handleChange}
-                    placeholder="TIN number" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="TIN number"
+                    className={`bg-gray-700 text-white ${isAutoFilled('tinNumber') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
               </div>
 
@@ -338,12 +413,14 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
                 <div className="space-y-2">
                   <Label className="text-gray-300">License Number</Label>
                   <Input name="licenseNumber" value={formData.licenseNumber} onChange={handleChange}
-                    placeholder="Business license #" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="Business license #"
+                    className={`bg-gray-700 text-white ${isAutoFilled('licenseNumber') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-300">Address</Label>
                   <Input name="address" value={formData.address} onChange={handleChange}
-                    placeholder="Business address" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="Business address"
+                    className={`bg-gray-700 text-white ${isAutoFilled('address') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
               </div>
 
@@ -351,7 +428,8 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
                 <div className="space-y-2">
                   <Label className="text-gray-300">Contact Person</Label>
                   <Input name="contactPerson" value={formData.contactPerson} onChange={handleChange}
-                    placeholder="Name" className="bg-gray-700 border-gray-600 text-white" />
+                    placeholder="Name"
+                    className={`bg-gray-700 text-white ${isAutoFilled('contactPerson') ? 'border-green-500 bg-green-900/20 ring-1 ring-green-500' : 'border-gray-600'}`} />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-300">Phone</Label>
@@ -375,21 +453,28 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
             {/* ===================== REGISTRATION TAB ===================== */}
             <TabsContent value="registration" className="space-y-4">
               {/* Registration Type Selection */}
-              <div className="bg-gray-700/30 rounded-lg p-4 border border-gray-700">
-                <h4 className="text-sm font-medium text-green-400 mb-3">Registration Type</h4>
+              <div className={`bg-gray-700/30 rounded-lg p-4 border ${errors.registrationType ? 'border-red-500' : 'border-gray-700'}`}>
+                <h4 className={`text-sm font-medium mb-3 ${errors.registrationType ? 'text-red-400' : 'text-green-400'}`}>
+                  Registration Type <span className="text-red-400">*</span>
+                </h4>
                 <div className="grid grid-cols-2 gap-2">
                   {REGISTRATION_TYPES.map(type => (
                     <button key={type.value} type="button"
                       onClick={() => handleSelectChange("registrationType", type.value)}
                       className={`p-3 rounded-lg border-2 transition-all flex items-center gap-2
-                        ${formData.registrationType === type.value 
-                          ? 'border-green-500 bg-green-500/20 text-green-400' 
+                        ${formData.registrationType === type.value
+                          ? 'border-green-500 bg-green-500/20 text-green-400'
                           : 'border-gray-600 hover:border-gray-500 text-gray-400'}`}>
                       <type.icon className="h-4 w-4" />
                       <span className="text-xs">{type.label}</span>
                     </button>
                   ))}
                 </div>
+                {errors.registrationType && (
+                  <p className="text-xs text-red-400 flex items-center gap-1 mt-2">
+                    <AlertCircle className="h-3 w-3" /> {errors.registrationType}
+                  </p>
+                )}
               </div>
 
               {/* Stage Progress */}
@@ -406,8 +491,8 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
                       </SelectContent>
                     </Select>
                   </div>
-                  <StageProgress 
-                    stages={getStages()} 
+                  <StageProgress
+                    stages={getStages()}
                     currentStage={formData.currentStage}
                     onStageChange={(stage) => handleSelectChange("currentStage", stage)}
                   />
@@ -442,65 +527,17 @@ export function CompanySheet({ open, onOpenChange, onSubmit, company }: CompanyS
               Cancel
             </Button>
             <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={!formData.companyName}>
-              {isEditMode ? "Update Company" : "Add Company"}
+              disabled={isOcrLoading || isSubmitting}>
+              {isOcrLoading ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Scanning...</>
+              ) : isSubmitting ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
+              ) : isEditMode ? "Update Company" : "Confirm & Save Company"}
             </Button>
           </div>
         </form>
       </SheetContent>
     </Sheet>
-
-    {/* OCR Preview Dialog */}
-    <Dialog open={ocrPreview?.isOpen || false} onOpenChange={(open) => !open && setOcrPreview(null)}>
-      <DialogContent className="bg-gray-800 border-gray-700 max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-green-400" />
-            AI Scanned Data Preview
-          </DialogTitle>
-          <DialogDescription className="text-gray-400">
-            Review and edit the extracted data below. Click "Apply" to fill the form.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-3 py-4 max-h-80 overflow-y-auto">
-          {Object.entries(ocrPreview?.editedData || {}).map(([field, value]) => {
-            const isEdited = value !== ocrPreview?.data[field]
-            return (
-              <div key={field} className="bg-gray-700/50 rounded-lg p-3 border border-gray-600 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs text-gray-400 font-medium">{getFieldLabel(field)}</label>
-                  {isEdited && (
-                    <button type="button" onClick={() => handleResetField(field)}
-                      className="p-1 text-gray-500 hover:text-amber-400 transition-colors" title="Reset">
-                      <RefreshCw className="h-3 w-3" />
-                    </button>
-                  )}
-                </div>
-                <Input value={value} onChange={(e) => handlePreviewFieldEdit(field, e.target.value)}
-                  className={`bg-gray-600 border-gray-500 text-white h-9 text-sm ${isEdited ? 'border-amber-500/50' : ''}`} />
-              </div>
-            )
-          })}
-        </div>
-
-        {Object.keys(ocrPreview?.editedData || {}).length > 0 && (
-          <div className="flex items-center gap-3 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
-            <CheckCircle2 className="h-5 w-5 text-green-400" />
-            <p className="text-sm text-green-300">Ready to apply {Object.keys(ocrPreview?.editedData || {}).length} fields</p>
-          </div>
-        )}
-
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => setOcrPreview(null)} className="bg-gray-700 border-gray-600">Cancel</Button>
-          <Button onClick={handleApplyOcrData} className="bg-green-600 hover:bg-green-700"
-            disabled={Object.keys(ocrPreview?.editedData || {}).length === 0}>
-            <Check className="h-4 w-4 mr-2" /> Apply {Object.keys(ocrPreview?.editedData || {}).length} Fields
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-    </>
   )
 }
 

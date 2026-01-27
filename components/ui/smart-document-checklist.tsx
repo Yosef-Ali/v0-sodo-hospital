@@ -164,9 +164,14 @@ export function SmartDocumentChecklist({
     const section = documentSections.find(s => s.type === doc.value)
     const hasFiles = section && section.files.length > 0
     const hasOcr = ocrDocumentTypes[doc.value]
+    const isScanning = isOcrLoading && ocrDocType === doc.value
 
     return (
-      <div key={doc.value} className="bg-gray-700/30 rounded-lg p-3 border border-gray-600">
+      <div key={doc.value} className={`rounded-lg p-3 border transition-all duration-300
+        ${isScanning 
+          ? 'bg-blue-500/10 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.2)]' 
+          : 'bg-gray-700/30 border-gray-600'
+        }`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-all
@@ -177,30 +182,51 @@ export function SmartDocumentChecklist({
               {doc.label}
               {isCustom && <span className="text-xs text-gray-500 ml-1">(custom)</span>}
             </span>
+            {isScanning && (
+              <span className="flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-medium animate-pulse border border-blue-500/30">
+                <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                Analyzing Document...
+              </span>
+            )}
           </div>
           <Button type="button" variant="ghost" size="sm" 
             onClick={() => setActiveUpload(activeUpload === doc.value ? null : doc.value)}
+            disabled={isScanning}
             className="text-xs text-gray-400 hover:text-white h-7">
-            {isOcrLoading && ocrDocType === doc.value ? (
-              <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Scanning...</>
+            {isScanning ? (
+              <span className="text-blue-400 font-medium">Processing...</span>
             ) : hasFiles ? (
               `${section?.files.length} file(s)`
             ) : hasOcr ? (
-              <><Sparkles className="h-3 w-3 mr-1" /> Auto-fill</>
+              <><Sparkles className="h-3 w-3 mr-1 text-amber-400" /> Auto-fill</>
             ) : 'Upload'}
           </Button>
         </div>
         
         {hasFiles && (
           <div className="flex gap-2 mt-2 flex-wrap">
-            {section?.files.map((url, idx) => (
-              <DocumentPreview key={idx} url={url} index={idx} onRemove={() => onRemoveFile(doc.value, idx)} />
-            ))}
+            {section?.files.map((url, idx) => {
+              // Highlight the last uploaded file if currently scanning
+              const isLatestAndScanning = isScanning && idx === section.files.length - 1
+              
+              return (
+                <div key={idx} className="relative">
+                  <DocumentPreview url={url} index={idx} onRemove={() => onRemoveFile(doc.value, idx)} />
+                  {isLatestAndScanning && (
+                    <div className="absolute inset-0 bg-gray-900/60 rounded-lg flex items-center justify-center backdrop-blur-[1px] z-20">
+                      <div className="bg-gray-800 p-1.5 rounded-full shadow-lg border border-gray-700">
+                         <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
         
-        {activeUpload === doc.value && (
-          <div className="mt-2">
+        {activeUpload === doc.value && !isScanning && (
+          <div className="mt-2 animate-in fade-in slide-in-from-top-2 duration-200">
             <UploadDropzone
               endpoint={uploadEndpoint as any}
               onClientUploadComplete={async (res) => {
