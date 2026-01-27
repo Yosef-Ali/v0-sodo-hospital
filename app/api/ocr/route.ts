@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { getGoogleApiKey } from "@/lib/api-keys"
 import { readFile } from "fs/promises"
 import path from "path"
+import { getFile } from "@/lib/storage/s3"
 
 // Document-specific extraction prompts
 const EXTRACTION_PROMPTS: Record<string, string> = {
@@ -126,24 +127,49 @@ export async function POST(req: Request) {
     let base64Image: string
     let mimeType: string
 
-    // Handle local file paths (starting with /uploads/)
-    if (imageUrl.startsWith('/uploads/')) {
-      // Read from local filesystem
+    // Determine mime type from extension
+    const getMimeType = (filePath: string): string => {
+      const ext = path.extname(filePath).toLowerCase()
+      const mimeTypes: Record<string, string> = {
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.pdf': 'application/pdf',
+      }
+      return mimeTypes[ext] || 'image/jpeg'
+    }
+
+    // Handle /api/files/ URLs (MinIO storage)
+    if (imageUrl.startsWith('/api/files/')) {
+      const fileKey = imageUrl.replace('/api/files/', '')
+      try {
+        const response = await getFile(decodeURIComponent(fileKey))
+        if (!response.Body) {
+          return NextResponse.json({ success: false, error: "File not found in storage" }, { status: 400 })
+        }
+        const chunks: Uint8Array[] = []
+        const reader = response.Body.transformToWebStream().getReader()
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          chunks.push(value)
+        }
+        const buffer = Buffer.concat(chunks)
+        base64Image = buffer.toString('base64')
+        mimeType = response.ContentType || getMimeType(fileKey)
+      } catch (fileError) {
+        console.error('Failed to read file from S3/MinIO:', fileError)
+        return NextResponse.json({ success: false, error: "Failed to read file from storage" }, { status: 400 })
+      }
+    } else if (imageUrl.startsWith('/uploads/')) {
+      // Handle local file paths (fallback for local dev)
       const filePath = path.join(process.cwd(), 'public', imageUrl)
       try {
         const fileBuffer = await readFile(filePath)
         base64Image = fileBuffer.toString('base64')
-        // Determine mime type from extension
-        const ext = path.extname(imageUrl).toLowerCase()
-        const mimeTypes: Record<string, string> = {
-          '.png': 'image/png',
-          '.gif': 'image/gif',
-          '.webp': 'image/webp',
-          '.jpg': 'image/jpeg',
-          '.jpeg': 'image/jpeg',
-          '.pdf': 'application/pdf',
-        }
-        mimeType = mimeTypes[ext] || 'image/jpeg'
+        mimeType = getMimeType(imageUrl)
       } catch (fileError) {
         console.error('Failed to read local file:', fileError)
         return NextResponse.json({ success: false, error: "Failed to read image file" }, { status: 400 })
