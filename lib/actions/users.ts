@@ -1,7 +1,7 @@
 "use server"
 
 import { db, users, type User, type NewUser } from "@/lib/db"
-import { eq, ilike, or } from "drizzle-orm"
+import { eq, ilike, or, and, isNull } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 
 // Get all users with optional search filter
@@ -9,11 +9,17 @@ export async function getUsers(search?: string) {
   try {
     let query = db.select().from(users)
 
+    // Filter out deleted users
+    query = query.where(isNull(users.deletedAt)) as any
+
     if (search) {
       query = query.where(
-        or(
-          ilike(users.name, `%${search}%`),
-          ilike(users.email, `%${search}%`)
+        and(
+          isNull(users.deletedAt),
+          or(
+            ilike(users.name, `%${search}%`),
+            ilike(users.email, `%${search}%`)
+          )
         )
       ) as any
     }
@@ -187,7 +193,7 @@ export async function updateUser(
   }
 }
 
-// Delete user
+// Delete user (Soft Delete)
 export async function deleteUser(id: string) {
   try {
     // Check if user exists
@@ -204,8 +210,21 @@ export async function deleteUser(id: string) {
       }
     }
 
-    // Delete user
-    await db.delete(users).where(eq(users.id, id))
+    // Soft delete: 
+    // 1. Mark as deleted
+    // 2. Set active = false
+    // 3. Anonymize email to allow re-registration or avoid unique constraint issues
+    const deletedEmail = `deleted_${Date.now()}_${existingUser.email}`
+
+    await db
+      .update(users)
+      .set({
+        active: false,
+        deletedAt: new Date(),
+        email: deletedEmail,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
 
     return {
       success: true,
@@ -248,6 +267,35 @@ export async function updateUserRole(
     return {
       success: false,
       error: "Failed to update user role",
+    }
+  }
+}
+// Toggle user active status
+export async function toggleUserStatus(id: string, active: boolean) {
+  try {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ active, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning()
+
+    if (!updatedUser) {
+      return {
+        success: false,
+        error: "User not found",
+      }
+    }
+
+    return {
+      success: true,
+      data: updatedUser,
+      message: active ? "User unblocked successfully" : "User blocked successfully",
+    }
+  } catch (error) {
+    console.error("Error toggling user status:", error)
+    return {
+      success: false,
+      error: "Failed to update user status",
     }
   }
 }

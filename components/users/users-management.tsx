@@ -9,16 +9,20 @@ import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Users, UserPlus, Mail, Shield, AlertCircle, Search, Check } from "lucide-react"
+import { Users, UserPlus, Mail, Shield, AlertCircle, Search, Check, MoreHorizontal, Ban, Unlock, Trash } from "lucide-react"
 import { EditUserDialog } from "@/components/users/edit-user-dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 
 interface UserProfile {
   id: string
   email: string
   full_name: string
   role: string
+  active: boolean
   created_at: string
   last_sign_in: string
 }
@@ -68,6 +72,7 @@ export function UsersManagement() {
           email: u.email,
           full_name: u.name,
           role: u.role,
+          active: u.active ?? true, // Default to true if missing
           created_at: u.createdAt,
           last_sign_in: u.updatedAt // Using updatedAt as proxy for now
         }))
@@ -115,6 +120,49 @@ export function UsersManagement() {
     } finally {
       setInviteLoading(false)
     }
+  }
+
+  const handleToggleBlock = async (userId: string, currentStatus: boolean) => {
+    try {
+      const { toggleUserStatus } = await import("@/lib/actions/users")
+      const result = await toggleUserStatus(userId, !currentStatus)
+      
+      if (result.success) {
+        toast.success(result.message)
+        fetchUsers()
+      } else {
+        toast.error(result.error)
+      }
+    } catch (error) {
+      toast.error("An error occurred")
+    }
+  }
+
+  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+
+  const handleDeleteUser = (user: UserProfile) => {
+    setUserToDelete({ id: user.id, name: user.full_name })
+    setIsDeleteOpen(true)
+  }
+
+  const confirmDeleteUser = async (userId: string) => {
+      try {
+        const { deleteUser } = await import("@/lib/actions/users")
+        const result = await deleteUser(userId)
+        
+        if (result.success) {
+          toast.success("User deleted successfully")
+          fetchUsers()
+        } else {
+          toast.error(result.error)
+        }
+      } catch (error) {
+        toast.error("An error occurred")
+      } finally {
+        setIsDeleteOpen(false)
+        setUserToDelete(null)
+      }
   }
 
   const filteredUsers = users.filter(
@@ -273,6 +321,7 @@ export function UsersManagement() {
                       <TableHead className="text-gray-300">Name</TableHead>
                       <TableHead className="text-gray-300">Email</TableHead>
                       <TableHead className="text-gray-300">Role</TableHead>
+                      <TableHead className="text-gray-300">Status</TableHead>
                       <TableHead className="text-gray-300">Created</TableHead>
                       <TableHead className="text-gray-300">Last Sign In</TableHead>
                       <TableHead className="text-gray-300">Actions</TableHead>
@@ -281,19 +330,38 @@ export function UsersManagement() {
                   <TableBody>
                     {filteredUsers.map((user) => (
                       <TableRow key={user.id} className="border-gray-700 hover:bg-gray-800/50">
-                        <TableCell className="text-white">{user.full_name}</TableCell>
+                        <TableCell className="text-white font-medium">{user.full_name}</TableCell>
                         <TableCell className="text-gray-300">{user.email}</TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
                             className={
-                              user.role === "admin"
-                                ? "border-green-500 text-green-400 bg-green-950/50"
+                              user.role === "ADMIN"
+                                ? "border-purple-500 text-purple-400 bg-purple-950/20"
+                                : user.role === "HR_MANAGER"
+                                ? "border-blue-500 text-blue-400 bg-blue-950/20"
                                 : "border-gray-600 text-gray-400"
                             }
                           >
                             <Shield className="mr-1 h-3 w-3" />
                             {user.role}
+                          </Badge>
+                        </TableCell>
+                         <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={
+                              user.active
+                                ? "border-green-500 text-green-400 bg-green-950/20"
+                                : "border-red-500 text-red-400 bg-red-950/20"
+                            }
+                          >
+                            {user.active ? (
+                                <Check className="mr-1 h-3 w-3" />
+                            ) : (
+                                <Ban className="mr-1 h-3 w-3" />
+                            )}
+                            {user.active ? "Active" : "Blocked"}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-gray-400">
@@ -303,14 +371,39 @@ export function UsersManagement() {
                           {new Date(user.last_sign_in).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-green-400 hover:text-green-300 hover:bg-green-950/50"
-                            onClick={() => handleEditUser(user)}
-                          >
-                            Manage
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-white">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="bg-gray-800 border-gray-700 text-white">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                <DropdownMenuItem 
+                                    onClick={() => handleEditUser(user)}
+                                    className="cursor-pointer hover:bg-gray-700 focus:bg-gray-700"
+                                >
+                                    <UserPlus className="mr-2 h-4 w-4" />
+                                    Edit Details
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="bg-gray-700" />
+                                <DropdownMenuItem 
+                                    onClick={() => handleToggleBlock(user.id, user.active)}
+                                    className={`cursor-pointer focus:bg-gray-700 ${user.active ? 'text-amber-400 hover:text-amber-300' : 'text-green-400 hover:text-green-300'}`}
+                                >
+                                    {user.active ? <Ban className="mr-2 h-4 w-4" /> : <Unlock className="mr-2 h-4 w-4" />}
+                                    {user.active ? "Block User" : "Unblock User"}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                    onClick={() => handleDeleteUser(user)}
+                                    className="cursor-pointer text-red-400 hover:text-red-300 hover:bg-red-900/20 focus:bg-red-900/20 focus:text-red-300"
+                                >
+                                    <Trash className="mr-2 h-4 w-4" />
+                                    Delete User
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -368,6 +461,32 @@ export function UsersManagement() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent className="bg-gray-900 border-gray-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              This action cannot be undone. This will permanently delete the user
+              <span className="font-semibold text-white"> {userToDelete?.name} </span>
+              and remove their data from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700 hover:text-white">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 text-white hover:bg-red-700 border-red-600"
+              onClick={() => {
+                if (userToDelete) {
+                  confirmDeleteUser(userToDelete.id)
+                }
+              }}
+            >
+              Delete User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

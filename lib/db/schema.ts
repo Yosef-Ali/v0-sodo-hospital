@@ -29,8 +29,10 @@ export const users = pgTable("users", {
   password: varchar("password", { length: 255 }), // bcrypt hashed for email/password auth
   role: userRoleEnum("role").default("USER").notNull(),
   locale: varchar("locale", { length: 10 }).default("en"), // for i18n preference
+  active: boolean("active").default(true).notNull(), // for blocking users
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  deletedAt: timestamp("deleted_at"), // for soft delete
 })
 
 // Departments table

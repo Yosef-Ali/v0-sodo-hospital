@@ -43,6 +43,13 @@
       "when": 1767255181659,
       "tag": "0005_cool_korvac",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1769592779802,
+      "tag": "0006_soft_piledriver",
+      "breakpoints": true
     }
   ]
 }

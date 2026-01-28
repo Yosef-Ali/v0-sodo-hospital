@@ -43,6 +43,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
+        if (user.active === false) {
+          console.log("LOGIN FAILED: User account is inactive:", { email: user.email })
+          return null
+        }
+
         console.log("LOGIN SUCCESS: User found:", { email: user.email, role: user.role })
 
         return {
