@@ -28,6 +28,7 @@ import { CompanySheet } from "@/components/sheets/company-sheet"
 import { toast } from "sonner"
 import { CompanyActionsCard } from "@/components/companies/company-actions-card"
 import { DeleteDocumentButton } from "@/components/ui/delete-document-button"
+import ReactMarkdown from "react-markdown"
 
 interface CompanyDetailPageProps {
   initialData: any
@@ -253,7 +254,9 @@ export function CompanyDetailPage({ initialData }: CompanyDetailPageProps) {
                 <div>
                   <p className="text-sm text-gray-400 mb-2">Notes</p>
                   <div className="bg-gray-900/30 p-3 rounded-md border border-gray-700/50">
-                    <p className="text-gray-300 text-sm whitespace-pre-wrap">{company.notes}</p>
+                    <div className="prose prose-invert prose-sm max-w-none text-gray-300">
+                       <ReactMarkdown>{company.notes}</ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               </>

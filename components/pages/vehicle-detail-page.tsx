@@ -25,6 +25,7 @@ import { VehicleSheet } from "@/components/sheets/vehicle-sheet"
 import { toast } from "sonner"
 import { VehicleActionsCard } from "@/components/vehicles/vehicle-actions-card"
 import { DeleteDocumentButton } from "@/components/ui/delete-document-button"
+import ReactMarkdown from "react-markdown"
 
 interface VehicleDetailPageProps {
   initialData: any
@@ -244,7 +245,9 @@ export function VehicleDetailPage({ initialData }: VehicleDetailPageProps) {
                 <div>
                   <p className="text-sm text-gray-400 mb-2">Notes</p>
                    <div className="bg-gray-900/30 p-3 rounded-md border border-gray-700/50">
-                    <p className="text-gray-300 text-sm whitespace-pre-wrap">{vehicle.notes}</p>
+                    <div className="prose prose-invert prose-sm max-w-none text-gray-300">
+                       <ReactMarkdown>{vehicle.notes}</ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               </>

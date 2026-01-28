@@ -28,6 +28,7 @@ import { toast } from "sonner"
 import { ImportActionsCard } from "@/components/imports/import-actions-card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { DeleteDocumentButton } from "@/components/ui/delete-document-button"
+import ReactMarkdown from "react-markdown"
 
 interface ImportDetailPageProps {
   initialData: any
@@ -234,7 +235,9 @@ export function ImportDetailPage({ initialData }: ImportDetailPageProps) {
                 <div>
                   <p className="text-sm text-gray-400 mb-2">Item Description</p>
                   <div className="bg-gray-900/30 p-3 rounded-md border border-gray-700/50">
-                    <p className="text-gray-300 text-sm whitespace-pre-wrap leading-relaxed">{permit.itemDescription}</p>
+                     <div className="prose prose-invert prose-sm max-w-none text-gray-300">
+                        <ReactMarkdown>{permit.itemDescription}</ReactMarkdown>
+                     </div>
                   </div>
                 </div>
               </>
@@ -246,7 +249,9 @@ export function ImportDetailPage({ initialData }: ImportDetailPageProps) {
                 <div>
                   <p className="text-sm text-gray-400 mb-2">Notes</p>
                   <div className="bg-gray-900/30 p-3 rounded-md border border-gray-700/50">
-                    <p className="text-gray-300 text-sm whitespace-pre-wrap">{permit.notes}</p>
+                    <div className="prose prose-invert prose-sm max-w-none text-gray-300">
+                       <ReactMarkdown>{permit.notes}</ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               </>
