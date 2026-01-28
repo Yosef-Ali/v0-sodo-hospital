@@ -302,7 +302,8 @@ export async function syncEntityToCalendar(
       })
     }
 
-    revalidatePath("/calendar")
+    // NOTE: revalidatePath removed from here to avoid calling it in a loop
+    // It should be called by the parent function
     return { success: true }
   } catch (error) {
     console.error("Error syncing to calendar:", error)
@@ -474,7 +475,7 @@ export async function getExpiringItems(daysAhead: number = 30) {
         if (expiryDate <= futureDate) {
           const diffDays = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
           expiringItems.push({
-            id: `passport-${person.id}`,
+            id: person.id, // Use actual UUID
             type: "passport",
             title: "Passport",
             entityName: personName,
@@ -492,7 +493,7 @@ export async function getExpiringItems(daysAhead: number = 30) {
         if (expiryDate <= futureDate) {
           const diffDays = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
           expiringItems.push({
-            id: `workpermit-${person.id}`,
+            id: person.id, // Use actual UUID
             type: "work_permit",
             title: "Work Permit",
             entityName: personName,
@@ -510,7 +511,7 @@ export async function getExpiringItems(daysAhead: number = 30) {
         if (expiryDate <= futureDate) {
           const diffDays = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
           expiringItems.push({
-            id: `residenceid-${person.id}`,
+            id: person.id, // Use actual UUID
             type: "residence_id",
             title: "Residence ID",
             entityName: personName,
@@ -528,7 +529,7 @@ export async function getExpiringItems(daysAhead: number = 30) {
         if (expiryDate <= futureDate) {
           const diffDays = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
           expiringItems.push({
-            id: `medicallicense-${person.id}`,
+            id: person.id, // Use actual UUID
             type: "medical_license",
             title: "Medical License",
             entityName: personName,
@@ -690,6 +691,7 @@ export async function syncAllExpirationsToCalendar() {
       count++
     }
 
+    revalidatePath("/calendar")
     return { success: true, count }
   } catch (error) {
     console.error("Error syncing expirations to calendar:", error)

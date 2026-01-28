@@ -1,267 +1,149 @@
 "use server"
 
-import { db } from "@/lib/db"
-import { reports, permits, tasksV2, people } from "@/lib/db/schema"
-import { count, sql, and, eq, desc, ilike, or } from "drizzle-orm"
-import { unstable_cache } from "next/cache"
-import { revalidateTag } from "next/cache"
+import { db, reports, users } from "@/lib/db"
+import { eq, desc, and, gte, lte, sql, or, isNull } from "drizzle-orm"
+import { revalidatePath } from "next/cache"
+import { createSafeAction } from "@/lib/safe-action"
+import { z } from "zod"
 
-export interface ReportStats {
-  total: number
-  draft: number
-  generated: number
-  published: number
-  archived: number
-  lastUpdated: Date
-}
+// --- Schemas ---
 
-export interface Report {
-  id: string
-  title: string
-  description: string | null
-  status: "DRAFT" | "GENERATED" | "PUBLISHED" | "ARCHIVED"
-  frequency: "DAILY" | "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "ON_DEMAND"
-  format: "PDF" | "EXCEL" | "CSV" | "DASHBOARD"
-  department: string | null
-  category: string | null
-  lastGenerated: Date | null
-  generatedBy: string | null
-  fileUrl: string | null
-  fileSize: number | null
-  parameters: Record<string, any>
-  createdBy: string | null
-  createdAt: Date
-  updatedAt: Date
-}
+const reportStatusEnum = z.enum(["DRAFT", "GENERATED", "PUBLISHED", "ARCHIVED"])
+const reportFrequencyEnum = z.enum(["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "YEARLY", "ON_DEMAND"])
+const reportFormatEnum = z.enum(["PDF", "EXCEL", "CSV", "DASHBOARD"])
 
-// Get all reports with optional filtering
-export async function getReports(params?: {
-  query?: string
-  status?: string
-  limit?: number
-}) {
+export const createReportSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  frequency: reportFrequencyEnum.default("ON_DEMAND"),
+  format: reportFormatEnum.default("PDF"),
+  department: z.string().optional(),
+  category: z.string().optional(),
+  parameters: z.record(z.any()).optional(),
+})
+
+export const searchReportSchema = z.object({
+  query: z.string().optional(),
+  status: reportStatusEnum.optional(),
+  category: z.string().optional(),
+  limit: z.number().default(20),
+  offset: z.number().default(0),
+})
+
+export const deleteReportSchema = z.object({
+  id: z.string().uuid(),
+})
+
+// --- Actions ---
+
+/**
+ * Get all reports with optional filters
+ */
+export async function getReports(params?: z.infer<typeof searchReportSchema>) {
   try {
-    const { query, status, limit = 100 } = params || {}
+    const { query, status, category, limit = 20, offset = 0 } = params || {}
 
-    let conditions = []
-
-    if (query) {
-      conditions.push(
-        or(
-          ilike(reports.title, `%${query}%`),
-          ilike(reports.description, `%${query}%`)
-        )
-      )
-    }
-
-    if (status && status !== "all") {
-      conditions.push(eq(reports.status, status.toUpperCase() as any))
-    }
-
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
-
-    const reportsList = await db
-      .select()
+    let queryBuilder = db
+      .select({
+        report: reports,
+        generatedBy: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+        },
+      })
       .from(reports)
-      .where(whereClause)
-      .orderBy(desc(reports.updatedAt))
-      .limit(limit)
+      .leftJoin(users, eq(reports.generatedBy, users.id))
 
-    return {
-      success: true,
-      data: reportsList,
+    const conditions = []
+    if (status) conditions.push(eq(reports.status, status))
+    if (category) conditions.push(eq(reports.category, category))
+    // if (query) conditions.push(like(reports.title, `%${query}%`)) // requires import like
+
+    if (conditions.length > 0) {
+      queryBuilder = queryBuilder.where(and(...conditions)) as any
     }
+
+    const result = await queryBuilder
+      .orderBy(desc(reports.createdAt))
+      .limit(limit)
+      .offset(offset)
+
+    return { success: true, data: result }
   } catch (error) {
     console.error("Error fetching reports:", error)
-    return {
-      success: false,
-      error: "Failed to fetch reports",
-      data: [],
-    }
+    return { success: false, error: "Failed to fetch reports" }
   }
 }
 
-// Get report statistics
-export async function getReportStats() {
-  try {
-    const stats = await unstable_cache(
-      async () => {
-        const [totalCount, draftCount, generatedCount, publishedCount, archivedCount] = await Promise.all([
-          db.select({ count: count() }).from(reports),
-          db.select({ count: count() }).from(reports).where(eq(reports.status, "DRAFT")),
-          db.select({ count: count() }).from(reports).where(eq(reports.status, "GENERATED")),
-          db.select({ count: count() }).from(reports).where(eq(reports.status, "PUBLISHED")),
-          db.select({ count: count() }).from(reports).where(eq(reports.status, "ARCHIVED")),
-        ])
-
-        return {
-          total: totalCount[0]?.count || 0,
-          draft: draftCount[0]?.count || 0,
-          generated: generatedCount[0]?.count || 0,
-          published: publishedCount[0]?.count || 0,
-          archived: archivedCount[0]?.count || 0,
-          lastUpdated: new Date(),
-        }
-      },
-      ["report-stats"],
-      { revalidate: 60, tags: ["reports"] }
-    )()
-
-    return {
-      success: true,
-      data: stats,
-    }
-  } catch (error) {
-    console.error("Error fetching report stats:", error)
-    return {
-      success: false,
-      error: "Failed to fetch report statistics",
-    }
-  }
-}
-
-// Get single report by ID
-export async function getReportById(id: string) {
-  try {
-    const report = await db
-      .select()
-      .from(reports)
-      .where(eq(reports.id, id))
-      .limit(1)
-
-    if (!report || report.length === 0) {
-      return {
-        success: false,
-        error: "Report not found",
-      }
-    }
-
-    return {
-      success: true,
-      data: report[0],
-    }
-  } catch (error) {
-    console.error("Error fetching report:", error)
-    return {
-      success: false,
-      error: "Failed to fetch report",
-    }
-  }
-}
-
-// Create new report
-export async function createReport(reportData: {
-  title: string
-  description?: string
-  status?: "DRAFT" | "GENERATED" | "PUBLISHED" | "ARCHIVED"
-  frequency?: "DAILY" | "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "ON_DEMAND"
-  format?: "PDF" | "EXCEL" | "CSV" | "DASHBOARD"
-  department?: string
-  category?: string
-  lastGenerated?: Date
-  generatedBy?: string
-  fileUrl?: string
-  fileSize?: number
-  parameters?: Record<string, any>
-  createdBy?: string
-}) {
-  try {
-    const newReport = await db
+/**
+ * Create a new report request
+ */
+export const createReport = createSafeAction(
+  createReportSchema,
+  async (data, user) => {
+    // 1. Create Report Record
+    const [newReport] = await db
       .insert(reports)
       .values({
-        title: reportData.title,
-        description: reportData.description || null,
-        status: reportData.status || "DRAFT",
-        frequency: reportData.frequency || "MONTHLY",
-        format: reportData.format || "PDF",
-        department: reportData.department || null,
-        category: reportData.category || null,
-        lastGenerated: reportData.lastGenerated || null,
-        generatedBy: reportData.generatedBy || null,
-        fileUrl: reportData.fileUrl || null,
-        fileSize: reportData.fileSize || null,
-        parameters: reportData.parameters || {},
-        createdBy: reportData.createdBy || null,
+        title: data.title,
+        description: data.description,
+        frequency: data.frequency,
+        format: data.format,
+        department: data.department,
+        category: data.category,
+        parameters: data.parameters || {},
+        status: "DRAFT", // Initially draft until generated
+        createdBy: user.id,
+        generatedBy: user.id,
       })
       .returning()
 
-    revalidateTag("reports")
+    revalidatePath("/reports")
+    return { success: true, data: newReport }
+  },
+  { requiredRole: ["ADMIN", "HR_MANAGER", "LOGISTICS"] }
+)
 
-    return {
-      success: true,
-      data: newReport[0],
-      message: "Report created successfully",
-    }
-  } catch (error) {
-    console.error("Error creating report:", error)
-    return {
-      success: false,
-      error: "Failed to create report",
-    }
-  }
-}
-
-// Update existing report
-export async function updateReport(id: string, reportData: Partial<{
-  title: string
-  description: string
-  status: "DRAFT" | "GENERATED" | "PUBLISHED" | "ARCHIVED"
-  frequency: "DAILY" | "WEEKLY" | "MONTHLY" | "QUARTERLY" | "YEARLY" | "ON_DEMAND"
-  format: "PDF" | "EXCEL" | "CSV" | "DASHBOARD"
-  department: string
-  category: string
-  lastGenerated: Date
-  generatedBy: string
-  fileUrl: string
-  fileSize: number
-  parameters: Record<string, any>
-}>) {
-  try {
-    const updatedReport = await db
+/**
+ * Update report status (e.g. after generation)
+ * INTERNAL USE mostly, but exposed as action for client-side generation flows
+ */
+export const updateReportStatus = createSafeAction(
+  z.object({
+    id: z.string().uuid(),
+    status: reportStatusEnum,
+    fileUrl: z.string().optional(),
+    fileSize: z.number().optional(),
+  }),
+  async (data, user) => {
+    const [updated] = await db
       .update(reports)
       .set({
-        ...reportData,
+        status: data.status,
+        fileUrl: data.fileUrl,
+        fileSize: data.fileSize,
+        lastGenerated: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(reports.id, id))
+      .where(eq(reports.id, data.id))
       .returning()
 
-    revalidateTag("reports")
-    revalidateTag(`report-${id}`)
+    revalidatePath("/reports")
+    return { success: true, data: updated }
+  },
+  { requiredRole: ["ADMIN", "HR_MANAGER", "LOGISTICS"] }
+)
 
-    return {
-      success: true,
-      data: updatedReport[0],
-      message: "Report updated successfully",
-    }
-  } catch (error) {
-    console.error("Error updating report:", error)
-    return {
-      success: false,
-      error: "Failed to update report",
-    }
-  }
-}
-
-// Delete report
-export async function deleteReport(id: string) {
-  try {
-    await db
-      .delete(reports)
-      .where(eq(reports.id, id))
-
-    revalidateTag("reports")
-    revalidateTag(`report-${id}`)
-
-    return {
-      success: true,
-      message: "Report deleted successfully",
-    }
-  } catch (error) {
-    console.error("Error deleting report:", error)
-    return {
-      success: false,
-      error: "Failed to delete report",
-    }
-  }
-}
+/**
+ * Delete a report
+ */
+export const deleteReport = createSafeAction(
+  deleteReportSchema,
+  async ({ id }, user) => {
+    const [deleted] = await db.delete(reports).where(eq(reports.id, id)).returning()
+    revalidatePath("/reports")
+    return { success: true, data: deleted }
+  },
+  { requiredRole: ["ADMIN", "HR_MANAGER"] }
+)

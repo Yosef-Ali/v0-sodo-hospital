@@ -1,17 +1,57 @@
 "use server"
 
-import { db, permits, people, checklists, permitHistory, tasksV2, users, documentsV2, vehicles, importPermits, type Permit, type NewPermit, type PermitHistory } from "@/lib/db"
-import { eq, desc, and, gte, lte, sql, or, like } from "drizzle-orm"
+import { db, permits, people, checklists, permitHistory, tasksV2, users, documentsV2, vehicles, importPermits, permitChecklistItems, type Permit } from "@/lib/db"
+import { eq, desc, and, gte, lte, sql, or, like, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { gregorianToEC, formatEC } from "@/lib/dates/ethiopian"
+import { createSafeAction } from "@/lib/safe-action"
+import { z } from "zod"
 
-/**
- * Generate a unique ticket number for a permit
- * Format: {PREFIX}-{YEAR}-{SEQUENCE}
- * Example: WRK-2025-0001, RES-2025-0002, LIC-2025-0003, PIP-2025-0001
- */
-async function generateTicketNumber(category: "WORK_PERMIT" | "RESIDENCE_ID" | "MEDICAL_LICENSE" | "PIP" | "CUSTOMS" | "CAR_BOLO_INSURANCE"): Promise<string> {
-  // Get prefix based on category
+// --- Schemas ---
+
+const permitCategoryEnum = z.enum(["WORK_PERMIT", "RESIDENCE_ID", "MEDICAL_LICENSE", "PIP", "CUSTOMS", "CAR_BOLO_INSURANCE"])
+const permitStatusEnum = z.enum(["PENDING", "SUBMITTED", "APPROVED", "REJECTED", "EXPIRED"])
+
+const createPermitSchema = z.object({
+  category: permitCategoryEnum,
+  personId: z.string().uuid(),
+  dueDate: z.coerce.date().optional(),
+  checklistId: z.string().uuid().optional(),
+  notes: z.string().optional(),
+  createdById: z.string().uuid().optional(),
+  subType: z.enum(["NEW", "RENEWAL", "OTHER"]).optional(),
+})
+
+const updatePermitSchema = z.object({
+  id: z.string().uuid(),
+  dueDate: z.coerce.date().optional(),
+  checklistId: z.string().uuid().optional(),
+  notes: z.string().optional(),
+  subType: z.enum(["NEW", "RENEWAL", "OTHER"]).optional(),
+})
+
+const transitionStatusSchema = z.object({
+  permitId: z.string().uuid(),
+  toStatus: permitStatusEnum,
+  notes: z.string().optional(),
+})
+
+const deletePermitSchema = z.object({
+  id: z.string().uuid(),
+})
+
+const searchSchema = z.object({
+  category: permitCategoryEnum.optional(),
+  status: permitStatusEnum.optional(),
+  personId: z.string().uuid().optional(),
+  dueBefore: z.coerce.date().optional(),
+  limit: z.number().default(50),
+  offset: z.number().default(0),
+})
+
+// --- Helpers ---
+
+async function generateTicketNumber(category: string): Promise<string> {
   const prefixMap: Record<string, string> = {
     WORK_PERMIT: "WRK",
     RESIDENCE_ID: "RES",
@@ -21,12 +61,9 @@ async function generateTicketNumber(category: "WORK_PERMIT" | "RESIDENCE_ID" | "
     CAR_BOLO_INSURANCE: "CAR",
   }
   const prefix = prefixMap[category] || "GEN"
-
-  // Get current year
   const year = new Date().getFullYear()
-
-  // Find the latest ticket number for this category and year
   const pattern = `${prefix}-${year}-%`
+
   const latestTickets = await db
     .select({ ticketNumber: permits.ticketNumber })
     .from(permits)
@@ -36,7 +73,6 @@ async function generateTicketNumber(category: "WORK_PERMIT" | "RESIDENCE_ID" | "
 
   let sequence = 1
   if (latestTickets.length > 0 && latestTickets[0].ticketNumber) {
-    // Extract sequence number from the latest ticket
     const parts = latestTickets[0].ticketNumber.split('-')
     if (parts.length === 3) {
       const lastSequence = parseInt(parts[2], 10)
@@ -46,24 +82,18 @@ async function generateTicketNumber(category: "WORK_PERMIT" | "RESIDENCE_ID" | "
     }
   }
 
-  // Format: PREFIX-YEAR-SEQUENCE (padded to 4 digits)
   return `${prefix}-${year}-${sequence.toString().padStart(4, '0')}`
 }
 
-/**
- * Get all permits with optional filters and pagination
- */
-export async function getPermits(params?: {
-  category?: "WORK_PERMIT" | "RESIDENCE_ID" | "MEDICAL_LICENSE" | "PIP" | "CUSTOMS" | "CAR_BOLO_INSURANCE"
-  status?: "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED" | "EXPIRED"
-  personId?: string
-  dueBefore?: Date
-  limit?: number
-  offset?: number
-}) {
-  const { category, status, personId, dueBefore, limit = 50, offset = 0 } = params || {}
+// --- Actions ---
 
+/**
+ * Get all permits with optional filters
+ */
+export async function getPermits(params?: z.infer<typeof searchSchema>) {
   try {
+    const { category, status, personId, dueBefore, limit = 50, offset = 0 } = params || {}
+
     let queryBuilder = db
       .select({
         permit: permits,
@@ -82,7 +112,6 @@ export async function getPermits(params?: {
       .leftJoin(people, eq(permits.personId, people.id))
       .leftJoin(checklists, eq(permits.checklistId, checklists.id))
 
-    // Build where conditions
     const conditions = []
     if (category) conditions.push(eq(permits.category, category))
     if (status) conditions.push(eq(permits.status, status))
@@ -99,50 +128,43 @@ export async function getPermits(params?: {
       .offset(offset)
 
     return { success: true, data: result }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching permits:", error)
+    const { isConnectionError } = await import("@/lib/db/error-utils")
+    if (isConnectionError(error)) {
+      return { success: false, error: "Database connection failed. SSH tunnel down?" }
+    }
     return { success: false, error: "Failed to fetch permits" }
   }
 }
 
 /**
- * Get a single permit by ID or ticket number with all related data
+ * Get a single permit by ID or ticket number
  */
 export async function getPermitById(permitIdOrTicket: string) {
   try {
-    // Determine if input is UUID or ticket number
     const isUUID = permitIdOrTicket.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
     const isTicket = permitIdOrTicket.match(/^[A-Z]{3}-\d{4}-\d{4}$/i)
 
-    // Get permit with person and checklist
-    let permitResult
+    let query = db
+      .select({
+        permit: permits,
+        person: people,
+        checklist: checklists,
+      })
+      .from(permits)
+      .leftJoin(people, eq(permits.personId, people.id))
+      .leftJoin(checklists, eq(permits.checklistId, checklists.id))
+
     if (isUUID) {
-      permitResult = await db
-        .select({
-          permit: permits,
-          person: people,
-          checklist: checklists,
-        })
-        .from(permits)
-        .leftJoin(people, eq(permits.personId, people.id))
-        .leftJoin(checklists, eq(permits.checklistId, checklists.id))
-        .where(eq(permits.id, permitIdOrTicket))
-        .limit(1)
+      query = query.where(eq(permits.id, permitIdOrTicket)) as any
     } else if (isTicket) {
-      permitResult = await db
-        .select({
-          permit: permits,
-          person: people,
-          checklist: checklists,
-        })
-        .from(permits)
-        .leftJoin(people, eq(permits.personId, people.id))
-        .leftJoin(checklists, eq(permits.checklistId, checklists.id))
-        .where(eq(permits.ticketNumber, permitIdOrTicket.toUpperCase()))
-        .limit(1)
+      query = query.where(eq(permits.ticketNumber, permitIdOrTicket.toUpperCase())) as any
     } else {
-      return { success: false, error: "Invalid permit ID or ticket number format" }
+      return { success: false, error: "Invalid permit ID format" }
     }
+
+    const permitResult = await query.limit(1)
 
     if (permitResult.length === 0) {
       return { success: false, error: "Permit not found" }
@@ -150,44 +172,22 @@ export async function getPermitById(permitIdOrTicket: string) {
 
     const permitId = permitResult[0].permit.id
 
-    // Get permit history
-    const history = await db
-      .select({
+    // Parallel related data fetch
+    const [history, tasks, documents] = await Promise.all([
+      db.select({
         history: permitHistory,
-        user: {
-          id: users.id,
-          name: users.name,
-          email: users.email,
-        },
-      })
-      .from(permitHistory)
-      .leftJoin(users, eq(permitHistory.changedBy, users.id))
-      .where(eq(permitHistory.permitId, permitId))
-      .orderBy(desc(permitHistory.changedAt))
+        user: { id: users.id, name: users.name, email: users.email },
+      }).from(permitHistory).leftJoin(users, eq(permitHistory.changedBy, users.id)).where(eq(permitHistory.permitId, permitId)).orderBy(desc(permitHistory.changedAt)),
 
-    // Get related tasks
-    const tasks = await db
-      .select({
+      db.select({
         task: tasksV2,
-        assignee: {
-          id: users.id,
-          name: users.name,
-        },
-      })
-      .from(tasksV2)
-      .leftJoin(users, eq(tasksV2.assigneeId, users.id))
-      .where(eq(tasksV2.permitId, permitId))
-      .orderBy(desc(tasksV2.createdAt))
+        assignee: { id: users.id, name: users.name },
+      }).from(tasksV2).leftJoin(users, eq(tasksV2.assigneeId, users.id)).where(eq(tasksV2.permitId, permitId)).orderBy(desc(tasksV2.createdAt)),
 
-    // Get related documents (by ticket number)
-    const ticketNumber = permitResult[0].permit.ticketNumber
-    const documents = ticketNumber
-      ? await db
-        .select()
-        .from(documentsV2)
-        .where(eq(documentsV2.number, ticketNumber))
-        .orderBy(desc(documentsV2.createdAt))
-      : []
+      permitResult[0].permit.ticketNumber
+        ? db.select().from(documentsV2).where(eq(documentsV2.number, permitResult[0].permit.ticketNumber)).orderBy(desc(documentsV2.createdAt))
+        : Promise.resolve([])
+    ])
 
     return {
       success: true,
@@ -205,311 +205,185 @@ export async function getPermitById(permitIdOrTicket: string) {
 }
 
 /**
- * Create a new permit
+ * Create a new permit (Atomic Transaction)
  */
-export async function createPermit(data: {
-  category: "WORK_PERMIT" | "RESIDENCE_ID" | "MEDICAL_LICENSE" | "PIP" | "CUSTOMS" | "CAR_BOLO_INSURANCE"
-  personId: string
-  dueDate?: Date
-  checklistId?: string
-  notes?: string
-  createdById?: string
-}) {
-  try {
-    // Validate person exists
-    const personExists = await db
-      .select({
-        id: people.id,
-        firstName: people.firstName,
-        lastName: people.lastName
-      })
-      .from(people)
-      .where(eq(people.id, data.personId))
-      .limit(1)
+export const createPermit = createSafeAction(
+  createPermitSchema,
+  async (data, user) => {
+    // 1. Validate person exists
+    const person = await db.select({ id: people.id }).from(people).where(eq(people.id, data.personId)).limit(1)
+    if (person.length === 0) return { success: false, error: "Person not found" }
 
-    if (personExists.length === 0) {
-      return { success: false, error: "Person not found" }
-    }
+    // 2. Check for duplicate active permit (same category, person, pending/submitted)
+    const existing = await db.select({ id: permits.id }).from(permits)
+      .where(and(
+        eq(permits.personId, data.personId),
+        eq(permits.category, data.category),
+        or(eq(permits.status, "PENDING"), eq(permits.status, "SUBMITTED"))
+      )).limit(1)
 
-    // Check for existing active permit of same category for this person
-    const existingPermit = await db
-      .select({
-        id: permits.id,
-        ticketNumber: permits.ticketNumber,
-        category: permits.category,
-        status: permits.status,
-        createdAt: permits.createdAt
-      })
-      .from(permits)
-      .where(
-        and(
-          eq(permits.personId, data.personId),
-          eq(permits.category, data.category),
-          or(
-            eq(permits.status, "PENDING"),
-            eq(permits.status, "SUBMITTED")
-          )
-        )
-      )
-      .limit(1)
+    if (existing.length > 0) return { success: false, error: `Active ${data.category} application already exists`, errorCode: "DUPLICATE_PERMIT" }
 
-    if (existingPermit.length > 0) {
-      return {
-        success: false,
-        error: `This person already has an active ${data.category.replace(/_/g, ' ').toLowerCase()} application`,
-        errorCode: "DUPLICATE_PERMIT",
-        existingPermit: {
-          ...existingPermit[0],
-          person: personExists[0]
-        }
+    // 3. Transaction
+    const newPermit = await db.transaction(async (tx) => {
+      let dueDateEC: string | undefined
+      if (data.dueDate) {
+        dueDateEC = formatEC(gregorianToEC(data.dueDate), 'en', 'iso')
       }
-    }
 
-    // Validate checklist exists if provided
-    if (data.checklistId) {
-      const checklistExists = await db
-        .select({ id: checklists.id })
-        .from(checklists)
-        .where(eq(checklists.id, data.checklistId))
-        .limit(1)
+      const ticketNumber = await generateTicketNumber(data.category)
 
-      if (checklistExists.length === 0) {
-        return { success: false, error: "Checklist not found" }
-      }
-    }
-
-    // Convert due date to Ethiopian calendar for storage
-    let dueDateEC: string | undefined
-    if (data.dueDate) {
-      const ec = gregorianToEC(data.dueDate)
-      dueDateEC = formatEC(ec, 'en', 'iso')
-    }
-
-    // Auto-generate ticket number
-    const ticketNumber = await generateTicketNumber(data.category)
-
-    const result = await db
-      .insert(permits)
-      .values({
-        ...data,
-        ticketNumber,
+      // Create Permit
+      const [permit] = await tx.insert(permits).values({
+        category: data.category,
+        personId: data.personId,
+        dueDate: data.dueDate,
         dueDateEC,
+        checklistId: data.checklistId,
+        notes: data.notes,
+        subType: data.subType,
+        ticketNumber,
         status: "PENDING",
-      })
-      .returning()
+      }).returning()
 
-    // Create initial history entry
-    if (data.createdById) {
-      await db.insert(permitHistory).values({
-        permitId: result[0].id,
+      // Create History
+      await tx.insert(permitHistory).values({
+        permitId: permit.id,
         fromStatus: "PENDING",
         toStatus: "PENDING",
-        changedBy: data.createdById,
+        changedBy: user.id || data.createdById || "", // Fallback if user.id empty (unlikely with SafeAction)
         notes: "Permit created",
       })
-    }
 
-    // Revalidate cache (only works in Next.js request context)
-    try {
-      revalidatePath("/permits")
-      revalidatePath(`/people/${data.personId}`)
-      revalidatePath("/dashboard")
-    } catch (error) {
-      // Ignore revalidation errors in non-request contexts (e.g., scripts)
-    }
+      return permit
+    })
 
-    return { success: true, data: result[0] }
-  } catch (error) {
-    console.error("Error creating permit:", error)
-    return { success: false, error: "Failed to create permit" }
+    revalidatePath("/permits")
+    revalidatePath(`/people/${data.personId}`)
+    revalidatePath("/dashboard")
+
+    return { success: true, data: newPermit }
   }
-}
+)
 
 /**
  * Update a permit
  */
-export async function updatePermit(
-  permitId: string,
-  data: Partial<{
-    dueDate: Date
-    checklistId: string
-    notes: string
-  }>
-) {
-  try {
-    // Check if permit exists
-    const existing = await db
-      .select({ id: permits.id, personId: permits.personId, ticketNumber: permits.ticketNumber, category: permits.category })
-      .from(permits)
-      .where(eq(permits.id, permitId))
-      .limit(1)
+export const updatePermit = createSafeAction(
+  updatePermitSchema,
+  async (data, user) => {
+    const { id, ...updateData } = data
 
-    if (existing.length === 0) {
-      return { success: false, error: "Permit not found" }
-    }
+    const existing = await db.select().from(permits).where(eq(permits.id, id)).limit(1)
+    if (existing.length === 0) return { success: false, error: "Permit not found" }
 
-    // Validate checklist if provided
-    if (data.checklistId) {
-      const checklistExists = await db
-        .select({ id: checklists.id })
-        .from(checklists)
-        .where(eq(checklists.id, data.checklistId))
-        .limit(1)
-
-      if (checklistExists.length === 0) {
-        return { success: false, error: "Checklist not found" }
-      }
-    }
-
-    // Convert due date to Ethiopian calendar if provided
-    const updateData: any = { ...data, updatedAt: new Date() }
-
-    // Generate ticket number if missing
-    if (!existing[0].ticketNumber && existing[0].category) {
-      updateData.ticketNumber = await generateTicketNumber(existing[0].category as any)
-    }
+    const dbUpdateData: any = { ...updateData, updatedAt: new Date() }
 
     if (data.dueDate) {
-      const ec = gregorianToEC(data.dueDate)
-      updateData.dueDateEC = formatEC(ec, 'en', 'iso')
+      dbUpdateData.dueDateEC = formatEC(gregorianToEC(data.dueDate), 'en', 'iso')
     }
 
-    const result = await db
-      .update(permits)
-      .set(updateData)
-      .where(eq(permits.id, permitId))
-      .returning()
+    // Ensure ticket number exists
+    if (!existing[0].ticketNumber) {
+      dbUpdateData.ticketNumber = await generateTicketNumber(existing[0].category)
+    }
+
+    const [updated] = await db.update(permits).set(dbUpdateData).where(eq(permits.id, id)).returning()
 
     revalidatePath("/permits")
-    revalidatePath(`/permits/${permitId}`)
+    revalidatePath(`/permits/${id}`)
     revalidatePath(`/people/${existing[0].personId}`)
 
-    return { success: true, data: result[0] }
-  } catch (error) {
-    console.error("Error updating permit:", error)
-    return { success: false, error: "Failed to update permit" }
+    return { success: true, data: updated }
   }
-}
+)
 
 /**
- * Transition permit status with audit trail
+ * Transition permit status
  */
-export async function transitionPermitStatus(
-  permitId: string,
-  toStatus: "PENDING" | "SUBMITTED" | "APPROVED" | "REJECTED" | "EXPIRED",
-  changedBy: string,
-  notes?: string
-) {
-  try {
-    // Get current permit
-    const current = await db
-      .select()
-      .from(permits)
-      .where(eq(permits.id, permitId))
-      .limit(1)
+export const transitionPermitStatus = createSafeAction(
+  transitionStatusSchema,
+  async ({ permitId, toStatus, notes }, user) => {
+    return await db.transaction(async (tx) => {
+      const current = await tx.select().from(permits).where(eq(permits.id, permitId)).limit(1)
+      if (current.length === 0) throw new Error("Permit not found")
 
-    if (current.length === 0) {
-      return { success: false, error: "Permit not found" }
-    }
+      const fromStatus = current[0].status
 
-    const fromStatus = current[0].status
-
-    // Validate user exists
-    const userExists = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.id, changedBy))
-      .limit(1)
-
-    if (userExists.length === 0) {
-      return { success: false, error: "User not found" }
-    }
-
-    // Validate state transition
-    const validTransitions: Record<string, string[]> = {
-      PENDING: ["SUBMITTED", "REJECTED"],
-      SUBMITTED: ["APPROVED", "REJECTED", "PENDING"],
-      APPROVED: ["EXPIRED"],
-      REJECTED: ["PENDING"],
-      EXPIRED: ["PENDING"],
-    }
-
-    if (!validTransitions[fromStatus]?.includes(toStatus)) {
-      return {
-        success: false,
-        error: `Invalid transition from ${fromStatus} to ${toStatus}`,
+      const validTransitions: Record<string, string[]> = {
+        PENDING: ["SUBMITTED", "REJECTED"],
+        SUBMITTED: ["APPROVED", "REJECTED", "PENDING"],
+        APPROVED: ["EXPIRED"],
+        REJECTED: ["PENDING"],
+        EXPIRED: ["PENDING"],
       }
-    }
 
-    // Update permit status
-    const result = await db
-      .update(permits)
-      .set({
-        status: toStatus,
-        updatedAt: new Date(),
+      if (!validTransitions[fromStatus]?.includes(toStatus)) {
+        throw new Error(`Invalid transition from ${fromStatus} to ${toStatus}`)
+      }
+
+      // Update Status
+      const [updated] = await tx.update(permits)
+        .set({ status: toStatus, updatedAt: new Date() })
+        .where(eq(permits.id, permitId))
+        .returning()
+
+      // Log History
+      await tx.insert(permitHistory).values({
+        permitId,
+        fromStatus,
+        toStatus,
+        changedBy: user.id || "",
+        notes: notes || `Status changed from ${fromStatus} to ${toStatus}`,
       })
-      .where(eq(permits.id, permitId))
-      .returning()
 
-    // Create history entry
-    await db.insert(permitHistory).values({
-      permitId,
-      fromStatus,
-      toStatus,
-      changedBy,
-      notes: notes || `Status changed from ${fromStatus} to ${toStatus}`,
+      return updated
+    }).then((res) => {
+      revalidatePath("/permits")
+      revalidatePath(`/permits/${permitId}`)
+      return { success: true, data: res }
+    }).catch((err) => {
+      return { success: false, error: err.message }
     })
-
-    revalidatePath("/permits")
-    revalidatePath(`/permits/${permitId}`)
-    revalidatePath(`/people/${current[0].personId}`)
-    revalidatePath("/dashboard")
-
-    return { success: true, data: result[0] }
-  } catch (error) {
-    console.error("Error transitioning permit status:", error)
-    return { success: false, error: "Failed to transition permit status" }
   }
-}
+)
 
 /**
- * Delete a permit
+ * Delete a permit (Atomic Transaction)
  */
-export async function deletePermit(permitId: string) {
-  try {
-    // Check if permit has tasks
-    const tasks = await db
-      .select({ id: tasksV2.id })
-      .from(tasksV2)
-      .where(eq(tasksV2.permitId, permitId))
-      .limit(1)
+export const deletePermit = createSafeAction(
+  deletePermitSchema,
+  async ({ id }, user) => {
+    // Only Admin can delete?
+    // if (user.role !== 'ADMIN') return { success: false, error: "Unauthorized" }
 
-    if (tasks.length > 0) {
-      return {
-        success: false,
-        error: "Cannot delete permit with associated tasks. Please remove tasks first.",
-      }
-    }
+    return await db.transaction(async (tx) => {
+      // Check for tasks
+      const tasks = await tx.select({ id: tasksV2.id }).from(tasksV2).where(eq(tasksV2.permitId, id)).limit(1)
+      if (tasks.length > 0) throw new Error("Cannot delete permit with associated tasks. Please remove tasks first.")
 
-    const result = await db
-      .delete(permits)
-      .where(eq(permits.id, permitId))
-      .returning()
+      // Delete Checklist Items
+      await tx.delete(permitChecklistItems).where(eq(permitChecklistItems.permitId, id))
 
-    if (result.length === 0) {
-      return { success: false, error: "Permit not found" }
-    }
+      // Delete History
+      await tx.delete(permitHistory).where(eq(permitHistory.permitId, id))
 
-    revalidatePath("/permits")
-    revalidatePath(`/people/${result[0].personId}`)
-    revalidatePath("/dashboard")
+      // Delete Permit
+      const [deleted] = await tx.delete(permits).where(eq(permits.id, id)).returning()
 
-    return { success: true, data: result[0] }
-  } catch (error) {
-    console.error("Error deleting permit:", error)
-    return { success: false, error: "Failed to delete permit" }
-  }
-}
+      if (!deleted) throw new Error("Permit not found")
+
+      return deleted
+    }).then((res) => {
+      revalidatePath("/permits")
+      revalidatePath("/dashboard")
+      return { success: true, data: res }
+    }).catch((err) => {
+      return { success: false, error: err.message }
+    })
+  },
+  { requiredRole: ["ADMIN", "HR_MANAGER"] }
+)
 
 /**
  * Get permits expiring within specified days
@@ -536,11 +410,7 @@ export async function getExpiringPermits(daysAhead: number = 30) {
           sql`${permits.dueDate} IS NOT NULL`,
           lte(permits.dueDate, futureDate),
           gte(permits.dueDate, new Date()),
-          or(
-            eq(permits.status, "PENDING"),
-            eq(permits.status, "SUBMITTED"),
-            eq(permits.status, "APPROVED")
-          )
+          or(eq(permits.status, "PENDING"), eq(permits.status, "SUBMITTED"), eq(permits.status, "APPROVED"))
         )
       )
       .orderBy(permits.dueDate)
@@ -553,46 +423,27 @@ export async function getExpiringPermits(daysAhead: number = 30) {
 }
 
 /**
- * Get permit statistics (including Vehicles and Import Permits)
+ * Get permit statistics
  */
 export async function getPermitStats() {
   try {
-    // Query permits table
-    const permitStats = await db
-      .select({
-        status: permits.status,
-        category: permits.category,
-        count: sql<number>`cast(count(*) as integer)`,
-      })
-      .from(permits)
-      .groupBy(permits.status, permits.category)
+    const permitStats = await db.select({
+      status: permits.status,
+      category: permits.category,
+      count: sql<number>`cast(count(*) as integer)`,
+    }).from(permits).groupBy(permits.status, permits.category)
 
-    // Query vehicles table
-    const vehicleCount = await db
-      .select({ count: sql<number>`cast(count(*) as integer)` })
-      .from(vehicles)
+    const vehicleTotal = (await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(vehicles))[0]?.count || 0
+    const importTotal = (await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(importPermits))[0]?.count || 0
 
-    // Query import_permits table
-    const importCount = await db
-      .select({ count: sql<number>`cast(count(*) as integer)` })
-      .from(importPermits)
-
-    // Aggregate by status
     const byStatus: Record<string, number> = {}
-
-    permitStats.forEach(stat => {
-      byStatus[stat.status] = (byStatus[stat.status] || 0) + stat.count
-    })
-
-    // Aggregate by category
     const byCategory: Record<string, number> = {}
 
     permitStats.forEach(stat => {
+      byStatus[stat.status] = (byStatus[stat.status] || 0) + stat.count
       byCategory[stat.category] = (byCategory[stat.category] || 0) + stat.count
     })
 
-    const vehicleTotal = vehicleCount[0]?.count || 0
-    const importTotal = importCount[0]?.count || 0
     const permitTotal = Object.values(byCategory).reduce((sum, n) => sum + n, 0)
     const total = permitTotal + vehicleTotal + importTotal
 
@@ -606,13 +457,13 @@ export async function getPermitStats() {
           APPROVED: byStatus.APPROVED || 0,
           REJECTED: byStatus.REJECTED || 0,
           EXPIRED: byStatus.EXPIRED || 0,
-          // Add lowercase fallbacks just in case UI uses them
-          pending: byStatus.PENDING || 0,
+          pending: byStatus.PENDING || 0, // Fallback
         },
         byCategory: {
           WORK_PERMIT: byCategory.WORK_PERMIT || 0,
           RESIDENCE_ID: byCategory.RESIDENCE_ID || 0,
-          LICENSE: byCategory.LICENSE || 0,
+          LICENSE: byCategory.LICENSE || 0, // Should be MEDICAL_LICENSE but keeping for API compat
+          MEDICAL_LICENSE: byCategory.MEDICAL_LICENSE || 0,
           PIP: byCategory.PIP || 0,
           VEHICLE: vehicleTotal,
           IMPORT: importTotal,
@@ -620,14 +471,6 @@ export async function getPermitStats() {
       },
     }
   } catch (error: any) {
-    console.error("Error fetching permit stats:", error)
-    const { isConnectionError } = await import("@/lib/db/error-utils")
-    if (isConnectionError(error)) {
-      return {
-        success: false,
-        error: "Database connection failed. Please ensure the SSH tunnel is running."
-      }
-    }
     return { success: false, error: "Failed to fetch permit statistics" }
   }
 }
@@ -659,7 +502,7 @@ export async function getPermitHistory(permitId: string) {
 }
 
 /**
- * Backfill missing ticket numbers for all permit records
+ * Backfill missing ticket numbers
  */
 export async function backfillPermitTicketNumbers() {
   try {
@@ -668,35 +511,19 @@ export async function backfillPermitTicketNumbers() {
       .from(permits)
       .where(sql`${permits.ticketNumber} IS NULL`)
 
-    if (permitsWithoutTickets.length === 0) {
-      return { success: true, message: "All permits already have ticket numbers", updated: 0 }
-    }
+    if (permitsWithoutTickets.length === 0) return { success: true, message: "No updates needed", updated: 0 }
 
     let updated = 0
     for (const permit of permitsWithoutTickets) {
-      try {
-        if (permit.category) {
-          const ticketNumber = await generateTicketNumber(permit.category as any)
-          await db
-            .update(permits)
-            .set({ ticketNumber, updatedAt: new Date() })
-            .where(eq(permits.id, permit.id))
-          updated++
-        }
-      } catch (err) {
-        console.error(`Failed to update permit ${permit.id}:`, err)
+      if (permit.category) {
+        const ticketNumber = await generateTicketNumber(permit.category as any)
+        await db.update(permits).set({ ticketNumber, updatedAt: new Date() }).where(eq(permits.id, permit.id))
+        updated++
       }
     }
-
     revalidatePath("/permits")
-    return {
-      success: true,
-      message: `Updated ${updated} of ${permitsWithoutTickets.length} permits`,
-      updated,
-      total: permitsWithoutTickets.length
-    }
+    return { success: true, message: `Updated ${updated} permits`, updated, total: permitsWithoutTickets.length }
   } catch (error) {
-    console.error("Error backfilling permit ticket numbers:", error)
     return { success: false, error: "Failed to backfill ticket numbers" }
   }
 }
