@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { uploadFile, getSignedUploadUrl } from "@/lib/s3"
+import { uploadFile, getSignedUploadUrl } from "@/lib/storage/s3"
 import { auth } from "@/auth"
 import { writeFile, mkdir } from "fs/promises"
 import path from "path"
@@ -57,10 +57,15 @@ export async function POST(request: NextRequest) {
 
     let result: { url: string; key: string }
 
-    if (isS3Configured) {
+    // Always prefer S3/MinIO if configured OR if we can reach localhost:9000 (tunnel)
+    const canReachS3 = isS3Configured || process.env.NODE_ENV === "development"
+
+    if (canReachS3) {
       // Upload to S3/MinIO
+      console.log("Uploading to S3/MinIO...")
       result = await uploadFile(buffer, file.name, file.type, folder)
     } else {
+      console.log("Falling back to local filesystem...")
       // Fallback: Save to local public/uploads directory
       const uploadDir = path.join(process.cwd(), "public", "uploads", folder)
       await mkdir(uploadDir, { recursive: true })

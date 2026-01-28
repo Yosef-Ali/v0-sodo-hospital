@@ -25,6 +25,8 @@ start_tunnel() {
         -o TCPKeepAlive=yes \
         -o ConnectTimeout=10 \
         -L ${LOCAL_PORT}:localhost:${REMOTE_PORT} \
+        -L 9000:localhost:9000 \
+        -L 9001:localhost:9001 \
         ${VPS_USER}@${VPS_IP}
 }
 

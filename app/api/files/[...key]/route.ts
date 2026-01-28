@@ -10,27 +10,19 @@ export async function GET(
     const fileKey = key.join("/")
 
     const response = await getFile(fileKey)
-    
+
     if (!response.Body) {
       return NextResponse.json({ error: "File not found" }, { status: 404 })
     }
 
-    const chunks: Uint8Array[] = []
-    const reader = response.Body.transformToWebStream().getReader()
-    
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      chunks.push(value)
-    }
+    const stream = response.Body.transformToWebStream()
 
-    const buffer = Buffer.concat(chunks)
-
-    return new NextResponse(buffer, {
+    return new NextResponse(stream, {
       headers: {
         "Content-Type": response.ContentType || "application/octet-stream",
-        "Content-Length": String(buffer.length),
+        "Content-Length": response.ContentLength ? String(response.ContentLength) : "",
         "Cache-Control": "public, max-age=31536000",
+        "Content-Disposition": `inline; filename="${fileKey.split('/').pop()}"`,
       },
     })
   } catch (error: any) {

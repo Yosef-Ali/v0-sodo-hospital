@@ -21,6 +21,14 @@ export interface UploadResult {
   contentType: string
 }
 
+// Generate unique filename
+export function generateFileName(originalName: string): string {
+  const timestamp = Date.now()
+  const random = Math.random().toString(36).substring(2, 8)
+  const ext = originalName.split(".").pop()
+  return `${timestamp}-${random}.${ext}`
+}
+
 /**
  * Upload a file to S3/MinIO
  */
@@ -30,8 +38,8 @@ export async function uploadFile(
   contentType: string,
   folder: string = "uploads"
 ): Promise<UploadResult> {
-  const key = `${folder}/${Date.now()}-${filename}`
-  
+  const key = `${folder}/${generateFileName(filename)}`
+
   await s3Client.send(
     new PutObjectCommand({
       Bucket: BUCKET,
@@ -83,6 +91,28 @@ export async function deleteFile(key: string): Promise<void> {
       Key: key,
     })
   )
+}
+
+/**
+ * Get signed URL for upload (client-side uploads)
+ */
+export async function getSignedUploadUrl(
+  fileName: string,
+  contentType: string,
+  folder: string = "uploads"
+): Promise<{ uploadUrl: string; key: string; publicUrl: string }> {
+  const key = `${folder}/${generateFileName(fileName)}`
+
+  const command = new PutObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+    ContentType: contentType,
+  })
+
+  const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 })
+  const publicUrl = `/api/files/${key}`
+
+  return { uploadUrl, key, publicUrl }
 }
 
 export { s3Client, BUCKET }

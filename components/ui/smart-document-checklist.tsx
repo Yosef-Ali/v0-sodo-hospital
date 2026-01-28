@@ -36,11 +36,43 @@ export function DocumentPreview({
   onRemove: () => void 
 }) {
   const isImage = url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+  const [error, setError] = useState(false)
+  const [refreshParam, setRefreshParam] = useState("")
+
+  const handleRefresh = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setError(false)
+    setRefreshParam(`?t=${Date.now()}`)
+  }
+
+  const displayUrl = `${url}${refreshParam}`
+
   return (
     <div className="relative group">
-      <div className="border border-gray-600 rounded-lg p-2 bg-gray-700/50 h-20 w-20">
+      <div className="border border-gray-600 rounded-lg p-2 bg-gray-700/50 h-20 w-20 relative overflow-hidden">
         {isImage ? (
-          <img src={url} alt={`Doc ${index + 1}`} className="w-full h-full object-cover rounded" />
+          <>
+            <img 
+              src={displayUrl} 
+              alt={`Doc ${index + 1}`} 
+              className={`w-full h-full object-cover rounded ${error ? 'opacity-0' : 'opacity-100'}`}
+              onError={() => setError(true)}
+            />
+            {error && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800/80 p-1">
+                <span className="text-[9px] text-red-400 mb-1 text-center leading-tight">Failed</span>
+                <button 
+                  onClick={handleRefresh}
+                  className="bg-gray-700 hover:bg-gray-600 text-white rounded p-1 transition-colors"
+                  title="Retry loading"
+                  type="button"
+                >
+                  <div className="h-3 w-3 flex items-center justify-center">↻</div>
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
             <File className="h-5 w-5 mb-1" />

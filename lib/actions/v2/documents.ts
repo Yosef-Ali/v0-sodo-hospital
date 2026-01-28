@@ -1,6 +1,6 @@
 "use server"
 
-import { uploadFile } from "@/lib/s3"
+import { uploadFile, deleteFile, getSignedDownloadUrl } from "@/lib/storage/s3"
 import { db, documentsV2, people, permits, type DocumentV2, type NewDocumentV2 } from "@/lib/db"
 import { eq, desc, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
