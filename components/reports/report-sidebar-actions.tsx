@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Download, Eye, RefreshCw, Edit } from "lucide-react"
 import Link from "next/link"
 import { ReportPreviewModal } from "./report-preview-modal"
-import type { ReportData } from "./report-template-a4"
+import type { ReportData } from "@/lib/types/reports"
+import { DeleteReportButton } from "./delete-report-button"
 
 interface ReportSidebarActionsProps {
   report: ReportData
@@ -44,6 +45,7 @@ export function ReportSidebarActions({ report, reportId }: ReportSidebarActionsP
             Edit Report
           </Button>
         </Link>
+        <DeleteReportButton reportId={reportId} reportTitle={report.title} />
       </div>
 
       <ReportPreviewModal

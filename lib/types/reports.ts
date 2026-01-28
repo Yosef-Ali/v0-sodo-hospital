@@ -13,7 +13,7 @@ export interface ReportData {
   lastGenerated: Date | null
   createdAt: Date
   updatedAt: Date
-  parameters?: Record<string, any>
+  parameters?: Record<string, any> | null
   generatedBy?: string | null
   fileUrl?: string | null
   fileSize?: number | null

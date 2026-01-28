@@ -9,6 +9,7 @@ import { FileBarChart, Download, RefreshCw, Edit, ArrowLeft } from "lucide-react
 import Link from "next/link"
 import { ReportDetailActions } from "@/components/reports/report-detail-actions"
 import { ReportSidebarActions } from "@/components/reports/report-sidebar-actions"
+import { MarkdownDisplay } from "@/components/ui/markdown-display"
 
 interface ReportPageProps {
   params: Promise<{
@@ -74,9 +75,9 @@ export default async function ReportPage({ params }: ReportPageProps) {
                 {report.status}
               </Badge>
             </div>
-            <p className="text-gray-400">
-              {report.description || "No description provided"}
-            </p>
+            <div className="text-gray-400">
+               <MarkdownDisplay content={report.description || "No description provided"} />
+            </div>
           </div>
 
           <ReportDetailActions report={report} reportId={id} />
@@ -132,7 +133,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
           {report.description && (
             <Card className="bg-gray-800 border-gray-700 p-6">
               <h2 className="text-lg font-semibold text-white mb-4">Description</h2>
-              <p className="text-gray-300">{report.description}</p>
+              <MarkdownDisplay content={report.description} />
             </Card>
           )}
 
