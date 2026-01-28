@@ -27,6 +27,7 @@ import { ImportSheet } from "@/components/sheets/import-sheet"
 import { toast } from "sonner"
 import { ImportActionsCard } from "@/components/imports/import-actions-card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { DeleteDocumentButton } from "@/components/ui/delete-document-button"
 
 interface ImportDetailPageProps {
   initialData: any
@@ -272,7 +273,16 @@ export function ImportDetailPage({ initialData }: ImportDetailPageProps) {
                   {/* Section Documents */}
                   {permit.documentSections?.map((section: any, sectionIdx: number) => {
                     if (!section.files || section.files.length === 0) return null;
-                    return section.files.map((fileUrl: string, fileIdx: number) => (
+                    return section.files.map((fileUrl: string, fileIdx: number) => {
+                      const handleDeleteParams = () => {
+                        return async () => {
+                           const { deleteEntityFile } = await import("@/lib/actions/v2/documents")
+                           await deleteEntityFile("import", permit.id, fileUrl)
+                           router.refresh()
+                        }
+                      }
+                      
+                      return (
                       <div key={`${sectionIdx}-${fileIdx}`} className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors group">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-gray-800 rounded-md border border-gray-700 group-hover:border-blue-500/50 transition-colors">
@@ -299,13 +309,26 @@ export function ImportDetailPage({ initialData }: ImportDetailPageProps) {
                                View
                              </Button>
                            </Link>
+                           <DeleteDocumentButton 
+                             itemName="Document"
+                             onConfirm={handleDeleteParams()}
+                           />
                         </div>
                       </div>
-                    ));
+                    )});
                   })}
                   
                   {/* Custom Documents array (legacy/direct uploads) */}
-                  {permit.documents?.map((fileUrl: string, fileIdx: number) => (
+                  {permit.documents?.map((fileUrl: string, fileIdx: number) => {
+                    const handleDeleteParams = () => {
+                        return async () => {
+                           const { deleteEntityFile } = await import("@/lib/actions/v2/documents")
+                           await deleteEntityFile("import", permit.id, fileUrl)
+                           router.refresh()
+                        }
+                    }
+
+                    return (
                     <div key={`custom-${fileIdx}`} className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors group">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-gray-800 rounded-md border border-gray-700 group-hover:border-blue-500/50 transition-colors">
@@ -329,9 +352,13 @@ export function ImportDetailPage({ initialData }: ImportDetailPageProps) {
                              View
                            </Button>
                          </Link>
+                         <DeleteDocumentButton 
+                             itemName="Document"
+                             onConfirm={handleDeleteParams()}
+                         />
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               </Card>
              );

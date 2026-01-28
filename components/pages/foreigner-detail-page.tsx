@@ -23,6 +23,7 @@ import { PersonActionsCard } from "@/components/foreigners/person-actions-card"
 import { updatePerson } from "@/lib/actions/v2/foreigners"
 import { toast } from "sonner"
 import { PersonSheet } from "@/components/sheets/person-sheet"
+import { DeleteDocumentButton } from "@/components/ui/delete-document-button"
 
 interface ForeignerDetailPageProps {
   initialData: {
@@ -201,6 +202,7 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
             const sectionDocs = person.documentSections?.flatMap((section: any) => 
               (section.files || []).map((fileUrl: string, idx: number) => ({
                 id: `${section.type}-${idx}`,
+                isJsonb: true, // Flag for deletion logic
                 type: section.type,
                 title: section.type?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
                 fileUrl: fileUrl,
@@ -213,6 +215,21 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
             
             if (allDocs.length === 0) return null
             
+            const handleDeleteParams = (doc: any) => {
+               // Dynamic import to avoid circular dependency issues in client component if action is heavy
+               // But actions are server functions, so it should be fine.
+               // We'll wrap execution in a handler passed to the button
+               return async () => {
+                 const { deleteDocument, deleteEntityFile } = await import("@/lib/actions/v2/documents")
+                 if (doc.isJsonb) {
+                   await deleteEntityFile("person", person.id, doc.fileUrl)
+                 } else {
+                   await deleteDocument(doc.id)
+                 }
+                 router.refresh()
+               }
+            }
+            
             return (
               <Card className="bg-gray-800 border-gray-700 p-6">
                 <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -221,8 +238,8 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
                   <Badge className="bg-blue-900/50 text-blue-300 text-xs ml-2">{allDocs.length}</Badge>
                 </h2>
                 <div className="grid grid-cols-1 gap-3">
-                  {allDocs.map((doc: any) => (
-                    <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors group">
+                  {allDocs.map((doc: any, index: number) => (
+                    <div key={`${doc.id}-${index}`} className="flex items-center justify-between p-3 bg-gray-900/50 rounded-lg border border-gray-700 hover:border-gray-600 transition-colors group">
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-gray-800 rounded-md border border-gray-700 group-hover:border-blue-500/50 transition-colors">
                           <FileText className="h-5 w-5 text-blue-400" />
@@ -254,6 +271,11 @@ export function ForeignerDetailPage({ initialData }: ForeignerDetailPageProps) {
                         ) : (
                           <span className="text-xs text-gray-500 italic px-2">No file</span>
                         )}
+                        
+                        <DeleteDocumentButton 
+                          itemName={doc.title || "Document"}
+                          onConfirm={handleDeleteParams(doc)}
+                        />
                       </div>
                     </div>
                   ))}

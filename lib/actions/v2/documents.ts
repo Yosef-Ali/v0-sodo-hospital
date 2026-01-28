@@ -1,6 +1,6 @@
 "use server"
 
-import { uploadFile, deleteFile, getSignedDownloadUrl } from "@/lib/storage/s3"
+import { uploadFile, deleteFile, getFileUrl } from "@/lib/storage/s3"
 import { db, documentsV2, people, permits, type DocumentV2, type NewDocumentV2 } from "@/lib/db"
 import { eq, desc, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
@@ -301,8 +301,7 @@ export async function updateDocument(
 }
 
 /**
- * Delete a document
- * Note: This should also delete the physical file from storage
+ * Delete a document from documentsV2 table
  */
 export async function deleteDocument(documentId: string) {
   try {
@@ -315,19 +314,157 @@ export async function deleteDocument(documentId: string) {
       return { success: false, error: "Document not found" }
     }
 
+    // Delete physically from S3
+    if (result[0].fileUrl) {
+      // Extract key from URL if possible, otherwise rely on helper
+      // url: /api/files/uploads/filename.ext or https://domain/api/files/...
+      try {
+        const urlParts = result[0].fileUrl.split("/api/files/")
+        if (urlParts.length > 1) {
+          const key = decodeURIComponent(urlParts[1])
+          await deleteFile(key)
+        }
+      } catch (err) {
+        console.error("Failed to delete file from S3:", err)
+      }
+    }
+
     if (result[0].personId) {
       revalidatePath(`/people/${result[0].personId}`)
     }
     revalidatePath("/documents")
 
-    // TODO: Delete physical file from storage
-    // if (result[0].fileUrl) {
-    //   await deleteFileFromStorage(result[0].fileUrl)
-    // }
-
     return { success: true, data: result[0] }
   } catch (error) {
     console.error("Error deleting document:", error)
+    return { success: false, error: "Failed to delete document" }
+  }
+}
+
+/**
+ * Delete a file from an entity's JSON list (vehicles, imports, companies, etc.)
+ */
+export async function deleteEntityFile(
+  entityType: "person" | "vehicle" | "import" | "company",
+  entityId: string,
+  fileUrl: string
+) {
+  try {
+    let success = false
+
+    // Dynamic imports to avoid massive loading
+    const { vehicles, importPermits, companyRegistrations, people } = await import("@/lib/db")
+
+    // Helper to attempt S3 deletion
+    const tryDeleteS3 = async (url: string) => {
+      try {
+        const urlParts = url.split("/api/files/")
+        if (urlParts.length > 1) {
+          const key = decodeURIComponent(urlParts[1])
+          await deleteFile(key)
+        }
+      } catch (err) {
+        console.warn("Failed to delete from S3:", err)
+      }
+    }
+
+    if (entityType === "vehicle") {
+      const existing = await db.select().from(vehicles).where(eq(vehicles.id, entityId)).limit(1)
+      if (existing.length > 0) {
+        const docs = (existing[0].documents as string[]) || []
+        const newDocs = docs.filter(d => d !== fileUrl)
+
+        // Also check documentSections if present
+        const sections = (existing[0].documentSections as any[]) || []
+        sections.forEach(section => {
+          if (section.files && Array.isArray(section.files)) {
+            section.files = section.files.filter((f: string) => f !== fileUrl)
+          }
+        })
+
+        if (newDocs.length !== docs.length || JSON.stringify(sections) !== JSON.stringify(existing[0].documentSections)) {
+          await db.update(vehicles)
+            .set({ documents: newDocs, documentSections: sections, updatedAt: new Date() })
+            .where(eq(vehicles.id, entityId))
+
+          await tryDeleteS3(fileUrl)
+          revalidatePath("/vehicle")
+          revalidatePath(`/vehicle/${entityId}`)
+          success = true
+        }
+      }
+    }
+    else if (entityType === "import") {
+      const existing = await db.select().from(importPermits).where(eq(importPermits.id, entityId)).limit(1)
+      if (existing.length > 0) {
+        const docs = (existing[0].documents as string[]) || []
+        const newDocs = docs.filter(d => d !== fileUrl)
+
+        if (newDocs.length !== docs.length) {
+          await db.update(importPermits)
+            .set({ documents: newDocs, updatedAt: new Date() })
+            .where(eq(importPermits.id, entityId))
+
+          await tryDeleteS3(fileUrl)
+          revalidatePath("/import")
+          revalidatePath(`/import/${entityId}`)
+          success = true
+        }
+      }
+    }
+    else if (entityType === "company") {
+      const existing = await db.select().from(companyRegistrations).where(eq(companyRegistrations.id, entityId)).limit(1)
+      if (existing.length > 0) {
+        const docs = (existing[0].documents as string[]) || []
+        const newDocs = docs.filter(d => d !== fileUrl)
+
+        if (newDocs.length !== docs.length) {
+          await db.update(companyRegistrations)
+            .set({ documents: newDocs, updatedAt: new Date() })
+            .where(eq(companyRegistrations.id, entityId))
+
+          await tryDeleteS3(fileUrl)
+          revalidatePath("/company")
+          revalidatePath(`/company/${entityId}`)
+          success = true
+        }
+      }
+    }
+    else if (entityType === "person") {
+      const existing = await db.select().from(people).where(eq(people.id, entityId)).limit(1)
+      if (existing.length > 0) {
+        // People mainly use documentSections
+        const sections = (existing[0].documentSections as any[]) || []
+        let modified = false
+
+        sections.forEach(section => {
+          if (section.files && Array.isArray(section.files)) {
+            const originalLen = section.files.length
+            section.files = section.files.filter((f: string) => f !== fileUrl)
+            if (section.files.length !== originalLen) modified = true
+          }
+        })
+
+        if (modified) {
+          await db.update(people)
+            .set({ documentSections: sections, updatedAt: new Date() })
+            .where(eq(people.id, entityId))
+
+          await tryDeleteS3(fileUrl)
+          revalidatePath("/foreigners")
+          revalidatePath(`/foreigners/${entityId}`)
+          success = true
+        }
+      }
+    }
+
+    if (success) {
+      return { success: true }
+    } else {
+      return { success: false, error: "Document not found or could not be deleted" }
+    }
+  } catch (error) {
+    console.error(`Error deleting ${entityType} document:`, error)
     return { success: false, error: "Failed to delete document" }
   }
 }
