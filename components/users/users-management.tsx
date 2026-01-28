@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, UserPlus, Mail, Shield, AlertCircle, Search, Check } from "lucide-react"
+import { EditUserDialog } from "@/components/users/edit-user-dialog"
 
 interface UserProfile {
   id: string
@@ -36,6 +37,20 @@ export function UsersManagement() {
   const [createRole, setCreateRole] = useState("USER")
   const [inviteLoading, setInviteLoading] = useState(false)
   const [inviteMessage, setInviteMessage] = useState<string | null>(null)
+
+  // Edit User State
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+
+  const handleEditUser = (user: UserProfile) => {
+    setSelectedUser({
+      id: user.id,
+      name: user.full_name,
+      email: user.email,
+      role: user.role,
+    })
+    setIsEditOpen(true)
+  }
 
   useEffect(() => {
     fetchUsers()
@@ -292,6 +307,7 @@ export function UsersManagement() {
                             variant="ghost"
                             size="sm"
                             className="text-green-400 hover:text-green-300 hover:bg-green-950/50"
+                            onClick={() => handleEditUser(user)}
                           >
                             Manage
                           </Button>
@@ -306,6 +322,13 @@ export function UsersManagement() {
         </CardContent>
       </Card>
 
+      <EditUserDialog 
+        user={selectedUser} 
+        open={isEditOpen} 
+        onOpenChange={setIsEditOpen} 
+        onUserUpdated={fetchUsers}
+      />
+      
       <Card className="glass-card border-gray-700/50">
         <CardHeader>
           <CardTitle className="text-white">User Roles & Permissions</CardTitle>
