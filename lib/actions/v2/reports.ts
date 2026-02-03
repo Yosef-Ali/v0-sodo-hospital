@@ -1,18 +1,18 @@
 "use server"
 
 import { db, reports, users } from "@/lib/db"
-import { eq, desc, and, gte, lte, sql, or, isNull } from "drizzle-orm"
+import { eq, desc, and, sql } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { createSafeAction } from "@/lib/safe-action"
 import { z } from "zod"
 
-// --- Schemas ---
+// --- Schemas (internal, not exported to avoid "use server" issues) ---
 
 const reportStatusEnum = z.enum(["DRAFT", "GENERATED", "PUBLISHED", "ARCHIVED"])
 const reportFrequencyEnum = z.enum(["DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "YEARLY", "ON_DEMAND"])
 const reportFormatEnum = z.enum(["PDF", "EXCEL", "CSV", "DASHBOARD"])
 
-export const createReportSchema = z.object({
+const createReportSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
   frequency: reportFrequencyEnum.default("ON_DEMAND"),
@@ -22,7 +22,7 @@ export const createReportSchema = z.object({
   parameters: z.record(z.any()).optional(),
 })
 
-export const searchReportSchema = z.object({
+const searchReportSchema = z.object({
   query: z.string().optional(),
   status: reportStatusEnum.optional(),
   category: z.string().optional(),
@@ -30,8 +30,20 @@ export const searchReportSchema = z.object({
   offset: z.number().default(0),
 })
 
-export const deleteReportSchema = z.object({
+const deleteReportSchema = z.object({
   id: z.string().uuid(),
+})
+
+const updateReportSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  frequency: reportFrequencyEnum.optional(),
+  format: reportFormatEnum.optional(),
+  department: z.string().optional(),
+  category: z.string().optional(),
+  parameters: z.record(z.any()).optional(),
+  status: reportStatusEnum.optional(),
 })
 
 // --- Actions ---
@@ -146,4 +158,102 @@ export const deleteReport = createSafeAction(
     return { success: true, data: deleted }
   },
   { requiredRole: ["ADMIN", "HR_MANAGER"] }
+)
+
+/**
+ * Get a single report by ID
+ */
+export async function getReportById(id: string) {
+  try {
+    const result = await db
+      .select({
+        report: reports,
+        generatedBy: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+        },
+      })
+      .from(reports)
+      .leftJoin(users, eq(reports.generatedBy, users.id))
+      .where(eq(reports.id, id))
+      .limit(1)
+
+    if (result.length === 0) {
+      return { success: false, error: "Report not found" }
+    }
+
+    return { success: true, data: result[0] }
+  } catch (error) {
+    console.error("Error fetching report:", error)
+    return { success: false, error: "Failed to fetch report" }
+  }
+}
+
+/**
+ * Get report statistics
+ */
+export async function getReportStats() {
+  try {
+    const stats = await db
+      .select({
+        status: reports.status,
+        count: sql<number>`cast(count(*) as integer)`,
+      })
+      .from(reports)
+      .groupBy(reports.status)
+
+    const byStatus: Record<string, number> = {}
+    let total = 0
+
+    stats.forEach((stat) => {
+      byStatus[stat.status] = stat.count
+      total += stat.count
+    })
+
+    return {
+      success: true,
+      data: {
+        total,
+        byStatus: {
+          DRAFT: byStatus.DRAFT || 0,
+          GENERATED: byStatus.GENERATED || 0,
+          PUBLISHED: byStatus.PUBLISHED || 0,
+          ARCHIVED: byStatus.ARCHIVED || 0,
+        },
+      },
+    }
+  } catch (error) {
+    console.error("Error fetching report stats:", error)
+    return { success: false, error: "Failed to fetch report statistics" }
+  }
+}
+
+/**
+ * Update a report
+ */
+export const updateReport = createSafeAction(
+  updateReportSchema,
+  async (data, user) => {
+    const { id, ...updateData } = data
+
+    const existing = await db.select().from(reports).where(eq(reports.id, id)).limit(1)
+    if (existing.length === 0) {
+      return { success: false, error: "Report not found" }
+    }
+
+    const [updated] = await db
+      .update(reports)
+      .set({
+        ...updateData,
+        updatedAt: new Date(),
+      })
+      .where(eq(reports.id, id))
+      .returning()
+
+    revalidatePath("/reports")
+    revalidatePath(`/reports/${id}`)
+    return { success: true, data: updated }
+  },
+  { requiredRole: ["ADMIN", "HR_MANAGER", "LOGISTICS"] }
 )

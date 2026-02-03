@@ -59,7 +59,7 @@ export default function AdminGuidePage() {
                 <Workflow className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
                 <div>
                   <h3 className="text-sm font-semibold text-white">Workflow Management</h3>
-                  <p className="text-xs text-gray-400">Track permits from submission to approval</p>
+                  <p className="text-xs text-gray-400">Track documents from submission to approval</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -108,7 +108,7 @@ export default function AdminGuidePage() {
                     <p className="text-sm text-gray-400 mb-3">Real-time statistics and analytics</p>
                     <ul className="space-y-1 text-xs text-gray-500">
                       <li>• Task statistics (pending, in-progress, completed)</li>
-                      <li>• Permit statistics (total, by status)</li>
+                      <li>• Entity statistics (foreigners, vehicles, imports)</li>
                       <li>• Activity logs</li>
                       <li>• Quick action buttons</li>
                     </ul>
@@ -141,22 +141,22 @@ export default function AdminGuidePage() {
                   </CardContent>
                 </Card>
 
-                {/* Permits */}
+                {/* Import */}
                 <Card className="bg-gray-900 border-gray-700 hover:border-green-500 transition-colors">
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       <ClipboardCheck className="w-5 h-5 text-purple-400" />
-                      <CardTitle className="text-base text-white">Permits</CardTitle>
+                      <CardTitle className="text-base text-white">Import</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm text-gray-400 mb-3">Document and permit tracking</p>
+                    <p className="text-sm text-gray-400 mb-3">Import permit management</p>
                     <ul className="space-y-1 text-xs text-gray-500">
-                      <li>• Create permits (Work, Residence, License)</li>
-                      <li>• View permit details</li>
-                      <li>• Update status (Draft → Submitted → Approved)</li>
-                      <li>• Delete permits</li>
-                      <li>• Filter by status, type, person</li>
+                      <li>• Create import records</li>
+                      <li>• Track PIP and customs documents</li>
+                      <li>• Update import status</li>
+                      <li>• View import history</li>
+                      <li>• Filter by category and status</li>
                     </ul>
                     <Badge className="mt-3 bg-purple-500/20 text-purple-400 border-purple-500/50">
                       Full CRUD + Status
@@ -221,7 +221,7 @@ export default function AdminGuidePage() {
                   <CardContent>
                     <p className="text-sm text-gray-400 mb-3">Analytics and insights</p>
                     <ul className="space-y-1 text-xs text-gray-500">
-                      <li>• Permit status distribution</li>
+                      <li>• Entity statistics overview</li>
                       <li>• Task completion rates</li>
                       <li>• People statistics</li>
                       <li>• Activity timeline</li>
@@ -266,14 +266,14 @@ export default function AdminGuidePage() {
                       <div className="flex items-center gap-3">
                         <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/50">Foreigners</Badge>
                         <ArrowRight className="w-4 h-4 text-gray-500" />
-                        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">Permits</Badge>
-                        <span className="text-xs text-gray-500">Foreigner can have multiple permits</span>
+                        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">Imports</Badge>
+                        <span className="text-xs text-gray-500">Foreigner can have import records</span>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">Permits</Badge>
+                        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">Imports</Badge>
                         <ArrowRight className="w-4 h-4 text-gray-500" />
                         <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/50">Tasks</Badge>
-                        <span className="text-xs text-gray-500">Permit generates review/approval tasks</span>
+                        <span className="text-xs text-gray-500">Import generates review/approval tasks</span>
                       </div>
                       <div className="flex items-center gap-3">
                         <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/50">Tasks</Badge>
@@ -284,7 +284,7 @@ export default function AdminGuidePage() {
                       <div className="flex items-center gap-3">
                         <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/50">Calendar</Badge>
                         <ArrowRight className="w-4 h-4 text-gray-500" />
-                        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">Permits</Badge>
+                        <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">Vehicles</Badge>
                         <span className="text-xs text-gray-500">Deadline tracking and reminders</span>
                       </div>
                     </div>
@@ -418,7 +418,7 @@ export default function AdminGuidePage() {
                           <p className="text-red-400">⚠️ Foreigner permanently deleted</p>
                         </div>
                         <div className="bg-amber-500/10 border border-amber-500/30 rounded p-2">
-                          <p className="text-amber-400 text-[10px]">Note: Related permits are also deleted (cascade)</p>
+                          <p className="text-amber-400 text-[10px]">Note: Related records are also deleted (cascade)</p>
                         </div>
                       </div>
                     </CardContent>
@@ -426,36 +426,36 @@ export default function AdminGuidePage() {
                 </div>
               </div>
 
-              {/* Permits CRUD */}
+              {/* Import CRUD */}
               <div className="space-y-4 pt-8 border-t border-gray-700">
                 <div className="flex items-center gap-3 mb-4">
                   <ClipboardCheck className="w-6 h-6 text-purple-400" />
-                  <h3 className="text-xl font-bold text-white">Permits Module</h3>
+                  <h3 className="text-xl font-bold text-white">Import Module</h3>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Create Permit */}
+                  {/* Create Import */}
                   <Card className="bg-gray-900 border-gray-700">
                     <CardHeader>
                       <div className="flex items-center gap-2">
                         <Plus className="w-4 h-4 text-green-400" />
-                        <CardTitle className="text-sm text-white">Create Permit</CardTitle>
+                        <CardTitle className="text-sm text-white">Create Import</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-xs text-gray-400 mb-3">Location: /permits → "New Permit" button</p>
+                      <p className="text-xs text-gray-400 mb-3">Location: /import → "New Import" button</p>
                       <div className="space-y-2 text-xs">
                         <div className="bg-gray-800 border border-gray-700 rounded p-2">
-                          <p className="text-gray-300">1. Select permit type (Work/Residence/License)</p>
+                          <p className="text-gray-300">1. Select import type (PIP/Customs)</p>
                         </div>
                         <div className="bg-gray-800 border border-gray-700 rounded p-2">
-                          <p className="text-gray-300">2. Select person from dropdown</p>
+                          <p className="text-gray-300">2. Enter item details</p>
                         </div>
                         <div className="bg-gray-800 border border-gray-700 rounded p-2">
                           <p className="text-gray-300">3. Set dates and upload documents</p>
                         </div>
                         <div className="bg-green-500/10 border border-green-500/30 rounded p-2">
-                          <p className="text-green-400">✓ Permit created with "Draft" status</p>
+                          <p className="text-green-400">✓ Import created with "Pending" status</p>
                         </div>
                       </div>
                     </CardContent>
@@ -560,7 +560,7 @@ export default function AdminGuidePage() {
                 <div className="space-y-3">
                   {[
                     { step: 1, module: "Foreigners", action: "Create new foreigner record", icon: Plus, color: "blue" },
-                    { step: 2, module: "Permits", action: "Create work permit for foreigner", icon: ClipboardCheck, color: "purple" },
+                    { step: 2, module: "Import", action: "Create import record if needed", icon: ClipboardCheck, color: "purple" },
                     { step: 3, module: "Tasks", action: "Create onboarding checklist tasks", icon: CheckSquare, color: "amber" },
                     { step: 4, module: "Calendar", action: "Click any day to schedule orientation meeting", icon: Calendar, color: "cyan" },
                     { step: 5, module: "Dashboard", action: "Monitor onboarding progress", icon: BarChart, color: "green" },
@@ -582,19 +582,19 @@ export default function AdminGuidePage() {
                 </div>
               </div>
 
-              {/* Workflow 2: Permit Processing */}
+              {/* Workflow 2: Import Processing */}
               <div className="pt-8 border-t border-gray-700">
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                   <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/50">Workflow 2</Badge>
-                  Permit Application Processing
+                  Import Application Processing
                 </h3>
                 <div className="space-y-3">
                   {[
-                    { step: 1, status: "Draft", action: "Applicant creates permit", icon: FileText, color: "gray" },
+                    { step: 1, status: "Pending", action: "User creates import record", icon: FileText, color: "gray" },
                     { step: 2, status: "Submitted", action: "Admin receives submission", icon: Upload, color: "blue" },
                     { step: 3, status: "Under Review", action: "Admin reviews documents", icon: Eye, color: "amber" },
-                    { step: 4, status: "Approved", action: "Admin approves permit", icon: CheckCircle2, color: "green" },
-                    { step: 5, status: "Issued", action: "Permit ready for collection", icon: Download, color: "emerald" },
+                    { step: 4, status: "Approved", action: "Admin approves import", icon: CheckCircle2, color: "green" },
+                    { step: 5, status: "Completed", action: "Import processed", icon: Download, color: "emerald" },
                   ].map((item) => (
                     <div key={item.step} className="flex items-start gap-3 bg-gray-900 border border-gray-700 rounded-lg p-4">
                       <div className={`w-8 h-8 rounded-full bg-${item.color}-500/20 border border-${item.color}-500/50 flex items-center justify-center flex-shrink-0`}>
@@ -636,7 +636,7 @@ export default function AdminGuidePage() {
                       <div className="w-6 h-6 rounded bg-purple-500/20 border border-purple-500/50 flex items-center justify-center">
                         <ClipboardCheck className="w-4 h-4 text-purple-400" />
                       </div>
-                      <span className="text-sm text-white">Review permit applications</span>
+                      <span className="text-sm text-white">Review import applications</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="w-6 h-6 rounded bg-green-500/20 border border-green-500/50 flex items-center justify-center">
@@ -696,12 +696,12 @@ export default function AdminGuidePage() {
                         <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
                           <FileText className="w-4 h-4" />
                         </div>
-                        <CardTitle className="text-sm text-white">Check Permit Status</CardTitle>
+                        <CardTitle className="text-sm text-white">Check Import Status</CardTitle>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <ul className="space-y-1 text-xs text-gray-400">
-                        <li>• Instantly check any permit's status</li>
+                        <li>• Instantly check any import's status</li>
                         <li>• Shows current workflow stage</li>
                         <li>• Displays next steps in process</li>
                         <li>• No navigation required</li>
@@ -964,7 +964,7 @@ export default function AdminGuidePage() {
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm text-gray-300">
                     <p>✓ Real-time dashboard statistics</p>
-                    <p>✓ Permit status distribution</p>
+                    <p>✓ Entity status distribution</p>
                     <p>✓ Task completion rates</p>
                     <p>✓ Export to CSV/PDF</p>
                     <div className="mt-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-400">
@@ -995,7 +995,7 @@ export default function AdminGuidePage() {
                       <CardTitle className="text-sm text-white">Best Practices</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-1 text-xs text-gray-400">
-                      <p>• Update permit status regularly</p>
+                      <p>• Update import status regularly</p>
                       <p>• Use tasks for tracking work</p>
                       <p>• Set calendar reminders</p>
                       <p>• Review reports weekly</p>

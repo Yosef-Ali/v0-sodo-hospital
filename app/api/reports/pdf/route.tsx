@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Generate PDF Stream
-    const stream = await renderToStream(<StandardReportPDF report={ report } data = { data } />);
+    const stream = await renderToStream(<StandardReportPDF report={report} data={data} />);
 
     // 4. Return Stream response
     // We need to convert the NodeJS ReadableStream to a Web ReadableStream or just use it directly if Next.js supports it (it usually does for native Node streams in App Router if typed correctly, but safer to construct a standard Response).

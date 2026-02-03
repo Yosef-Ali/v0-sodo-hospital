@@ -5,7 +5,7 @@ import { StatusCard } from "@/components/ui/status-card"
 import { MetricCard } from "@/components/ui/metric-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { FileText, AlertCircle, ArrowRight, User, Clock, Calendar } from "lucide-react"
+import { AlertCircle, ArrowRight, Clock, Calendar, Car, Package, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -25,8 +25,7 @@ interface ExpiringItem {
 interface DashboardPageProps {
   initialData: {
     taskStats: any
-    permitStats: any
-    permits: any[]
+    entityStats: any
     overdueCount: number
     myTasks: any[]
     expiringItems: ExpiringItem[]
@@ -36,7 +35,7 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ initialData }: DashboardPageProps) {
-  const { taskStats, permitStats, permits, overdueCount, myTasks, expiringItems, currentUser, error } = initialData
+  const { taskStats, entityStats, overdueCount, myTasks, expiringItems, currentUser, error } = initialData
   const router = useRouter()
   const { toast } = useToast()
 
@@ -59,16 +58,17 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
   const openTasks = pendingTasks + inProgressTasks + urgentTasks
   const completionRate = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0
 
-  const totalPermits = permitStats?.total || 0
-  const pendingPermits = permitStats?.byStatus?.PENDING || 0
-  const submittedPermits = permitStats?.byStatus?.SUBMITTED || 0
-  const approvedPermits = permitStats?.byStatus?.APPROVED || 0
+  // Entity counts from stats
+  const totalForeigners = entityStats?.foreigners || 0
+  const totalVehicles = entityStats?.vehicles || 0
+  const totalImports = entityStats?.imports || 0
+  const totalCompanies = entityStats?.companies || 0
 
   return (
     <div className="p-8">
       <PageHeader
         title="Administrative Dashboard"
-        description="A quick overview of tasks, permits, and recent activity."
+        description="A quick overview of tasks and recent activity."
       />
 
       {error && (
@@ -95,7 +95,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           <span>
             {overdueCount === 0
               ? "No overdue tasks. You're on track."
-              : `${overdueCount} task${overdueCount === 1 ? "" : "s"} are overdue across your permits.`}
+              : `${overdueCount} task${overdueCount === 1 ? "" : "s"} overdue.`}
           </span>
         </div>
         {overdueCount > 0 && (
@@ -199,38 +199,38 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
           {/* Permit and task mix metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <MetricCard
-              icon={<FileText className="h-5 w-5 text-gray-400" />}
-              title="Active Permits"
-              value={String(totalPermits)}
-              subtext="Across all categories"
-              change={`${pendingPermits} pending review`}
-              changeType={pendingPermits > 0 ? "negative" : "positive"}
-                items={[
-                  {
-                    label: "Work Permits",
-                    value: String(permitStats?.byCategory?.WORK_PERMIT || 0),
-                    action: { text: "View", link: "/permits?category=WORK_PERMIT" },
-                  },
-                  {
-                    label: "Vehicles",
-                    value: String(permitStats?.byCategory?.VEHICLE || 0),
-                    action: { text: "View", link: "/vehicle" },
-                  },
-                  {
-                    label: "Imports",
-                    value: String(permitStats?.byCategory?.IMPORT || 0),
-                    action: { text: "View", link: "/import" },
-                  },
-                ]}
-                footer={`${submittedPermits} submitted, ${approvedPermits} approved`}
-                buttonText="Open permits workspace"
-              buttonLink="/permits"
+              icon={<Users className="h-5 w-5 text-gray-400" />}
+              title="Entity Overview"
+              value={String(totalForeigners + totalVehicles + totalImports + totalCompanies)}
+              subtext="Total records"
+              change={`${totalForeigners} foreigners`}
+              changeType="neutral"
+              items={[
+                {
+                  label: "Foreigners",
+                  value: String(totalForeigners),
+                  action: { text: "View", link: "/foreigners" },
+                },
+                {
+                  label: "Vehicles",
+                  value: String(totalVehicles),
+                  action: { text: "View", link: "/vehicle" },
+                },
+                {
+                  label: "Imports",
+                  value: String(totalImports),
+                  action: { text: "View", link: "/import" },
+                },
+              ]}
+              footer={`${totalCompanies} companies registered`}
+              buttonText="View all foreigners"
+              buttonLink="/foreigners"
               onChartClick={() => {
                 toast({
-                  title: "Permits",
-                  description: "Opening detailed permit metrics.",
+                  title: "Entities",
+                  description: "Opening foreigners list.",
                 })
-                router.push("/permits")
+                router.push("/foreigners")
               }}
             />
 
@@ -269,69 +269,52 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
             />
           </div>
 
-          {/* Lightweight latest permits list instead of full table */}
-          <div className="bg-gray-800 rounded-lg border border-gray-700 shadow-sm">
-            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-white">Latest Permits</h3>
-                <p className="text-sm text-gray-400 mt-1">
-                  {permits.length === 0 ? "No permits in the system yet." : `${permits.length} most recent permits`}
-                </p>
+          {/* Quick stats cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <Users className="h-5 w-5 text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{totalForeigners}</p>
+                  <p className="text-xs text-gray-400">Foreigners</p>
+                </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs font-normal border-gray-700 bg-gray-800 hover:bg-gray-700 text-gray-300"
-                onClick={() => router.push("/permits")}
-              >
-                View all
-              </Button>
             </div>
-            {permits.length === 0 ? (
-              <div className="p-6 text-sm text-gray-400">
-                As you create permits, they will appear here with their status and due dates.
+            <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <Car className="h-5 w-5 text-green-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{totalVehicles}</p>
+                  <p className="text-xs text-gray-400">Vehicles</p>
+                </div>
               </div>
-            ) : (
-              <ul className="divide-y divide-gray-700">
-                {permits.map((item) => (
-                  <li key={item.permit.id} className="px-4 py-3 flex items-center justify-between">
-                    <div>
-                      <div className="text-sm font-medium text-white">
-                        {item.checklist?.name || item.permit.category.replace(/_/g, " ")}
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {item.person
-                          ? `${item.person.firstName || ""} ${item.person.lastName || ""}`.trim() || "Unknown person"
-                          : "Unknown person"}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {item.person?.photoUrl ? (
-                        <div className="h-8 w-8 rounded-full overflow-hidden border border-gray-600 flex-shrink-0">
-                          <img src={item.person.photoUrl} alt="Avatar" className="h-full w-full object-cover" />
-                        </div>
-                      ) : (
-                        <div className="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-500 border border-gray-600 flex-shrink-0">
-                          <User className="h-4 w-4" />
-                        </div>
-                      )}
-                      <Badge variant="outline" className="bg-gray-700/60 text-gray-200 border-gray-600">
-                        {item.permit.status}
-                      </Badge>
-                      {item.permit.dueDate && (
-                        <span className="text-xs text-gray-400">
-                          Due{" "}
-                          {new Date(item.permit.dueDate).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+            </div>
+            <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-500/10">
+                  <Package className="h-5 w-5 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{totalImports}</p>
+                  <p className="text-xs text-gray-400">Imports</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-800 rounded-lg border border-gray-700 p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <AlertCircle className="h-5 w-5 text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">{totalCompanies}</p>
+                  <p className="text-xs text-gray-400">Companies</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -379,14 +362,14 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
                 </Link>
               </li>
               <li>
-                <Link href="/permits" className="flex items-center justify-between text-gray-300 hover:text-white">
-                  <span>Permits workspace</span>
+                <Link href="/foreigners" className="flex items-center justify-between text-gray-300 hover:text-white">
+                  <span>Foreigners</span>
                   <ArrowRight className="h-3 w-3" />
                 </Link>
               </li>
               <li>
-                <Link href="/documents" className="flex items-center justify-between text-gray-300 hover:text-white">
-                  <span>Documents</span>
+                <Link href="/calendar" className="flex items-center justify-between text-gray-300 hover:text-white">
+                  <span>Calendar</span>
                   <ArrowRight className="h-3 w-3" />
                 </Link>
               </li>
@@ -408,7 +391,7 @@ export function DashboardPage({ initialData }: DashboardPageProps) {
             </p>
             {openTasks > 0 && (
               <p className="mt-2 text-xs text-gray-400">
-                {openTasks} tasks are still open across your active permits.
+                {openTasks} tasks are still open.
               </p>
             )}
           </div>

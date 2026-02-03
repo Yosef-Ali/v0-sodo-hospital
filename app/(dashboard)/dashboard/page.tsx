@@ -1,6 +1,9 @@
 import { DashboardPage } from "@/components/pages/dashboard-page"
 import { getTaskStats, getOverdueTasks, getTasks } from "@/lib/actions/v2/tasks"
-import { getPermitStats } from "@/lib/actions/v2/permits"
+import { getPeopleStats } from "@/lib/actions/v2/foreigners"
+import { getVehicleStats } from "@/lib/actions/v2/vehicles"
+import { getImportStats } from "@/lib/actions/v2/imports"
+import { getCompanyStats } from "@/lib/actions/v2/companies"
 import { getExpiringItems, syncAllExpirationsToCalendar } from "@/lib/actions/v2/calendar-events"
 import { unstable_cache } from "next/cache"
 import { getCurrentUser } from "@/lib/auth/permissions"
@@ -8,10 +11,13 @@ import { getCurrentUser } from "@/lib/auth/permissions"
 // Cache dashboard data for 60 seconds
 const getCachedDashboardData = unstable_cache(
   async () => {
-    const [taskStatsResult, overdueResult, permitStatsResult, expiringResult] = await Promise.all([
+    const [taskStatsResult, overdueResult, peopleStatsResult, vehicleStatsResult, importStatsResult, companyStatsResult, expiringResult] = await Promise.all([
       getTaskStats(),
       getOverdueTasks(),
-      getPermitStats(),
+      getPeopleStats(),
+      getVehicleStats(),
+      getImportStats(),
+      getCompanyStats(),
       getExpiringItems(30), // Get items expiring in next 30 days
     ])
 
@@ -20,13 +26,16 @@ const getCachedDashboardData = unstable_cache(
 
     return {
       taskStats: taskStatsResult.success ? taskStatsResult.data : { byStatus: {}, total: 0 },
-      permitStats: permitStatsResult.success ? permitStatsResult.data : { byStatus: {}, byCategory: {}, total: 0 },
-      permits: [],
+      entityStats: {
+        foreigners: peopleStatsResult.success && peopleStatsResult.data ? peopleStatsResult.data.total : 0,
+        vehicles: vehicleStatsResult.success && vehicleStatsResult.data ? vehicleStatsResult.data.total : 0,
+        imports: importStatsResult.success && importStatsResult.data ? importStatsResult.data.total : 0,
+        companies: companyStatsResult.success && companyStatsResult.data ? companyStatsResult.data.total : 0,
+      },
       overdueCount: overdueResult.success && overdueResult.data ? overdueResult.data.length : 0,
       expiringItems: expiringResult.success ? expiringResult.data : [],
-      error: (!taskStatsResult.success && (taskStatsResult as any).error) || 
-             (!permitStatsResult.success && (permitStatsResult as any).error) || 
-             (!overdueResult.success && (overdueResult as any).error) || 
+      error: (!taskStatsResult.success && (taskStatsResult as any).error) ||
+             (!overdueResult.success && (overdueResult as any).error) ||
              (!expiringResult.success && (expiringResult as any).error) || undefined
     }
   },
@@ -49,6 +58,7 @@ export default async function Dashboard() {
       assigneeId: currentUser.id,
       includeCompleted: false,
       limit: 5,
+      offset: 0,
     })
 
     if (myTasksResult.success && myTasksResult.data) {
