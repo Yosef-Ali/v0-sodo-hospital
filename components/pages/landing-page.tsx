@@ -7,6 +7,7 @@ import { A2UIChatWidget } from "@/components/a2ui"
 import { Button } from "@/components/ui/button"
 import { UserButton } from "@/components/auth/user-button"
 import { Badge } from "@/components/ui/badge"
+import { useOrganization } from "@/hooks/use-organization"
 
 interface LandingPageProps {
   initialPeople?: any[]
@@ -35,6 +36,7 @@ export function LandingPage({
   dbError
 }: LandingPageProps) {
   const { data: session } = useSession()
+  const { settings } = useOrganization()
   
   // Get foreigners with photos first, then fill with placeholders
   const foreignersWithPhotos = initialPeople.filter(p => p.photoUrl).slice(0, 3)
@@ -59,10 +61,18 @@ export function LandingPage({
       <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 fade-in">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
-              <Activity className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-xl font-semibold tracking-tight">Soddo Christian General Hospital</span>
+            {settings?.logoUrl ? (
+              <img 
+                src={settings.logoUrl} 
+                alt={settings.name} 
+                className="w-10 h-10 object-contain"
+              />
+            ) : (
+              <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
+                <Activity className="w-4 h-4 text-white" />
+              </div>
+            )}
+            <span className="text-xl font-semibold tracking-tight">{settings?.name || "Soddo Christian General Hospital"}</span>
           </div>
           <div className="hidden md:flex items-center space-x-4 text-sm">
             {session?.user ? (

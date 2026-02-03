@@ -13,7 +13,7 @@ export default function PeopleLoading() {
       </div>
 
       {/* Tabs and Search Bar */}
-      <div className="mt-[200px] mb-6 flex flex-col gap-4">
+      <div className="mt-8 md:mt-10 lg:mt-12 mb-6 flex flex-col gap-4">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           {/* Tabs */}
           <div className="flex gap-2">

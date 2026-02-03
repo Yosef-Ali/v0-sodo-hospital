@@ -10,7 +10,7 @@ export default function TasksLoading() {
       </div>
 
       {/* Tabs and Search Bar */}
-      <div className="mt-[200px] mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mt-8 md:mt-10 lg:mt-12 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         {/* Tabs */}
         <div className="flex gap-2">
           <Skeleton className="h-10 w-24" />
