@@ -65,7 +65,7 @@ export function LandingPage({
               <img 
                 src={settings.logoUrl} 
                 alt={settings.name} 
-                className="h-16 w-auto object-contain min-w-[64px]"
+                className="h-20 w-auto object-contain min-w-[84px]"
               />
             ) : (
               <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
