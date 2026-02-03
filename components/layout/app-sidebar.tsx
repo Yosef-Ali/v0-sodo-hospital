@@ -114,10 +114,15 @@ const menuItems: MenuItem[] = [
   },
 ]
 
+import { useOrganization } from "@/hooks/use-organization"
+
+// ... (keep existing imports)
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
-  const { isMobile, setOpenMobile } = useSidebar()
+  const { isMobile, setOpenMobile, state } = useSidebar()
   const { data: session } = useSession()
+  const { settings, isLoading } = useOrganization()
 
   // Get user role from session
   const userRole = (session?.user as { role?: string })?.role || "USER"
@@ -153,24 +158,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/dashboard" onClick={handleNavClick}>
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-emerald-600 text-white">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="size-4"
-                  >
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                  </svg>
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Soddo</span>
-                  <span className="truncate text-xs text-muted-foreground">Permit Management</span>
-                </div>
+                {settings?.logoUrl ? (
+                  <div className={`flex items-center justify-center ${state === "collapsed" ? "size-8" : "h-10"}`}>
+                    <img 
+                      src={settings.logoUrl} 
+                      alt={settings.name} 
+                      className={`object-contain ${state === "collapsed" ? "size-8" : "h-full w-auto max-w-[180px]"}`}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-gradient-to-br from-green-600 to-emerald-600 text-white">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="size-4"
+                    >
+                      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                    </svg>
+                  </div>
+                )}
+                {(!settings?.logoUrl || state === "expanded") && (
+                   <div className={`grid flex-1 text-left text-sm leading-tight ${settings?.logoUrl && state === "expanded" ? "ml-2" : ""}`}>
+                     <span className="truncate font-semibold">{settings?.name || "Soddo"}</span>
+                     <span className="truncate text-xs text-muted-foreground">Permit Management</span>
+                   </div>
+                )}
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

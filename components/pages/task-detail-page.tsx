@@ -42,7 +42,8 @@ export function TaskDetailPage({ initialData }: TaskDetailPageProps) {
 
   const handleEditSubmit = async (data: any) => {
     try {
-      const result = await updateTask(task.task.id, {
+      const result = await updateTask({
+        id: task.task.id,
         ...data,
         assigneeId: data.assignee // Map form field 'assignee' to 'assigneeId'
       })

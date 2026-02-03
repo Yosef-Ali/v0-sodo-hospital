@@ -81,7 +81,7 @@ const workflowTaskSchema = z.object({
 /**
  * Get all tasks with optional filters
  */
-export async function getTasks(params?: z.infer<typeof searchSchema>) {
+export async function getTasks(params?: z.input<typeof searchSchema>) {
   try {
     const {
       assigneeId,

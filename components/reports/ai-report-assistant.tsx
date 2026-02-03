@@ -151,15 +151,11 @@ export function AIReportAssistant({ onApply }: AIReportAssistantProps) {
                   }}
                   appearance={{
                     button: "bg-gray-800 border-gray-700 hover:bg-gray-700 text-sm h-10 px-4 py-2 ring-offset-background transition-colors",
-                    allowedContent: "hidden",
                   }}
-                  content={{
-                    button({ ready }) {
-                      if (ready) return <div className="flex items-center gap-2"><Upload className="h-4 w-4" /> Upload Document</div>
-                      return "Loading..."
-                    }
-                  }}
-                />
+                  className="flex items-center gap-2"
+                >
+                  <Upload className="h-4 w-4" /> Upload Document
+                </UploadButton>
               </div>
             </div>
 

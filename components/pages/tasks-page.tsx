@@ -111,7 +111,8 @@ export function TasksPage({ initialData }: TasksPageProps) {
     try {
       if (taskData.id) {
         // Edit mode - update existing task
-        const result = await updateTask(taskData.id, {
+        const result = await updateTask({
+          id: taskData.id,
           title: taskData.title,
           description: taskData.description,
           status: taskData.status,

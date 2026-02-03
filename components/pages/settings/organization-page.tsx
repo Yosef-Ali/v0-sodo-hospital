@@ -8,6 +8,8 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Building2, Upload, X, Loader2, Check, Camera } from "lucide-react"
 import { toast } from "sonner"
+import { updateOrganizationState } from "@/hooks/use-organization"
+
 import {
   getOrganizationSettings,
   updateOrganizationSettings,
@@ -89,7 +91,11 @@ export function SettingsOrganizationPage() {
       // Update logo URL in settings
       const updateResult = await updateOrganizationLogo(result.url)
       if (updateResult.success) {
-        setSettings((prev) => ({ ...prev, logoUrl: result.url }))
+        setSettings((prev) => {
+          const next = { ...prev, logoUrl: result.url };
+          updateOrganizationState(next);
+          return next;
+        })
         toast.success("Logo uploaded successfully")
       } else {
         throw new Error(updateResult.error)
@@ -112,7 +118,11 @@ export function SettingsOrganizationPage() {
     try {
       const result = await updateOrganizationLogo(null)
       if (result.success) {
-        setSettings((prev) => ({ ...prev, logoUrl: null }))
+        setSettings((prev) => {
+          const next = { ...prev, logoUrl: null };
+          updateOrganizationState(next);
+          return next;
+        })
         toast.success("Logo removed")
       } else {
         throw new Error(result.error)
@@ -130,6 +140,7 @@ export function SettingsOrganizationPage() {
     try {
       const result = await updateOrganizationSettings(settings)
       if (result.success) {
+        updateOrganizationState(settings)
         toast.success("Settings saved successfully")
       } else {
         throw new Error(result.error)

@@ -985,7 +985,6 @@ export function UploadGuideWidget({
                           appearance={{
                             button:
                               "bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2 rounded-md ut-ready:bg-green-600 ut-uploading:bg-green-700 ut-uploading:cursor-wait",
-                            allowedContent: "hidden",
                           }}
                         />
                       </div>

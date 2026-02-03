@@ -66,7 +66,7 @@ const searchSchema = z.object({
 /**
  * Get all people with optional search and pagination
  */
-export async function getPeople(params?: z.infer<typeof searchSchema>) {
+export async function getPeople(params?: z.input<typeof searchSchema>) {
   // Read-only, still good to wrap or just use directly if public/internal
   // For consistency, we'll keep it as a regular function but could safely be wrapped if we wanted to enforce auth for reading
   try {
